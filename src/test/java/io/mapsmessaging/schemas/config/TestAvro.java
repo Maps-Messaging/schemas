@@ -17,51 +17,29 @@
 
 package io.mapsmessaging.schemas.config;
 
-import java.io.IOException;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
-public class TestAvro {
+public class TestAvro extends GeneralBaseTest {
 
-
-  @Test
-  void testAvro() throws IOException {
+  Map<String, Object> getProperties(){
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "AVRO");
-    props.put("schema", new String(Base64.getEncoder().encode(AVRO_SCHEMA.getBytes())));
-    Map<String, Object> schema = new LinkedHashMap<>();
-    schema.put("schema", props);
-    SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
-    Assertions.assertEquals("AVRO", config.getFormat());
+    props.put("schema", new String(Base64.getEncoder().encode(getSchema())));
+    return props;
   }
 
-  @Test
-  void testSchemaReload() throws IOException {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "AVRO");
-    props.put("schema", new String(Base64.getEncoder().encode(AVRO_SCHEMA.getBytes())));
-    Map<String, Object> schema = new LinkedHashMap<>();
-    schema.put("schema", props);
-    SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
-    Assertions.assertEquals("AVRO", config.getFormat());
-    String packed = config.pack();
-    SchemaConfig parsed = SchemaConfigFactory.getInstance().constructConfig(packed);
-    Assertions.assertEquals("AVRO", parsed.getFormat());
+  public static byte[] getSchema()  {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
+    byte[] tmp = new byte[10240];
+    try (InputStream fis = TestProtobuf.class.getClassLoader().getResourceAsStream("avro/Person.avsc")) {
+      int len = fis.read(tmp);
+      baos.write(tmp, 0, len);
+    }
+    catch (Exception ex){}
+    return baos.toByteArray();
   }
-
-  public static final String AVRO_SCHEMA = "{\n"
-      + "   \"namespace\": \"tutorialspoint.com\",\n"
-      + "   \"type\": \"record\",\n"
-      + "   \"name\": \"emp\",\n"
-      + "   \"fields\": [\n"
-      + "      {\"name\": \"name\", \"type\": \"string\"},\n"
-      + "      {\"name\": \"id\", \"type\": \"int\"},\n"
-      + "      {\"name\": \"salary\", \"type\": \"int\"},\n"
-      + "      {\"name\": \"age\", \"type\": \"int\"},\n"
-      + "      {\"name\": \"address\", \"type\": \"string\"}\n"
-      + "   ]\n"
-      + "}";
 }

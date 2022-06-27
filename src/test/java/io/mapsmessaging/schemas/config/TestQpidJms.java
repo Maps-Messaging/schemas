@@ -17,41 +17,14 @@
 
 package io.mapsmessaging.schemas.config;
 
-import io.mapsmessaging.schemas.config.impl.QpidJmsSchemaConfig;
-import java.io.IOException;
-import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.json.JSONObject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
-public class TestQpidJms {
+public class TestQpidJms extends GeneralBaseTest {
 
-  @Test
-  void testJsonSchemaConfig() throws IOException {
-
+  Map<String, Object> getProperties(){
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "QPID-JMS");
-    Map<String, Object> schema = new LinkedHashMap<>();
-    schema.put("schema", props);
-    SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
-    Assertions.assertEquals("QPID-JMS", config.getFormat());
-    String packed = config.pack();
-    JSONObject jsonObject = new JSONObject(packed);
-    Assertions.assertEquals("QPID-JMS", jsonObject.getJSONObject("schema").get("format"));
-  }
-
-  @Test
-  void testSchemaReload() throws IOException {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "QPID-JMS");
-    Map<String, Object> schema = new LinkedHashMap<>();
-    schema.put("schema", props);
-    SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
-    Assertions.assertEquals("QPID-JMS", config.getFormat());
-    String packed = config.pack();
-    SchemaConfig parsed = SchemaConfigFactory.getInstance().constructConfig(packed);
-    Assertions.assertEquals("QPID-JMS", parsed.getFormat());
+    return props;
   }
 }

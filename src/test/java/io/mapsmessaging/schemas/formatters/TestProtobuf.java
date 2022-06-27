@@ -38,7 +38,7 @@ public class TestProtobuf {
   public static byte[] packSample() throws IOException {
     Builder builder = Person.newBuilder();
     builder.addPhones(PhoneNumber.newBuilder().setNumber("+1 555 555-55555").build());
-    builder.setEmail("matthew@buckton.org");
+    builder.setEmail("admin@gmail.com");
     builder.setName("Matthew Buckton");
     Person person = builder.build();
     ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);

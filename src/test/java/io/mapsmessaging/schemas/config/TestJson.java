@@ -17,38 +17,14 @@
 
 package io.mapsmessaging.schemas.config;
 
-import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.json.JSONObject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
-class TestJson {
+class TestJson extends GeneralBaseTest {
 
-  @Test
-  void testJsonSchemaConfig() throws IOException {
+  Map<String, Object> getProperties(){
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "JSON");
-    Map<String, Object> schema = new LinkedHashMap<>();
-    schema.put("schema", props);
-    SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
-    Assertions.assertEquals("JSON", config.getFormat());
-    String packed = config.pack();
-    JSONObject jsonObject = new JSONObject(packed);
-    Assertions.assertEquals("JSON", jsonObject.getJSONObject("schema").get("format"));
-  }
-
-  @Test
-  void testSchemaReload() throws IOException {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "JSON");
-    Map<String, Object> schema = new LinkedHashMap<>();
-    schema.put("schema", props);
-    SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
-    Assertions.assertEquals("JSON", config.getFormat());
-    String packed = config.pack();
-    SchemaConfig parsed = SchemaConfigFactory.getInstance().constructConfig(packed);
-    Assertions.assertEquals("JSON", parsed.getFormat());
+    return props;
   }
 }

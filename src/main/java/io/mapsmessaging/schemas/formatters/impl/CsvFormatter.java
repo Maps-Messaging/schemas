@@ -53,6 +53,7 @@ public class CsvFormatter implements MessageFormatter {
     keys = header.toArray(tmp);
     CsvParserSettings settings = new CsvParserSettings();
     parser = new CsvParser(settings);
+
   }
 
   public ParsedObject parse(byte[] payload) {

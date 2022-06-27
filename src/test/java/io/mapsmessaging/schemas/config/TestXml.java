@@ -16,39 +16,14 @@
  */
 package io.mapsmessaging.schemas.config;
 
-import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
-import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.json.JSONObject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
-class TestXml {
+class TestXml extends GeneralBaseTest {
 
-  @Test
-  void testXMLFiltering() throws IOException {
+  Map<String, Object> getProperties(){
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "XML");
-    Map<String, Object> schema = new LinkedHashMap<>();
-    schema.put("schema", props);
-    SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
-    Assertions.assertEquals("XML", config.getFormat());
-    String packed = config.pack();
-    JSONObject jsonObject = new JSONObject(packed);
-    Assertions.assertEquals("XML", jsonObject.getJSONObject("schema").get("format"));
-  }
-
-  @Test
-  void testSchemaReload() throws IOException {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "XML");
-    Map<String, Object> schema = new LinkedHashMap<>();
-    schema.put("schema", props);
-    SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
-    Assertions.assertEquals("XML", config.getFormat());
-    String packed = config.pack();
-    SchemaConfig parsed = SchemaConfigFactory.getInstance().constructConfig(packed);
-    Assertions.assertEquals("XML", parsed.getFormat());
+    return props;
   }
 }

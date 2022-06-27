@@ -18,8 +18,22 @@ package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.util.Map;
+import lombok.Getter;
+import lombok.Setter;
 
 public class XmlSchemaConfig extends SimpleSchemaConfig {
+
+  @Getter
+  @Setter
+  private boolean namespaceAware = false;
+
+  @Getter
+  @Setter
+  private boolean validating = false;
+
+  @Getter
+  @Setter
+  private boolean coalescing = false;
 
   public XmlSchemaConfig() {
     super("XML");

@@ -41,7 +41,6 @@ public class TestJson {
     Assertions.assertEquals("Raised", resolver.get("data[1].name"));
     Assertions.assertNull(resolver.get("data[1].batters.batter[2].type"));
 
-
     Assertions.assertEquals("donut", resolver.get("data[2].type"));
     Assertions.assertEquals("Old Fashioned", resolver.get("data[2].name"));
     Assertions.assertNull(resolver.get("data[2].batters.batter[2].type"));

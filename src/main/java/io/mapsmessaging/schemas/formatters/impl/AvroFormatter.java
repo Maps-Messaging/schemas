@@ -57,7 +57,6 @@ public class AvroFormatter implements MessageFormatter {
   AvroFormatter(String schemaDefinition) {
     schema = new Schema.Parser().parse(schemaDefinition);
     datumReader = new GenericDatumReader<>(schema);
-
   }
 
   public ParsedObject parse(byte[] payload) throws IOException {

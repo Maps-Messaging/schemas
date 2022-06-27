@@ -18,6 +18,7 @@
 package io.mapsmessaging.schemas.formatters.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
@@ -26,6 +27,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -43,15 +45,23 @@ public class XmlFormatter implements MessageFormatter {
 
   private final DocumentBuilder parser;
 
-  public XmlFormatter() throws IOException {
+  public XmlFormatter() {
+    parser = null;
+  }
+
+  XmlFormatter(XmlSchemaConfig config) throws IOException {
     try {
+
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-      dbf.setNamespaceAware(true);
+      dbf.setNamespaceAware(config.isNamespaceAware());
+      dbf.setValidating(config.isValidating());
+      dbf.setCoalescing(config.isCoalescing());
       parser = dbf.newDocumentBuilder();
     } catch (ParserConfigurationException e) {
       throw new IOException(e);
     }
   }
+
 
   public String getName() {
     return "XML";
@@ -97,7 +107,7 @@ public class XmlFormatter implements MessageFormatter {
 
   @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {
-    return this;
+    return new XmlFormatter( (XmlSchemaConfig) config);
   }
 
 }

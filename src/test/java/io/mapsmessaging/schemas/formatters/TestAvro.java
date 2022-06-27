@@ -17,7 +17,7 @@
 
 package io.mapsmessaging.schemas.formatters;
 
-import static io.mapsmessaging.schemas.config.TestAvro.AVRO_SCHEMA;
+import static io.mapsmessaging.schemas.config.TestAvro.getSchema;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
@@ -35,11 +35,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class TestAvro {
+
   @Test
   void testAvro() throws IOException {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "AVRO");
-    props.put("schema", new String(Base64.getEncoder().encode(AVRO_SCHEMA.getBytes())));
+    props.put("schema", new String(Base64.getEncoder().encode(getSchema())));
     Map<String, Object> schema = new LinkedHashMap<>();
     schema.put("schema", props);
     SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
@@ -47,34 +48,30 @@ public class TestAvro {
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
     Assertions.assertEquals("AVRO", formatter.getName());
 
-    emp e1 = new emp();
+    PersonAvro e1 = new PersonAvro();
     e1.setName("Matthew Buckton");;
     e1.setId(2);
-    e1.setSalary(100000);
-    e1.setAge(40);
-    e1.setAddress("Sydney");
+    e1.setEmail("admin@gmail.com");
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     byte[] data;
     Encoder binaryEncoder = null;
     binaryEncoder = EncoderFactory.get().binaryEncoder(stream, null);
-    DatumWriter<emp> writer = new SpecificDatumWriter<>(emp.class);
+    DatumWriter<PersonAvro> writer = new SpecificDatumWriter<>(PersonAvro.class);
     writer.write(e1, binaryEncoder);
     binaryEncoder.flush();
     data = stream.toByteArray();
 
     ParsedObject obj = formatter.parse(data);
     Assertions.assertEquals("Matthew Buckton", obj.get("name").toString());
-    Assertions.assertEquals(100000, obj.get("salary"));
-    Assertions.assertEquals(40, obj.get("age"));
     Assertions.assertEquals(2, obj.get("id"));
-    Assertions.assertEquals("Sydney", obj.get("address"));
+    Assertions.assertEquals("admin@gmail.com", obj.get("email"));
   }
 
   @Test
   void testAvroToJson() throws IOException {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "AVRO");
-    props.put("schema", new String(Base64.getEncoder().encode(AVRO_SCHEMA.getBytes())));
+    props.put("schema", new String(Base64.getEncoder().encode(getSchema())));
     Map<String, Object> schema = new LinkedHashMap<>();
     schema.put("schema", props);
     SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
@@ -82,26 +79,22 @@ public class TestAvro {
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
     Assertions.assertEquals("AVRO", formatter.getName());
 
-    emp e1 = new emp();
+    PersonAvro e1 = new PersonAvro();
     e1.setName("Matthew Buckton");;
     e1.setId(2);
-    e1.setSalary(100000);
-    e1.setAge(40);
-    e1.setAddress("Sydney");
+    e1.setEmail("admin@gmail.com");
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     byte[] data;
     Encoder binaryEncoder = null;
     binaryEncoder = EncoderFactory.get().binaryEncoder(stream, null);
-    DatumWriter<emp> writer = new SpecificDatumWriter<>(emp.class);
+    DatumWriter<PersonAvro> writer = new SpecificDatumWriter<>(PersonAvro.class);
     writer.write(e1, binaryEncoder);
     binaryEncoder.flush();
     data = stream.toByteArray();
     JSONObject jsonObject = formatter.parseToJson(data);
 
     Assertions.assertEquals("Matthew Buckton", jsonObject.get("name").toString());
-    Assertions.assertEquals(100000, jsonObject.get("salary"));
-    Assertions.assertEquals(40, jsonObject.get("age"));
     Assertions.assertEquals(2, jsonObject.get("id"));
-    Assertions.assertEquals("Sydney", jsonObject.get("address"));
+    Assertions.assertEquals("admin@gmail.com", jsonObject.get("email"));
   }
 }

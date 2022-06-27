@@ -38,7 +38,7 @@ class TestCsv {
     SchemaConfig config = new CsvSchemaConfig("key1, val1, v1l2");
     Assertions.assertEquals("CSV", config.getFormat());
     String packed = config.pack();
-    SchemaConfig parsed = SchemaConfigFactory.getInstance().parse(packed);
+    SchemaConfig parsed = SchemaConfigFactory.getInstance().constructConfig(packed);
     Assertions.assertEquals("CSV", parsed.getFormat());
   }
 }

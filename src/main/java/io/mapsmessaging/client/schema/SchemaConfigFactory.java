@@ -18,7 +18,12 @@
 package io.mapsmessaging.client.schema;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.ServiceLoader;
+import java.util.function.Consumer;
 import org.json.JSONObject;
 
 public class SchemaConfigFactory {
@@ -31,11 +36,26 @@ public class SchemaConfigFactory {
 
   private final ServiceLoader<SchemaConfig> schemaConfigServiceLoader;
 
-  public SchemaConfig parse(byte[] rawPayload) throws IOException {
-    return parse(new String(rawPayload));
+  public SchemaConfig constructConfig(Properties properties) throws IOException {
+    if(properties.contains("schema")){
+      Properties formatProperties = (Properties) properties.get("schema");
+      String formatName = formatProperties.getProperty("format", "RAW");
+      for (SchemaConfig config : schemaConfigServiceLoader) {
+        if (config.getFormat().equalsIgnoreCase(formatName)) {
+          Map<String, Object> map = new LinkedHashMap<>();
+          properties.forEach((key, value) -> map.put(key.toString(), value));
+          return config.getInstance(map);
+        }
+      }
+    }
+    throw new IOException("Unknown schema config found");
   }
 
-  public SchemaConfig parse(String payload) throws IOException {
+  public SchemaConfig constructConfig(byte[] rawPayload) throws IOException {
+    return constructConfig(new String(rawPayload));
+  }
+
+  public SchemaConfig constructConfig(String payload) throws IOException {
     JSONObject schemaJson = new JSONObject(payload);
     if (!schemaJson.has("schema")) {
       throw new IOException("Not a valid schema config");
@@ -46,13 +66,13 @@ public class SchemaConfigFactory {
       throw new IOException("Not a valid schema config");
     }
 
+    String formatName = schemaJson.getString("format");
     for (SchemaConfig config : schemaConfigServiceLoader) {
-      if (config.getFormat().equalsIgnoreCase(schemaJson.getString("format"))) {
-        return config.getInstance(schemaJson);
+      if (config.getFormat().equalsIgnoreCase(formatName)) {
+        return config.getInstance(schemaJson.toMap());
       }
     }
     throw new IOException("Unknown schema config found");
-
   }
 
   private SchemaConfigFactory() {

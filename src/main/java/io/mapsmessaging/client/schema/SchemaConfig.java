@@ -16,6 +16,7 @@
  */
 package io.mapsmessaging.client.schema;
 
+import java.util.Map;
 import lombok.Getter;
 import org.json.JSONObject;
 
@@ -40,5 +41,6 @@ public abstract class SchemaConfig {
 
   protected abstract JSONObject packData();
 
-  protected abstract SchemaConfig getInstance(JSONObject config);
+  protected abstract SchemaConfig getInstance(Map<String, Object> config);
+
 }

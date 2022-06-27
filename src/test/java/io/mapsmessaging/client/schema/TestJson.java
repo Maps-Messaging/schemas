@@ -38,7 +38,7 @@ class TestJson {
     SchemaConfig config = new JsonSchemaConfig();
     Assertions.assertEquals("JSON", config.getFormat());
     String packed = config.pack();
-    SchemaConfig parsed = SchemaConfigFactory.getInstance().parse(packed);
+    SchemaConfig parsed = SchemaConfigFactory.getInstance().constructConfig(packed);
     Assertions.assertEquals("JSON", parsed.getFormat());
   }
 }

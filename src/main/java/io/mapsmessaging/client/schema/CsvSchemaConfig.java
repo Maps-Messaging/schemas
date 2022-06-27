@@ -17,6 +17,7 @@
 
 package io.mapsmessaging.client.schema;
 
+import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
@@ -45,7 +46,7 @@ public class CsvSchemaConfig extends SchemaConfig {
     return data;
   }
 
-  protected SchemaConfig getInstance(JSONObject config) {
-    return new CsvSchemaConfig(config.getString("header"));
+  protected SchemaConfig getInstance(Map<String, Object> config) {
+    return new CsvSchemaConfig(config.get("header").toString());
   }
 }

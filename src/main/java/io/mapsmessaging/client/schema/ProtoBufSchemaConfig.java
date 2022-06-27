@@ -17,6 +17,7 @@
 package io.mapsmessaging.client.schema;
 
 import java.util.Base64;
+import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
@@ -51,8 +52,8 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
     return data;
   }
 
-  protected SchemaConfig getInstance(JSONObject config) {
-    return new ProtoBufSchemaConfig(config.getString("messageName"), config.getString("descriptor"));
+  protected SchemaConfig getInstance(Map<String, Object> config) {
+    return new ProtoBufSchemaConfig(config.get("messageName").toString(), config.get("descriptor").toString());
   }
 
 }

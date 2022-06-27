@@ -16,6 +16,7 @@
  */
 package io.mapsmessaging.client.schema;
 
+import java.util.Map;
 import org.json.JSONObject;
 
 public class JsonSchemaConfig extends SimpleSchemaConfig {
@@ -24,7 +25,7 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
     super("JSON");
   }
 
-  protected SchemaConfig getInstance(JSONObject config) {
+  protected SchemaConfig getInstance(Map<String, Object> config) {
     return this;
   }
 }

@@ -38,7 +38,7 @@ class TestRaw {
     SchemaConfig config = new RawSchemaConfig();
     Assertions.assertEquals("RAW", config.getFormat());
     String packed = config.pack();
-    SchemaConfig parsed = SchemaConfigFactory.getInstance().parse(packed);
+    SchemaConfig parsed = SchemaConfigFactory.getInstance().constructConfig(packed);
     Assertions.assertEquals("RAW", parsed.getFormat());
   }
 

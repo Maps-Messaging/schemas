@@ -17,7 +17,6 @@
  */
 package io.mapsmessaging.schemas.formatters;
 
-
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
 import io.mapsmessaging.schemas.formatters.AddressBookProtos.Person;

@@ -18,10 +18,8 @@ package io.mapsmessaging.schemas.formatters;
 
 import io.mapsmessaging.selector.IdentifierResolver;
 import java.io.IOException;
-import javax.xml.parsers.ParserConfigurationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.xml.sax.SAXException;
 
 public class TextXML {
 

@@ -46,6 +46,42 @@
   <scm>
     <url>https://github.com/Maps-Messaging/schemas.git</url>
   </scm>
+  <profiles>
+    <profile>
+      <id>mac</id>
+      <activation>
+        <os>
+          <family>mac</family>
+        </os>
+      </activation>
+      <properties>
+        <protocCommand>/Users/matthew/Downloads/protoc-21.1-osx-aarch_64/bin/protoc</protocCommand>
+      </properties>
+    </profile>
+    <profile>
+      <id>windows</id>
+      <activation>
+        <os>
+          <family>Windows</family>
+        </os>
+      </activation>
+      <properties>
+        <protocCommand>protoc</protocCommand>
+      </properties>
+    </profile>
+    <profile>
+      <id>unix</id>
+      <activation>
+        <os>
+          <family>unix</family>
+        </os>
+      </activation>
+      <properties>
+        <protocCommand>protoc</protocCommand>
+      </properties>
+    </profile>
+  </profiles>
+
 
   <properties>
     <maven.compiler.source>13</maven.compiler.source>

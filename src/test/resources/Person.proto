@@ -13,7 +13,7 @@ package test;
 
 // [START java_declaration]
 option java_multiple_files = false;
-option java_package = "io.mapsmessaging.api.message.format.proto";
+option java_package = "io.mapsmessaging.schemas.formatters";
 option java_outer_classname = "AddressBookProtos";
 // [END java_declaration]
 

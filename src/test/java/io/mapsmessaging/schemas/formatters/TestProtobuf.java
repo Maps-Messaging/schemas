@@ -18,21 +18,18 @@
 package io.mapsmessaging.schemas.formatters;
 
 
-import io.mapsmessaging.api.message.format.proto.AddressBookProtos.Person;
-import io.mapsmessaging.api.message.format.proto.AddressBookProtos.Person.Builder;
-import io.mapsmessaging.api.message.format.proto.AddressBookProtos.Person.PhoneNumber;
-import io.mapsmessaging.schemas.config.ProtoBufSchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
+import io.mapsmessaging.schemas.formatters.AddressBookProtos.Person;
+import io.mapsmessaging.schemas.formatters.AddressBookProtos.Person.Builder;
+import io.mapsmessaging.schemas.formatters.AddressBookProtos.Person.PhoneNumber;
 import io.mapsmessaging.selector.IdentifierResolver;
-import io.mapsmessaging.utilities.configuration.ConfigurationProperties;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Properties;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

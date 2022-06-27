@@ -21,10 +21,15 @@ import static io.mapsmessaging.schemas.config.TestAvro.AVRO_SCHEMA;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.specific.SpecificDatumWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -40,5 +45,23 @@ public class TestAvro {
     Assertions.assertEquals("AVRO", config.getFormat());
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
     Assertions.assertEquals("AVRO", formatter.getName());
+
+    emp e1 = new emp();
+    e1.setName("Matthew Buckton");;
+    e1.setId(2);
+    e1.setSalary(100000);
+    e1.setAge(40);
+    e1.setAddress("Sydney");
+    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    byte[] data;
+    Encoder binaryEncoder = null;
+    binaryEncoder = EncoderFactory.get().binaryEncoder(stream, null);
+    DatumWriter<emp> writer = new SpecificDatumWriter<>(emp.class);
+    writer.write(e1, binaryEncoder);
+    binaryEncoder.flush();
+    data = stream.toByteArray();
+
+    ParsedObject obj = formatter.parse(data);
+    Assertions.assertEquals("Matthew Buckton", obj.get("name").toString());
   }
 }

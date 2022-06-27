@@ -15,8 +15,9 @@
  *     limitations under the License.
  */
 
-package io.mapsmessaging.schemas.formatters;
+package io.mapsmessaging.schemas.formatters.walker;
 
+import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.StructureWalker;
 import io.mapsmessaging.selector.IdentifierResolver;
 import java.util.ArrayList;

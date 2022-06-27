@@ -49,16 +49,19 @@ public class TestProtobuf {
 
   @Test
   public void testSimpleLoad() throws IOException {
-    Map<String, Object> props = new LinkedHashMap<>();
     ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
     byte[] tmp = new byte[10240];
     try (InputStream fis = getClass().getClassLoader().getResourceAsStream("Person.desc")) {
       int len = fis.read(tmp);
       baos.write(tmp, 0, len);
     }
+    Map<String, Object> props = new LinkedHashMap<>();
+    props.put("format", "ProtoBuf");
     props.put("descriptor", new String(Base64.getEncoder().encode(baos.toByteArray())));
     props.put("messageName", "Person");
-    SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(props);
+    Map<String, Object> schema = new LinkedHashMap<>();
+    schema.put("schema", props);
+    SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
     byte[] packed = packSample();
     IdentifierResolver resolver = formatter.parse(packed);

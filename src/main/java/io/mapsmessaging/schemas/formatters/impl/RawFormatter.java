@@ -14,17 +14,31 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
-package io.mapsmessaging.schemas.config;
 
-import java.util.Map;
+package io.mapsmessaging.schemas.formatters.impl;
 
-public class XmlSchemaConfig extends SimpleSchemaConfig {
+import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import java.io.IOException;
+import org.json.JSONObject;
 
-  public XmlSchemaConfig() {
-    super("XML");
+public class RawFormatter implements MessageFormatter {
+
+  public RawFormatter() {
   }
 
-  protected SchemaConfig getInstance(Map<String, Object> config) {
+  @Override
+  public String getName() {
+    return "RAW";
+  }
+
+  @Override
+  public JSONObject parseToJson(byte[] payload) {
+    return new JSONObject();
+  }
+
+  @Override
+  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     return this;
   }
 

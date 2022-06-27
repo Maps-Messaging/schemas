@@ -17,7 +17,10 @@
 
 package io.mapsmessaging.schemas.config;
 
+import io.mapsmessaging.schemas.config.impl.RawSchemaConfig;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -25,8 +28,13 @@ import org.junit.jupiter.api.Test;
 class TestRaw {
 
   @Test
-  void testRaw() {
-    SchemaConfig config = new RawSchemaConfig();
+  void testRaw() throws IOException {
+    Map<String, Object> props = new LinkedHashMap<>();
+    props.put("format", "RAW");
+    Map<String, Object> schema = new LinkedHashMap<>();
+    schema.put("schema", props);
+    SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
+
     Assertions.assertEquals("RAW", config.getFormat());
     String packed = config.pack();
     JSONObject jsonObject = new JSONObject(packed);

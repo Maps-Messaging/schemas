@@ -15,26 +15,28 @@
  *     limitations under the License.
  */
 
-package io.mapsmessaging.schemas.config;
+package io.mapsmessaging.schemas.config.impl;
 
+import io.mapsmessaging.schemas.config.SchemaConfig;
+import java.util.Base64;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
 
-public class CsvSchemaConfig extends SchemaConfig {
+public class AvroSchemaConfig extends SchemaConfig {
 
   @Getter
   @Setter
-  private String header;
+  private String schema;
 
-  public CsvSchemaConfig() {
-    super("CSV");
+  public AvroSchemaConfig() {
+    super("AVRO");
   }
 
-  protected CsvSchemaConfig(String header) {
-    super("CSV");
-    this.header = header;
+  protected AvroSchemaConfig(String config) {
+    super("AVRO");
+    this.schema = new String(Base64.getDecoder().decode(config));
   }
 
 
@@ -42,11 +44,11 @@ public class CsvSchemaConfig extends SchemaConfig {
   protected JSONObject packData() {
     JSONObject data = new JSONObject();
     packData(data);
-    data.put("header", header);
+    data.put("schema", new String(Base64.getEncoder().encode(schema.getBytes())));
     return data;
   }
 
   protected SchemaConfig getInstance(Map<String, Object> config) {
-    return new CsvSchemaConfig(config.get("header").toString());
+    return new AvroSchemaConfig(config.get("schema").toString());
   }
 }

@@ -18,10 +18,13 @@
 package io.mapsmessaging.schemas.config;
 
 
+import io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -32,11 +35,16 @@ class TestProtobuf {
   @Test
   void protobufTest() throws IOException {
     byte[] descriptor = getDescriptor();
-    ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
-    config.setDescriptor(descriptor);
-    config.setMessageName("Person");
+    Map<String, Object> props = new LinkedHashMap<>();
+    props.put("format", "ProtoBuf");
+    props.put("descriptor", new String(Base64.getEncoder().encode(descriptor)));
+    props.put("messageName", "Person");
+    Map<String, Object> schema = new LinkedHashMap<>();
+    schema.put("schema", props);
+    SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
+
     Assertions.assertEquals("ProtoBuf", config.getFormat());
-    Assertions.assertEquals(descriptor, config.getDescriptor());
+    Assertions.assertArrayEquals(descriptor, ((ProtoBufSchemaConfig)config).getDescriptor());
 
     JSONObject jsonObject = new JSONObject(config.pack());
     Assertions.assertEquals("ProtoBuf", jsonObject.getJSONObject("schema").get("format"));
@@ -49,9 +57,13 @@ class TestProtobuf {
   void testSchemaReload() throws IOException {
     byte[] descriptor = getDescriptor();
 
-    ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
-    config.setDescriptor(descriptor);
-    config.setMessageName("Person");
+    Map<String, Object> props = new LinkedHashMap<>();
+    props.put("format", "ProtoBuf");
+    props.put("descriptor", new String(Base64.getEncoder().encode(descriptor)));
+    props.put("messageName", "Person");
+    Map<String, Object> schema = new LinkedHashMap<>();
+    schema.put("schema", props);
+    SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
 
     Assertions.assertEquals("ProtoBuf", config.getFormat());
     String packed = config.pack();

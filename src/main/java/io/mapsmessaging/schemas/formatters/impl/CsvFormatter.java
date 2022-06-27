@@ -15,12 +15,14 @@
  *     limitations under the License.
  */
 
-package io.mapsmessaging.schemas.formatters;
+package io.mapsmessaging.schemas.formatters.impl;
 
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
-import io.mapsmessaging.schemas.config.CsvSchemaConfig;
+import io.mapsmessaging.schemas.config.impl.CsvSchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

@@ -14,31 +14,18 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
-
-package io.mapsmessaging.schemas.formatters;
+package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import java.io.IOException;
-import org.json.JSONObject;
+import java.util.Map;
 
-public class RawFormatter implements MessageFormatter {
+public class JsonSchemaConfig extends SimpleSchemaConfig {
 
-  public RawFormatter() {
+  public JsonSchemaConfig() {
+    super("JSON");
   }
 
-  @Override
-  public String getName() {
-    return "RAW";
-  }
-
-  @Override
-  public JSONObject parseToJson(byte[] payload) {
-    return new JSONObject();
-  }
-
-  @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  protected SchemaConfig getInstance(Map<String, Object> config) {
     return this;
   }
-
 }

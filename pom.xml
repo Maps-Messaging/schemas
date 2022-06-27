@@ -284,6 +284,14 @@
       <version>3.21.1</version>
     </dependency>
 
+    <!-- https://mvnrepository.com/artifact/org.apache.avro/avro -->
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro</artifactId>
+      <version>1.11.0</version>
+    </dependency>
+
+
     <!-- https://mvnrepository.com/artifact/org.apache.qpid/proton-j -->
     <dependency>
       <groupId>org.apache.qpid</groupId>

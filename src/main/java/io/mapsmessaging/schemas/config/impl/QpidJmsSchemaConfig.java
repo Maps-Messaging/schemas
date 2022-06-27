@@ -15,8 +15,9 @@
  *     limitations under the License.
  */
 
-package io.mapsmessaging.schemas.config;
+package io.mapsmessaging.schemas.config.impl;
 
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.util.Map;
 
 public class QpidJmsSchemaConfig extends SimpleSchemaConfig {

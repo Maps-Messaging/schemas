@@ -15,7 +15,7 @@
  *     limitations under the License.
  */
 
-package io.mapsmessaging.schemas.formatters;
+package io.mapsmessaging.schemas.formatters.impl;
 
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
@@ -24,10 +24,12 @@ import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FileDescriptor;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
-import io.mapsmessaging.schemas.config.ProtoBufSchemaConfig;
+import io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParsedObject;
+import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
-import io.mapsmessaging.selector.IdentifierResolver;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;

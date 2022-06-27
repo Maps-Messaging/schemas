@@ -15,9 +15,12 @@
  *     limitations under the License.
  */
 
-package io.mapsmessaging.schemas.formatters;
+package io.mapsmessaging.schemas.formatters.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParsedObject;
+import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

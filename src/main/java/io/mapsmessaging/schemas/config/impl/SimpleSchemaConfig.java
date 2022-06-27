@@ -14,18 +14,21 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
-package io.mapsmessaging.schemas.config;
+package io.mapsmessaging.schemas.config.impl;
 
-import java.util.Map;
+import io.mapsmessaging.schemas.config.SchemaConfig;
+import org.json.JSONObject;
 
-public class RawSchemaConfig extends SimpleSchemaConfig {
+abstract class SimpleSchemaConfig extends SchemaConfig {
 
-  public RawSchemaConfig() {
-    super("RAW");
+  public SimpleSchemaConfig(String format) {
+    super(format);
   }
 
-  protected SchemaConfig getInstance(Map<String, Object> config) {
-    return this;
+  @Override
+  protected JSONObject packData() {
+    JSONObject data = new JSONObject();
+    packData(data);
+    return data;
   }
-
 }

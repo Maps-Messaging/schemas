@@ -18,6 +18,7 @@
 package io.mapsmessaging.schemas.formatters;
 
 
+import io.mapsmessaging.schemas.formatters.impl.JsonFormatter;
 import io.mapsmessaging.selector.IdentifierResolver;
 import java.io.IOException;
 import org.junit.jupiter.api.Assertions;

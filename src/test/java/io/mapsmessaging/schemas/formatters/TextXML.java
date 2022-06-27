@@ -16,8 +16,12 @@
  */
 package io.mapsmessaging.schemas.formatters;
 
+import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.config.SchemaConfigFactory;
 import io.mapsmessaging.selector.IdentifierResolver;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +29,12 @@ public class TextXML {
 
   @Test
   public void testXMLFiltering() throws IOException{
-    XmlFormatter format = new XmlFormatter();
+    Map<String, Object> props = new LinkedHashMap<>();
+    props.put("format", "XML");
+    Map<String, Object> schema = new LinkedHashMap<>();
+    schema.put("schema", props);
+    SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
+    MessageFormatter format = MessageFormatterFactory.getInstance().getFormatter(config);
     IdentifierResolver resolver = format.parse(XMLString.getBytes());
     Assertions.assertEquals("cardigan.jpg", resolver.get("catalog.product.product_image"));
     Assertions.assertEquals("Medium", resolver.get("catalog.product.catalog_item[0].size[0].description"));

@@ -14,9 +14,10 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 #
-io.mapsmessaging.schemas.formatters.CsvFormatter
-io.mapsmessaging.schemas.formatters.XmlFormatter
-io.mapsmessaging.schemas.formatters.JsonFormatter
-io.mapsmessaging.schemas.formatters.ProtoBufFormatter
-io.mapsmessaging.schemas.formatters.RawFormatter
-io.mapsmessaging.schemas.formatters.QpidJmsFormatter
+io.mapsmessaging.schemas.formatters.impl.AvroFormatter
+io.mapsmessaging.schemas.formatters.impl.CsvFormatter
+io.mapsmessaging.schemas.formatters.impl.XmlFormatter
+io.mapsmessaging.schemas.formatters.impl.JsonFormatter
+io.mapsmessaging.schemas.formatters.impl.ProtoBufFormatter
+io.mapsmessaging.schemas.formatters.impl.RawFormatter
+io.mapsmessaging.schemas.formatters.impl.QpidJmsFormatter

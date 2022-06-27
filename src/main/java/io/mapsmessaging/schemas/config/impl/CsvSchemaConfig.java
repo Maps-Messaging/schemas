@@ -14,32 +14,28 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
-package io.mapsmessaging.schemas.config;
 
-import java.util.Base64;
+package io.mapsmessaging.schemas.config.impl;
+
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
 
-public class ProtoBufSchemaConfig extends SchemaConfig {
+public class CsvSchemaConfig extends SchemaConfig {
 
   @Getter
   @Setter
-  private byte[] descriptor;
+  private String header;
 
-  @Getter
-  @Setter
-  private String messageName;
-
-  public ProtoBufSchemaConfig() {
-    super("ProtoBuf");
+  public CsvSchemaConfig() {
+    super("CSV");
   }
 
-  protected ProtoBufSchemaConfig(String name, String base64EncodedDescriptor) {
-    super("ProtoBuf");
-    messageName = name;
-    descriptor = Base64.getDecoder().decode(base64EncodedDescriptor);
+  protected CsvSchemaConfig(String header) {
+    super("CSV");
+    this.header = header;
   }
 
 
@@ -47,13 +43,11 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
   protected JSONObject packData() {
     JSONObject data = new JSONObject();
     packData(data);
-    data.put("descriptor", new String(Base64.getEncoder().encode(descriptor)));
-    data.put("messageName", messageName);
+    data.put("header", header);
     return data;
   }
 
   protected SchemaConfig getInstance(Map<String, Object> config) {
-    return new ProtoBufSchemaConfig(config.get("messageName").toString(), config.get("descriptor").toString());
+    return new CsvSchemaConfig(config.get("header").toString());
   }
-
 }

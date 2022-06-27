@@ -17,41 +17,51 @@
 
 package io.mapsmessaging.schemas.config;
 
-import io.mapsmessaging.schemas.config.impl.QpidJmsSchemaConfig;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class TestQpidJms {
+public class TestAvro {
+
 
   @Test
-  void testJsonSchemaConfig() throws IOException {
-
+  void testAvro() throws IOException {
     Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "QPID-JMS");
+    props.put("format", "AVRO");
+    props.put("schema", new String(Base64.getEncoder().encode(AVRO_SCHEMA.getBytes())));
     Map<String, Object> schema = new LinkedHashMap<>();
     schema.put("schema", props);
     SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
-    Assertions.assertEquals("QPID-JMS", config.getFormat());
-    String packed = config.pack();
-    JSONObject jsonObject = new JSONObject(packed);
-    Assertions.assertEquals("QPID-JMS", jsonObject.getJSONObject("schema").get("format"));
+    Assertions.assertEquals("AVRO", config.getFormat());
   }
 
   @Test
   void testSchemaReload() throws IOException {
     Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "QPID-JMS");
+    props.put("format", "AVRO");
+    props.put("schema", new String(Base64.getEncoder().encode(AVRO_SCHEMA.getBytes())));
     Map<String, Object> schema = new LinkedHashMap<>();
     schema.put("schema", props);
     SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
-    Assertions.assertEquals("QPID-JMS", config.getFormat());
+    Assertions.assertEquals("AVRO", config.getFormat());
     String packed = config.pack();
     SchemaConfig parsed = SchemaConfigFactory.getInstance().constructConfig(packed);
-    Assertions.assertEquals("QPID-JMS", parsed.getFormat());
+    Assertions.assertEquals("AVRO", parsed.getFormat());
   }
+
+  public static final String AVRO_SCHEMA = "{\n"
+      + "   \"namespace\": \"tutorialspoint.com\",\n"
+      + "   \"type\": \"record\",\n"
+      + "   \"name\": \"emp\",\n"
+      + "   \"fields\": [\n"
+      + "      {\"name\": \"name\", \"type\": \"string\"},\n"
+      + "      {\"name\": \"id\", \"type\": \"int\"},\n"
+      + "      {\"name\": \"salary\", \"type\": \"int\"},\n"
+      + "      {\"name\": \"age\", \"type\": \"int\"},\n"
+      + "      {\"name\": \"address\", \"type\": \"string\"}\n"
+      + "   ]\n"
+      + "}";
 }

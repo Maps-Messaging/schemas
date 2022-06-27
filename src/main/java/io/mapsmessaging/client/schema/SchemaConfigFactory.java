@@ -36,15 +36,16 @@ public class SchemaConfigFactory {
 
   private final ServiceLoader<SchemaConfig> schemaConfigServiceLoader;
 
-  public SchemaConfig constructConfig(Properties properties) throws IOException {
-    if(properties.contains("schema")){
-      Properties formatProperties = (Properties) properties.get("schema");
-      String formatName = formatProperties.getProperty("format", "RAW");
+  public SchemaConfig constructConfig(Map<String, Object> properties) throws IOException {
+    if(properties.containsKey("schema")){
+      Map<String, Object> formatMap = (Map) properties.get("schema");
+      Object formatName = formatMap.get("format");
+      if(formatName == null){
+        formatName = "RAW";
+      }
       for (SchemaConfig config : schemaConfigServiceLoader) {
-        if (config.getFormat().equalsIgnoreCase(formatName)) {
-          Map<String, Object> map = new LinkedHashMap<>();
-          properties.forEach((key, value) -> map.put(key.toString(), value));
-          return config.getInstance(map);
+        if (config.getFormat().equalsIgnoreCase(formatName.toString())) {
+          return config.getInstance(formatMap);
         }
       }
     }

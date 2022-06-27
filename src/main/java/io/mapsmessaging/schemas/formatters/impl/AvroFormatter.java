@@ -22,31 +22,42 @@ import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.avro.util.Utf8;
 import org.json.JSONObject;
 
 public class AvroFormatter implements MessageFormatter {
 
   private final DatumReader<GenericRecord> datumReader;
+  private final Schema schema;
   private BinaryDecoder decoder;
+
 
   public AvroFormatter() {
     datumReader = null;
+    schema = null;
     decoder = null;
   }
 
-  AvroFormatter(String schemaDefinition) throws IOException {
-    Schema schema = new Schema.Parser().parse(schemaDefinition);
+  AvroFormatter(String schemaDefinition) {
+    schema = new Schema.Parser().parse(schemaDefinition);
     datumReader = new GenericDatumReader<>(schema);
+
   }
 
   public ParsedObject parse(byte[] payload) throws IOException {
@@ -57,7 +68,14 @@ public class AvroFormatter implements MessageFormatter {
 
   @Override
   public JSONObject parseToJson(byte[] payload) throws IOException {
-    return (JSONObject) parse(payload);
+    GenericRecord genericRecord = (GenericRecord) parse(payload).getReferenced();
+    ByteArrayOutputStream stream = new ByteArrayOutputStream(1024);
+    Encoder binaryEncoder = EncoderFactory.get().jsonEncoder(schema, stream);
+    GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
+    writer.write(genericRecord, binaryEncoder);
+    binaryEncoder.flush();
+    byte[] data = stream.toByteArray();
+    return new JSONObject(new String(data));
   }
 
   public byte[] pack(Object object) throws IOException {
@@ -87,7 +105,7 @@ public class AvroFormatter implements MessageFormatter {
   }
 
 
-  public class AvroResolver implements ParsedObject {
+  public static class AvroResolver implements ParsedObject {
 
     private final GenericRecord genericRecord;
 
@@ -120,6 +138,9 @@ public class AvroFormatter implements MessageFormatter {
         }
         if(val instanceof Map){
           return new MapResolver((Map)val);
+        }
+        if(val instanceof Utf8){
+          return val.toString();
         }
         return val;
       }

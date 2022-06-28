@@ -17,9 +17,11 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import java.io.IOException;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
+import org.json.JSONObject;
 
 public class XmlSchemaConfig extends SimpleSchemaConfig {
 
@@ -41,6 +43,16 @@ public class XmlSchemaConfig extends SimpleSchemaConfig {
 
   protected SchemaConfig getInstance(Map<String, Object> config) {
     return this;
+  }
+
+  @Override
+  protected JSONObject packData() {
+    JSONObject data = new JSONObject();
+    packData(data);
+    data.put("namespaceAware", namespaceAware);
+    data.put("validating", validating);
+    data.put("coalescing", coalescing);
+    return data;
   }
 
 }

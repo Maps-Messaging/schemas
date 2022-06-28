@@ -17,6 +17,7 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import java.io.IOException;
 import org.json.JSONObject;
 
 abstract class SimpleSchemaConfig extends SchemaConfig {
@@ -26,7 +27,7 @@ abstract class SimpleSchemaConfig extends SchemaConfig {
   }
 
   @Override
-  protected JSONObject packData() {
+  protected JSONObject packData() throws IOException {
     JSONObject data = new JSONObject();
     packData(data);
     return data;

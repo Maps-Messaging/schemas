@@ -18,6 +18,7 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import java.io.IOException;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,7 +41,11 @@ public class CsvSchemaConfig extends SchemaConfig {
 
 
   @Override
-  protected JSONObject packData() {
+  protected JSONObject packData() throws IOException {
+    if(header == null || header.length() == 0){
+      throw new IOException("No header specified");
+    }
+
     JSONObject data = new JSONObject();
     packData(data);
     data.put("header", header);

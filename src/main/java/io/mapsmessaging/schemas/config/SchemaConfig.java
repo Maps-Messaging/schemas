@@ -16,6 +16,7 @@
  */
 package io.mapsmessaging.schemas.config;
 
+import java.io.IOException;
 import java.util.Map;
 import lombok.Getter;
 import org.json.JSONObject;
@@ -29,7 +30,7 @@ public abstract class SchemaConfig {
     this.format = format;
   }
 
-  public String pack() {
+  public String pack() throws IOException {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put("schema", packData());
     return jsonObject.toString(2);
@@ -39,7 +40,7 @@ public abstract class SchemaConfig {
     jsonObject.put("format", format);
   }
 
-  protected abstract JSONObject packData();
+  protected abstract JSONObject packData() throws IOException;
 
   protected abstract SchemaConfig getInstance(Map<String, Object> config);
 

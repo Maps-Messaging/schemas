@@ -17,6 +17,7 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import java.io.IOException;
 import java.util.Base64;
 import java.util.Map;
 import lombok.Getter;
@@ -45,7 +46,14 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
 
 
   @Override
-  protected JSONObject packData() {
+  protected JSONObject packData() throws IOException {
+    if(descriptor == null || descriptor.length == 0){
+      throw new IOException("No descriptor specified");
+    }
+    if(messageName == null || messageName.length() == 0){
+      throw new IOException("No message name specified");
+    }
+
     JSONObject data = new JSONObject();
     packData(data);
     data.put("descriptor", new String(Base64.getEncoder().encode(descriptor)));

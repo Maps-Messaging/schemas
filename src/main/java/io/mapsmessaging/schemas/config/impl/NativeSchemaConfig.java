@@ -9,7 +9,7 @@ import org.json.JSONObject;
 
 public class NativeSchemaConfig extends SimpleSchemaConfig {
 
-  public enum TYPE {STRING, NUMERIC_STRING, INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, FLOAT, DOUBLE }
+  public enum TYPE {STRING, NUMERIC_STRING, INT8, INT16, INT32, INT64, FLOAT, DOUBLE }
 
   @Getter
   @Setter
@@ -57,18 +57,6 @@ public class NativeSchemaConfig extends SimpleSchemaConfig {
         break;
       case "INT64":
         typeLoad  = TYPE.INT64;
-        break;
-      case "UINT8":
-        typeLoad  = TYPE.UINT8;
-        break;
-      case "UINT16":
-        typeLoad  = TYPE.UINT16;
-        break;
-      case "UINT32":
-        typeLoad  = TYPE.UINT32;
-        break;
-      case "UINT64":
-        typeLoad  = TYPE.UINT64;
         break;
       case "FLOAT":
         typeLoad  = TYPE.FLOAT;

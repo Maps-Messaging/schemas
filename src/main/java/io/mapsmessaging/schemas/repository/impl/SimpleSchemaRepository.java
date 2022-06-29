@@ -22,9 +22,15 @@ public class SimpleSchemaRepository implements SchemaRepository {
 
   @Override
   public void addSchema(String context, SchemaConfig config) {
+    SchemaConfig existing = mapByUUID.get(config.getUniqueId());
+    if(existing != null){
+      config = existing;
+    }
+    else{
+      mapByUUID.put(config.getUniqueId(), config);
+    }
     List<SchemaConfig> list = mapByContext.computeIfAbsent(context, k -> new ArrayList<>());
     list.add(config);
-    mapByUUID.put(config.getUniqueId(), config);
   }
 
   @Override

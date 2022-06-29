@@ -17,8 +17,10 @@
 
 package io.mapsmessaging.schemas.config;
 
+import io.mapsmessaging.schemas.config.impl.QpidJmsSchemaConfig;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Assertions;
 
 public class TestQpidJms extends GeneralBaseTest {
 
@@ -27,4 +29,10 @@ public class TestQpidJms extends GeneralBaseTest {
     props.put("format", "QPID-JMS");
     return props;
   }
+
+  @Override
+  void validate(SchemaConfig schemaConfig) {
+    Assertions.assertTrue(schemaConfig instanceof QpidJmsSchemaConfig);
+  }
+
 }

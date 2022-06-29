@@ -18,7 +18,6 @@
 package io.mapsmessaging.schemas.formatters.walker;
 
 import io.mapsmessaging.schemas.formatters.ParsedObject;
-import io.mapsmessaging.schemas.formatters.walker.StructureWalker;
 import io.mapsmessaging.selector.IdentifierResolver;
 import java.util.ArrayList;
 import java.util.List;

@@ -17,13 +17,17 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import java.io.IOException;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
 
 public class XmlSchemaConfig extends SimpleSchemaConfig {
+
+  private static final String NAME = "XML";
+  private static final String NAMESPACE_AWARE = "namespaceAware";
+  private static final String VALIDATING = "validating";
+  private static final String COALESCING = "coalescing";
 
   @Getter
   @Setter
@@ -38,20 +42,28 @@ public class XmlSchemaConfig extends SimpleSchemaConfig {
   private boolean coalescing = false;
 
   public XmlSchemaConfig() {
-    super("XML");
+    super(NAME);
   }
 
+  private XmlSchemaConfig(Map<String, Object> config) {
+    super(NAME, config);
+    namespaceAware = (Boolean) config.getOrDefault(NAMESPACE_AWARE, false);
+    validating = (Boolean) config.getOrDefault(VALIDATING, false);
+    coalescing = (Boolean) config.getOrDefault(COALESCING, false);
+  }
+
+
   protected SchemaConfig getInstance(Map<String, Object> config) {
-    return this;
+    return new XmlSchemaConfig(config);
   }
 
   @Override
   protected JSONObject packData() {
     JSONObject data = new JSONObject();
     packData(data);
-    data.put("namespaceAware", namespaceAware);
-    data.put("validating", validating);
-    data.put("coalescing", coalescing);
+    data.put(NAMESPACE_AWARE, namespaceAware);
+    data.put(VALIDATING, validating);
+    data.put(COALESCING, coalescing);
     return data;
   }
 

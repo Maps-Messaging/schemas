@@ -17,12 +17,18 @@
 
 package io.mapsmessaging.schemas.config;
 
+import static io.mapsmessaging.schemas.config.Constants.DEFAULT_FORMAT;
+import static io.mapsmessaging.schemas.config.Constants.FORMAT;
+import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.ServiceLoader;
 import org.json.JSONObject;
 
 public class SchemaConfigFactory {
+
+
 
   private static final SchemaConfigFactory instance = new SchemaConfigFactory();
 
@@ -33,11 +39,11 @@ public class SchemaConfigFactory {
   private final ServiceLoader<SchemaConfig> schemaConfigServiceLoader;
 
   public SchemaConfig constructConfig(Map<String, Object> properties) throws IOException {
-    if(properties.containsKey("schema")){
-      Map<String, Object> formatMap = (Map) properties.get("schema");
-      Object formatName = formatMap.get("format");
+    if(properties.containsKey(SCHEMA)){
+      Map<String, Object> formatMap = (Map) properties.get(SCHEMA);
+      Object formatName = formatMap.get(FORMAT);
       if(formatName == null){
-        formatName = "RAW";
+        formatName = DEFAULT_FORMAT;
       }
       for (SchemaConfig config : schemaConfigServiceLoader) {
         if (config.getFormat().equalsIgnoreCase(formatName.toString())) {
@@ -54,16 +60,16 @@ public class SchemaConfigFactory {
 
   public SchemaConfig constructConfig(String payload) throws IOException {
     JSONObject schemaJson = new JSONObject(payload);
-    if (!schemaJson.has("schema")) {
+    if (!schemaJson.has(SCHEMA)) {
       throw new IOException("Not a valid schema config");
     }
 
-    schemaJson = schemaJson.getJSONObject("schema");
-    if (!schemaJson.has("format")) {
+    schemaJson = schemaJson.getJSONObject(SCHEMA);
+    if (!schemaJson.has(FORMAT)) {
       throw new IOException("Not a valid schema config");
     }
 
-    String formatName = schemaJson.getString("format");
+    String formatName = schemaJson.getString(FORMAT);
     for (SchemaConfig config : schemaConfigServiceLoader) {
       if (config.getFormat().equalsIgnoreCase(formatName)) {
         return config.getInstance(schemaJson.toMap());

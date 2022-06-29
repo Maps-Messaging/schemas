@@ -17,22 +17,31 @@
 
 package io.mapsmessaging.schemas.config;
 
+import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Assertions;
 
 public class TestAvro extends GeneralBaseTest {
 
   Map<String, Object> getProperties(){
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "AVRO");
-    props.put("schema", new String(Base64.getEncoder().encode(getSchema())));
+    props.put("schema", new String(Base64.getEncoder().encode(getSchema().getBytes())));
     return props;
   }
 
-  public static byte[] getSchema()  {
+  @Override
+  void validate(SchemaConfig schemaConfig) {
+    Assertions.assertTrue(schemaConfig instanceof AvroSchemaConfig);
+    AvroSchemaConfig config = (AvroSchemaConfig) schemaConfig;
+    Assertions.assertEquals(getSchema(), config.getSchema());
+  }
+
+  public static String getSchema()  {
     ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
     byte[] tmp = new byte[10240];
     try (InputStream fis = TestProtobuf.class.getClassLoader().getResourceAsStream("avro/Person.avsc")) {
@@ -40,6 +49,6 @@ public class TestAvro extends GeneralBaseTest {
       baos.write(tmp, 0, len);
     }
     catch (Exception ex){}
-    return baos.toByteArray();
+    return new String( baos.toByteArray());
   }
 }

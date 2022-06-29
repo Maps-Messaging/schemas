@@ -26,17 +26,20 @@ import org.json.JSONObject;
 
 public class CsvSchemaConfig extends SchemaConfig {
 
+  private static final String NAME = "CSV";
+  private static final String HEADER = "header";
+
   @Getter
   @Setter
   private String header;
 
   public CsvSchemaConfig() {
-    super("CSV");
+    super(NAME);
   }
 
-  protected CsvSchemaConfig(String header) {
-    super("CSV");
-    this.header = header;
+  protected CsvSchemaConfig(Map<String, Object> config) {
+    super(NAME, config);
+    this.header = config.getOrDefault(HEADER, "").toString();
   }
 
 
@@ -45,14 +48,13 @@ public class CsvSchemaConfig extends SchemaConfig {
     if(header == null || header.length() == 0){
       throw new IOException("No header specified");
     }
-
     JSONObject data = new JSONObject();
     packData(data);
-    data.put("header", header);
+    data.put(HEADER, header);
     return data;
   }
 
   protected SchemaConfig getInstance(Map<String, Object> config) {
-    return new CsvSchemaConfig(config.get("header").toString());
+    return new CsvSchemaConfig(config);
   }
 }

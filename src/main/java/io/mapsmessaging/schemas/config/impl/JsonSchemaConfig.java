@@ -21,11 +21,17 @@ import java.util.Map;
 
 public class JsonSchemaConfig extends SimpleSchemaConfig {
 
+  private static final String NAME = "JSON";
+
   public JsonSchemaConfig() {
-    super("JSON");
+    super(NAME);
+  }
+
+  private JsonSchemaConfig(Map<String, Object> config) {
+    super(NAME, config);
   }
 
   protected SchemaConfig getInstance(Map<String, Object> config) {
-    return this;
+    return new JsonSchemaConfig(config);
   }
 }

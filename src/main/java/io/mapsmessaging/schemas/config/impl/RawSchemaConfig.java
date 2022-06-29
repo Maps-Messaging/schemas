@@ -21,12 +21,18 @@ import java.util.Map;
 
 public class RawSchemaConfig extends SimpleSchemaConfig {
 
+  private static final String NAME = "RAW";
+
   public RawSchemaConfig() {
-    super("RAW");
+    super(NAME);
+  }
+
+  protected RawSchemaConfig(Map<String, Object> config) {
+    super(NAME, config);
   }
 
   protected SchemaConfig getInstance(Map<String, Object> config) {
-    return this;
+    return new RawSchemaConfig(config);
   }
 
 }

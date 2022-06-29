@@ -17,8 +17,10 @@
 
 package io.mapsmessaging.schemas.config;
 
+import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Assertions;
 
 class TestJson extends GeneralBaseTest {
 
@@ -27,4 +29,10 @@ class TestJson extends GeneralBaseTest {
     props.put("format", "JSON");
     return props;
   }
+
+  @Override
+  void validate(SchemaConfig schemaConfig) {
+    Assertions.assertTrue(schemaConfig instanceof JsonSchemaConfig);
+  }
+
 }

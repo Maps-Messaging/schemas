@@ -17,8 +17,10 @@
 
 package io.mapsmessaging.schemas.config;
 
+import io.mapsmessaging.schemas.config.impl.CsvSchemaConfig;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Assertions;
 
 class TestCsv extends GeneralBaseTest {
 
@@ -29,4 +31,10 @@ class TestCsv extends GeneralBaseTest {
     return props;
   }
 
+  @Override
+  void validate(SchemaConfig schemaConfig) {
+    Assertions.assertTrue(schemaConfig instanceof CsvSchemaConfig);
+    CsvSchemaConfig config = (CsvSchemaConfig) schemaConfig;
+    Assertions.assertEquals("key1, val1, v1l2", config.getHeader());
+  }
 }

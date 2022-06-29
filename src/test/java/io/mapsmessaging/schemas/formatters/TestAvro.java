@@ -52,7 +52,7 @@ public class TestAvro {
   SchemaConfig buildConfig() throws IOException {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "AVRO");
-    props.put("schema", new String(Base64.getEncoder().encode(getSchema())));
+    props.put("schema", new String(Base64.getEncoder().encode(getSchema().getBytes())));
     Map<String, Object> schema = new LinkedHashMap<>();
     schema.put("schema", props);
     return SchemaConfigFactory.getInstance().constructConfig(schema);

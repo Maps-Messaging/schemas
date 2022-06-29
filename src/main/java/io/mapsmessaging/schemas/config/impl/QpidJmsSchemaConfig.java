@@ -22,11 +22,17 @@ import java.util.Map;
 
 public class QpidJmsSchemaConfig extends SimpleSchemaConfig {
 
+  private static final String NAME = "QPID-JMS";
+
   public QpidJmsSchemaConfig() {
-    super("QPID-JMS");
+    super(NAME);
+  }
+
+  protected QpidJmsSchemaConfig(Map<String, Object> config) {
+    super(NAME, config);
   }
 
   protected SchemaConfig getInstance(Map<String, Object> config) {
-    return this;
+    return new QpidJmsSchemaConfig(config);
   }
 }

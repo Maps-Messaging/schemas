@@ -18,12 +18,16 @@ package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.io.IOException;
+import java.util.Map;
 import org.json.JSONObject;
 
 abstract class SimpleSchemaConfig extends SchemaConfig {
 
-  public SimpleSchemaConfig(String format) {
+  protected SimpleSchemaConfig(String format) {
     super(format);
+  }
+  protected SimpleSchemaConfig(String format, Map<String, Object> config) {
+    super(format, config);
   }
 
   @Override

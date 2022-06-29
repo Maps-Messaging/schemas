@@ -16,9 +16,17 @@
  */
 package io.mapsmessaging.schemas.config;
 
+import static io.mapsmessaging.schemas.config.Constants.EXPIRES_AFTER;
+import static io.mapsmessaging.schemas.config.Constants.FORMAT;
+import static io.mapsmessaging.schemas.config.Constants.NOT_BEFORE;
+import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
+
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.UUID;
 import lombok.Getter;
+import lombok.Setter;
 import org.json.JSONObject;
 
 public abstract class SchemaConfig {
@@ -26,18 +34,46 @@ public abstract class SchemaConfig {
   @Getter
   private final String format;
 
-  public SchemaConfig(String format) {
+  @Getter
+  @Setter
+  private UUID uniqueId;
+
+  @Getter
+  @Setter
+  private LocalDateTime expiresAfter;
+
+  @Getter
+  @Setter
+  private LocalDateTime notBefore;
+
+  protected SchemaConfig(String format) {
     this.format = format;
+  }
+
+  protected SchemaConfig(String format, Map<String, Object> config){
+    this.format = format;
+    uniqueId = UUID.fromString(config.get(io.mapsmessaging.schemas.config.Constants.UUID).toString());
+    if(config.containsKey(EXPIRES_AFTER)){
+      expiresAfter = LocalDateTime.parse(config.get(EXPIRES_AFTER).toString());
+    }
+    if(config.containsKey(NOT_BEFORE)){
+      notBefore = LocalDateTime.parse(config.get(NOT_BEFORE).toString());
+    }
   }
 
   public String pack() throws IOException {
     JSONObject jsonObject = new JSONObject();
-    jsonObject.put("schema", packData());
+    jsonObject.put(SCHEMA, packData());
     return jsonObject.toString(2);
   }
 
   protected void packData(JSONObject jsonObject) {
-    jsonObject.put("format", format);
+    jsonObject.put(FORMAT, format);
+    if(expiresAfter != null)jsonObject.put(EXPIRES_AFTER, expiresAfter.toString() );
+    if(notBefore != null)jsonObject.put(NOT_BEFORE, notBefore.toString() );
+    if(notBefore != null)jsonObject.put(NOT_BEFORE, notBefore.toString() );
+    jsonObject.put(io.mapsmessaging.schemas.config.Constants.UUID, uniqueId.toString());
+
   }
 
   protected abstract JSONObject packData() throws IOException;

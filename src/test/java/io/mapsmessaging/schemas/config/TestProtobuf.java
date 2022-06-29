@@ -18,11 +18,13 @@
 package io.mapsmessaging.schemas.config;
 
 
+import io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Assertions;
 
 class TestProtobuf extends GeneralBaseTest {
 
@@ -34,6 +36,15 @@ class TestProtobuf extends GeneralBaseTest {
     return props;
   }
 
+  @Override
+  void validate(SchemaConfig schemaConfig) {
+    Assertions.assertTrue(schemaConfig instanceof ProtoBufSchemaConfig);
+    ProtoBufSchemaConfig config = (ProtoBufSchemaConfig) schemaConfig;
+    Assertions.assertArrayEquals(getDescriptor(), config.getDescriptor());
+    Assertions.assertEquals("Person", config.getMessageName());
+  }
+
+
   private byte[] getDescriptor()  {
     ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
     byte[] tmp = new byte[10240];
@@ -44,4 +55,6 @@ class TestProtobuf extends GeneralBaseTest {
     catch (Exception ex){}
     return baos.toByteArray();
   }
+
+
 }

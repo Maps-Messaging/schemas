@@ -17,6 +17,8 @@
 
 package io.mapsmessaging.schemas.config.impl;
 
+import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
+
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.io.IOException;
 import java.util.Base64;
@@ -27,17 +29,19 @@ import org.json.JSONObject;
 
 public class AvroSchemaConfig extends SchemaConfig {
 
+  public static String NAME = "AVRO";
+
   @Getter
   @Setter
   private String schema;
 
   public AvroSchemaConfig() {
-    super("AVRO");
+    super(NAME);
   }
 
-  protected AvroSchemaConfig(String config) {
-    super("AVRO");
-    this.schema = new String(Base64.getDecoder().decode(config));
+  protected AvroSchemaConfig(Map<String, Object> config) {
+    super(NAME, config);
+    this.schema = new String(Base64.getDecoder().decode(config.get(SCHEMA).toString()));
   }
 
 
@@ -48,11 +52,11 @@ public class AvroSchemaConfig extends SchemaConfig {
     }
     JSONObject data = new JSONObject();
     packData(data);
-    data.put("schema", new String(Base64.getEncoder().encode(schema.getBytes())));
+    data.put(SCHEMA, new String(Base64.getEncoder().encode(schema.getBytes())));
     return data;
   }
 
   protected SchemaConfig getInstance(Map<String, Object> config) {
-    return new AvroSchemaConfig(config.get("schema").toString());
+    return new AvroSchemaConfig(config);
   }
 }

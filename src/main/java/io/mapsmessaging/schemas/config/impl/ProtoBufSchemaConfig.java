@@ -26,6 +26,10 @@ import org.json.JSONObject;
 
 public class ProtoBufSchemaConfig extends SchemaConfig {
 
+  private static final String NAME = "ProtoBuf";
+  private static final String DESCRIPTOR = "descriptor";
+  private static final String MESSAGE_NAME = "messageName";
+
   @Getter
   @Setter
   private byte[] descriptor;
@@ -35,13 +39,13 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
   private String messageName;
 
   public ProtoBufSchemaConfig() {
-    super("ProtoBuf");
+    super(NAME);
   }
 
-  protected ProtoBufSchemaConfig(String name, String base64EncodedDescriptor) {
-    super("ProtoBuf");
-    messageName = name;
-    descriptor = Base64.getDecoder().decode(base64EncodedDescriptor);
+  protected ProtoBufSchemaConfig(Map<String, Object> config) {
+    super(NAME, config);
+    messageName = config.getOrDefault(MESSAGE_NAME, "").toString();
+    descriptor = Base64.getDecoder().decode(config.getOrDefault(DESCRIPTOR, "").toString());
   }
 
 
@@ -56,13 +60,13 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
 
     JSONObject data = new JSONObject();
     packData(data);
-    data.put("descriptor", new String(Base64.getEncoder().encode(descriptor)));
-    data.put("messageName", messageName);
+    data.put(DESCRIPTOR, new String(Base64.getEncoder().encode(descriptor)));
+    data.put(MESSAGE_NAME, messageName);
     return data;
   }
 
   protected SchemaConfig getInstance(Map<String, Object> config) {
-    return new ProtoBufSchemaConfig(config.get("messageName").toString(), config.get("descriptor").toString());
+    return new ProtoBufSchemaConfig(config);
   }
 
 }

@@ -37,6 +37,11 @@ public class CsvSchemaConfig extends SchemaConfig {
     super(NAME);
   }
 
+  public CsvSchemaConfig(String header) {
+    super(NAME);
+    this.header = header;
+  }
+
   protected CsvSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
     this.header = config.getOrDefault(HEADER, "").toString();

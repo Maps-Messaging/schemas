@@ -27,6 +27,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -43,24 +44,25 @@ import org.xml.sax.SAXException;
 public class XmlFormatter implements MessageFormatter {
 
   private final DocumentBuilder parser;
+  private final String root;
 
   public XmlFormatter() {
     parser = null;
+    root = "";
   }
 
   XmlFormatter(XmlSchemaConfig config) throws IOException {
     try {
-
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
       dbf.setNamespaceAware(config.isNamespaceAware());
       dbf.setValidating(config.isValidating());
       dbf.setCoalescing(config.isCoalescing());
       parser = dbf.newDocumentBuilder();
+      root = config.getRoot();
     } catch (ParserConfigurationException e) {
       throw new IOException(e);
     }
   }
-
 
   public String getName() {
     return "XML";
@@ -74,7 +76,9 @@ public class XmlFormatter implements MessageFormatter {
   public ParsedObject parse(byte[] payload) throws IOException {
     try {
       Document document = parser.parse(new ByteArrayInputStream(payload));
-      return new StructuredResolver(new MapResolver(parseToJson(payload).toMap()), document);
+      Map<String, Object> map = parseToJson(payload).toMap();
+      map = (Map) map.get(root);
+      return new StructuredResolver(new MapResolver(map), document);
     } catch (SAXException e) {
       throw new IOException(e);
     }

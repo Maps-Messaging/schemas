@@ -67,6 +67,14 @@ public class ProtoBufFormatter implements MessageFormatter {
 
   public ParsedObject parse(byte[] payload) throws InvalidProtocolBufferException {
     DynamicMessage message = DynamicMessage.parseFrom(descriptor.findMessageTypeByName(messageName), payload);
+    for(int x=0;x<payload.length;x++){
+      int val = payload[x] & 0xff;
+      if(val<16){
+        System.err.print("0");
+      }
+      System.err.print(Integer.toHexString(val)+" ");
+    }
+    System.err.println();
     ParsedObject parsed = new MapResolver(convertToMap(message));
     return new StructuredResolver(parsed, message);
   }

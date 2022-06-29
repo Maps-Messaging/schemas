@@ -17,14 +17,16 @@
 
 package io.mapsmessaging.schemas.formatters;
 
-import static io.mapsmessaging.schemas.config.TestAvro.getSchema;
-
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
+import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
+import io.mapsmessaging.schemas.formatters.PersonProto.Person.Builder;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Encoder;
@@ -34,13 +36,13 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class TestAvro {
+public class TestAvro extends BaseTest {
 
-  byte[] packObject() throws IOException {
+  byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws IOException {
     PersonAvro e1 = new PersonAvro();
-    e1.setName("Matthew Buckton");;
-    e1.setId(2);
-    e1.setEmail("admin@gmail.com");
+    e1.setName(p.getName());;
+    e1.setId(p.getId());
+    e1.setEmail(p.getEmail());
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     Encoder binaryEncoder = EncoderFactory.get().binaryEncoder(stream, null);
     DatumWriter<PersonAvro> writer = new SpecificDatumWriter<>(PersonAvro.class);
@@ -49,38 +51,20 @@ public class TestAvro {
     return stream.toByteArray();
   }
 
-  SchemaConfig buildConfig() throws IOException {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "AVRO");
-    props.put("schema", new String(Base64.getEncoder().encode(getSchema().getBytes())));
-    Map<String, Object> schema = new LinkedHashMap<>();
-    schema.put("schema", props);
-    return SchemaConfigFactory.getInstance().constructConfig(schema);
+
+  @Override
+  List<byte[]> packList(List<io.mapsmessaging.schemas.formatters.Person> list) throws IOException {
+    List<byte[]> packed = new ArrayList<>();
+    for(io.mapsmessaging.schemas.formatters.Person p:list){
+      packed.add(pack(p));
+    }
+    return packed;
   }
 
-  @Test
-  void testAvro() throws IOException {
-    SchemaConfig config = buildConfig();
-    Assertions.assertEquals("AVRO", config.getFormat());
-    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
-    Assertions.assertEquals("AVRO", formatter.getName());
-
-    ParsedObject obj = formatter.parse(packObject());
-    Assertions.assertEquals("Matthew Buckton", obj.get("name").toString());
-    Assertions.assertEquals(2, obj.get("id"));
-    Assertions.assertEquals("admin@gmail.com", obj.get("email"));
-  }
-
-  @Test
-  void testAvroToJson() throws IOException {
-    SchemaConfig config = buildConfig();
-    Assertions.assertEquals("AVRO", config.getFormat());
-    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
-    Assertions.assertEquals("AVRO", formatter.getName());
-
-    JSONObject jsonObject = formatter.parseToJson(packObject());
-    Assertions.assertEquals("Matthew Buckton", jsonObject.get("name").toString());
-    Assertions.assertEquals(2, jsonObject.get("id"));
-    Assertions.assertEquals("admin@gmail.com", jsonObject.get("email"));
+  @Override
+  SchemaConfig getSchema() throws IOException {
+    AvroSchemaConfig avroSchemaConfig = new AvroSchemaConfig();
+    avroSchemaConfig.setSchema(io.mapsmessaging.schemas.config.TestAvro.getSchema());
+    return avroSchemaConfig;
   }
 }

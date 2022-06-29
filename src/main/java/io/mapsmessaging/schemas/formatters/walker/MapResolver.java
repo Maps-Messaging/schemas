@@ -20,6 +20,7 @@ package io.mapsmessaging.schemas.formatters.walker;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntPredicate;
 
 public class MapResolver implements ParsedObject {
 
@@ -42,8 +43,9 @@ public class MapResolver implements ParsedObject {
       if(val instanceof List && isArray){
         String index = s.substring(s.indexOf("[")+1, s.indexOf("]"));
         var idx = Integer.parseInt(index.trim());
-        if( ( (List)val).size() > idx) {
-          val = ((List) val).get(idx);
+        List vList = (List) val;
+        if( vList.size() > idx) {
+          val = vList.get(idx);
         }
         else{
           return null;
@@ -51,6 +53,14 @@ public class MapResolver implements ParsedObject {
       }
       if(val instanceof Map){
         return new MapResolver((Map)val);
+      }
+      if(val instanceof String){
+        if(((String) val).trim().chars().allMatch(value -> {
+          char c = (char)value;
+          return Character.isDigit(c);
+        })){
+          return Integer.parseInt(((String) val).trim());
+        }
       }
       return val;
     }

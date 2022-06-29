@@ -18,105 +18,45 @@
 package io.mapsmessaging.schemas.formatters;
 
 
+import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
 import io.mapsmessaging.schemas.formatters.impl.JsonFormatter;
 import io.mapsmessaging.selector.IdentifierResolver;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.specific.SpecificDatumWriter;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class TestJson {
+public class TestJson extends BaseTest {
 
-  @Test
-  public void testJsonFiltering() throws IOException {
-    JsonFormatter format = new JsonFormatter();
-    IdentifierResolver resolver = format.parse(JSONString.getBytes());
-    Assertions.assertEquals(12.0, resolver.get("top"));
-    Assertions.assertNull(resolver.get("not there"));
 
-    Assertions.assertEquals("donut", resolver.get("data[0].type"));
-    Assertions.assertEquals("Cake", resolver.get("data[0].name"));
-    Assertions.assertEquals("Blueberry", resolver.get("data[0].batters.batter[2].type"));
-
-    Assertions.assertEquals("donut", resolver.get("data[1].type"));
-    Assertions.assertEquals("Raised", resolver.get("data[1].name"));
-    Assertions.assertNull(resolver.get("data[1].batters.batter[2].type"));
-
-    Assertions.assertEquals("donut", resolver.get("data[2].type"));
-    Assertions.assertEquals("Old Fashioned", resolver.get("data[2].name"));
-    Assertions.assertNull(resolver.get("data[2].batters.batter[2].type"));
+  byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws IOException {
+    JSONObject jsonObject = new JSONObject();
+    jsonObject.put("name", p.getName());
+    jsonObject.put("id", p.getId());
+    jsonObject.put("email", p.getEmail());
+    return jsonObject.toString(2).getBytes();
   }
 
-  private static final String JSONString = ""
-      + "{\"top\": 12.0,\n"
-      + "\"data\":\n"
-      + "[\n"
-      + "\t{\n"
-      + "\t\t\"id\": \"0001\",\n"
-      + "\t\t\"type\": \"donut\",\n"
-      + "\t\t\"name\": \"Cake\",\n"
-      + "\t\t\"ppu\": 0.55,\n"
-      + "\t\t\"batters\":\n"
-      + "\t\t\t{\n"
-      + "\t\t\t\t\"batter\":\n"
-      + "\t\t\t\t\t[\n"
-      + "\t\t\t\t\t\t{ \"id\": \"1001\", \"type\": \"Regular\" },\n"
-      + "\t\t\t\t\t\t{ \"id\": \"1002\", \"type\": \"Chocolate\" },\n"
-      + "\t\t\t\t\t\t{ \"id\": \"1003\", \"type\": \"Blueberry\" },\n"
-      + "\t\t\t\t\t\t{ \"id\": \"1004\", \"type\": \"Devil's Food\" }\n"
-      + "\t\t\t\t\t]\n"
-      + "\t\t\t},\n"
-      + "\t\t\"topping\":\n"
-      + "\t\t\t[\n"
-      + "\t\t\t\t{ \"id\": \"5001\", \"type\": \"None\" },\n"
-      + "\t\t\t\t{ \"id\": \"5002\", \"type\": \"Glazed\" },\n"
-      + "\t\t\t\t{ \"id\": \"5005\", \"type\": \"Sugar\" },\n"
-      + "\t\t\t\t{ \"id\": \"5007\", \"type\": \"Powdered Sugar\" },\n"
-      + "\t\t\t\t{ \"id\": \"5006\", \"type\": \"Chocolate with Sprinkles\" },\n"
-      + "\t\t\t\t{ \"id\": \"5003\", \"type\": \"Chocolate\" },\n"
-      + "\t\t\t\t{ \"id\": \"5004\", \"type\": \"Maple\" }\n"
-      + "\t\t\t]\n"
-      + "\t},\n"
-      + "\t{\n"
-      + "\t\t\"id\": \"0002\",\n"
-      + "\t\t\"type\": \"donut\",\n"
-      + "\t\t\"name\": \"Raised\",\n"
-      + "\t\t\"ppu\": 0.55,\n"
-      + "\t\t\"batters\":\n"
-      + "\t\t\t{\n"
-      + "\t\t\t\t\"batter\":\n"
-      + "\t\t\t\t\t[\n"
-      + "\t\t\t\t\t\t{ \"id\": \"1001\", \"type\": \"Regular\" }\n"
-      + "\t\t\t\t\t]\n"
-      + "\t\t\t},\n"
-      + "\t\t\"topping\":\n"
-      + "\t\t\t[\n"
-      + "\t\t\t\t{ \"id\": \"5001\", \"type\": \"None\" },\n"
-      + "\t\t\t\t{ \"id\": \"5002\", \"type\": \"Glazed\" },\n"
-      + "\t\t\t\t{ \"id\": \"5005\", \"type\": \"Sugar\" },\n"
-      + "\t\t\t\t{ \"id\": \"5003\", \"type\": \"Chocolate\" },\n"
-      + "\t\t\t\t{ \"id\": \"5004\", \"type\": \"Maple\" }\n"
-      + "\t\t\t]\n"
-      + "\t},\n"
-      + "\t{\n"
-      + "\t\t\"id\": \"0003\",\n"
-      + "\t\t\"type\": \"donut\",\n"
-      + "\t\t\"name\": \"Old Fashioned\",\n"
-      + "\t\t\"ppu\": 0.55,\n"
-      + "\t\t\"batters\":\n"
-      + "\t\t\t{\n"
-      + "\t\t\t\t\"batter\":\n"
-      + "\t\t\t\t\t[\n"
-      + "\t\t\t\t\t\t{ \"id\": \"1001\", \"type\": \"Regular\" },\n"
-      + "\t\t\t\t\t\t{ \"id\": \"1002\", \"type\": \"Chocolate\" }\n"
-      + "\t\t\t\t\t]\n"
-      + "\t\t\t},\n"
-      + "\t\t\"topping\":\n"
-      + "\t\t\t[\n"
-      + "\t\t\t\t{ \"id\": \"5001\", \"type\": \"None\" },\n"
-      + "\t\t\t\t{ \"id\": \"5002\", \"type\": \"Glazed\" },\n"
-      + "\t\t\t\t{ \"id\": \"5003\", \"type\": \"Chocolate\" },\n"
-      + "\t\t\t\t{ \"id\": \"5004\", \"type\": \"Maple\" }\n"
-      + "\t\t\t]\n"
-      + "\t}\n"
-      + "]\n}";
+
+  @Override
+  List<byte[]> packList(List<io.mapsmessaging.schemas.formatters.Person> list) throws IOException {
+    List<byte[]> packed = new ArrayList<>();
+    for(io.mapsmessaging.schemas.formatters.Person p:list){
+      packed.add(pack(p));
+    }
+    return packed;
+  }
+
+  @Override
+  SchemaConfig getSchema() throws IOException {
+    return new JsonSchemaConfig();
+  }
 }

@@ -18,68 +18,47 @@ package io.mapsmessaging.schemas.formatters;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
+import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
 import io.mapsmessaging.selector.IdentifierResolver;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import org.json.JSONObject;
+import org.json.XML;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class TextXML {
+public class TextXML extends BaseTest{
+  byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws IOException {
+    JSONObject jsonObject = new JSONObject();
+    jsonObject.put("name", p.getName());
+    jsonObject.put("id", p.getId());
+    jsonObject.put("email", p.getEmail());
+    String xml = XML.toString(jsonObject);
+    xml ="<?xml version=\"1.0\"?>\n"+
+        "<!DOCTYPE person  >\n"
+        + "<person>\n"
+        +xml+"\n"+
+        "</person>\n";
 
-  @Test
-  public void testXMLFiltering() throws IOException{
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "XML");
-    Map<String, Object> schema = new LinkedHashMap<>();
-    schema.put("schema", props);
-    SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
-    MessageFormatter format = MessageFormatterFactory.getInstance().getFormatter(config);
-    IdentifierResolver resolver = format.parse(XMLString.getBytes());
-    Assertions.assertEquals("cardigan.jpg", resolver.get("catalog.product.product_image"));
-    Assertions.assertEquals("Medium", resolver.get("catalog.product.catalog_item[0].size[0].description"));
+    return  xml.getBytes();
   }
 
-  private static final String XMLString = "<?xml version=\"1.0\"?>\n"
-      + "<?xml-stylesheet href=\"catalog.xsl\" type=\"text/xsl\"?>\n"
-      + "<!DOCTYPE catalog  >\n"
-      + "<catalog>\n"
-      + "   <product description=\"Cardigan Sweater\" product_image=\"cardigan.jpg\">\n"
-      + "      <catalog_item gender=\"Men's\">\n"
-      + "         <item_number>QWZ5671</item_number>\n"
-      + "         <price>39.95</price>\n"
-      + "         <size description=\"Medium\">\n"
-      + "            <color_swatch image=\"red_cardigan.jpg\">Red</color_swatch>\n"
-      + "            <color_swatch image=\"burgundy_cardigan.jpg\">Burgundy</color_swatch>\n"
-      + "         </size>\n"
-      + "         <size description=\"Large\">\n"
-      + "            <color_swatch image=\"red_cardigan.jpg\">Red</color_swatch>\n"
-      + "            <color_swatch image=\"burgundy_cardigan.jpg\">Burgundy</color_swatch>\n"
-      + "         </size>\n"
-      + "      </catalog_item>\n"
-      + "      <catalog_item gender=\"Women's\">\n"
-      + "         <item_number>RRX9856</item_number>\n"
-      + "         <price>42.50</price>\n"
-      + "         <size description=\"Small\">\n"
-      + "            <color_swatch image=\"red_cardigan.jpg\">Red</color_swatch>\n"
-      + "            <color_swatch image=\"navy_cardigan.jpg\">Navy</color_swatch>\n"
-      + "            <color_swatch image=\"burgundy_cardigan.jpg\">Burgundy</color_swatch>\n"
-      + "         </size>\n"
-      + "         <size description=\"Medium\">\n"
-      + "            <color_swatch image=\"red_cardigan.jpg\">Red</color_swatch>\n"
-      + "            <color_swatch image=\"navy_cardigan.jpg\">Navy</color_swatch>\n"
-      + "            <color_swatch image=\"burgundy_cardigan.jpg\">Burgundy</color_swatch>\n"
-      + "            <color_swatch image=\"black_cardigan.jpg\">Black</color_swatch>\n"
-      + "         </size>\n"
-      + "         <size description=\"Large\">\n"
-      + "            <color_swatch image=\"navy_cardigan.jpg\">Navy</color_swatch>\n"
-      + "            <color_swatch image=\"black_cardigan.jpg\">Black</color_swatch>\n"
-      + "         </size>\n"
-      + "         <size description=\"Extra Large\">\n"
-      + "            <color_swatch image=\"burgundy_cardigan.jpg\">Burgundy</color_swatch>\n"
-      + "            <color_swatch image=\"black_cardigan.jpg\">Black</color_swatch>\n"
-      + "         </size>\n"
-      + "      </catalog_item>\n"
-      + "   </product>\n"
-      + "</catalog>";
+
+  @Override
+  List<byte[]> packList(List<io.mapsmessaging.schemas.formatters.Person> list) throws IOException {
+    List<byte[]> packed = new ArrayList<>();
+    for(io.mapsmessaging.schemas.formatters.Person p:list){
+      packed.add(pack(p));
+    }
+    return packed;
+  }
+  @Override
+  SchemaConfig getSchema() throws IOException {
+    XmlSchemaConfig xmlSchemaConfig = new XmlSchemaConfig();
+    xmlSchemaConfig.setRoot("person");
+    return xmlSchemaConfig;
+  }
 }

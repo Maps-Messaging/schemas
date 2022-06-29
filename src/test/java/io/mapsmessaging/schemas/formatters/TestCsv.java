@@ -15,26 +15,27 @@
  *     limitations under the License.
  */
 
-package io.mapsmessaging.schemas.config;
+package io.mapsmessaging.schemas.formatters;
 
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.CsvSchemaConfig;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import org.junit.jupiter.api.Assertions;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-class TestCsv extends GeneralBaseTest {
+public class TestCsv extends BaseTest{
 
-  Map<String, Object> getProperties(){
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "CSV");
-    props.put("header", "name, id, email");
-    return props;
+  @Override
+  List<byte[]> packList(List<Person> list) throws IOException {
+    List<byte[]> packed = new ArrayList<>();
+    for(io.mapsmessaging.schemas.formatters.Person p:list){
+      packed.add((p.getId()+",\""+p.getName()+"\","+p.getEmail()).getBytes());
+    }
+    return packed;
   }
 
   @Override
-  void validate(SchemaConfig schemaConfig) {
-    Assertions.assertTrue(schemaConfig instanceof CsvSchemaConfig);
-    CsvSchemaConfig config = (CsvSchemaConfig) schemaConfig;
-    Assertions.assertEquals("name, id, email", config.getHeader());
+  SchemaConfig getSchema() throws IOException {
+    return new CsvSchemaConfig("id, name, email");
   }
 }

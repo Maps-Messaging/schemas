@@ -47,7 +47,7 @@ public class CsvFormatter implements MessageFormatter {
     StringTokenizer tokenizer = new StringTokenizer(keyList, ",");
     List<String> header = new ArrayList<>();
     while (tokenizer.hasMoreElements()) {
-      header.add(tokenizer.nextElement().toString());
+      header.add(tokenizer.nextElement().toString().trim());
     }
     String[] tmp = new String[header.size()];
     keys = header.toArray(tmp);

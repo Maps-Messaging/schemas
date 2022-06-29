@@ -49,6 +49,6 @@ public class TestAvro extends GeneralBaseTest {
       baos.write(tmp, 0, len);
     }
     catch (Exception ex){}
-    return new String( baos.toByteArray());
+    return baos.toString();
   }
 }

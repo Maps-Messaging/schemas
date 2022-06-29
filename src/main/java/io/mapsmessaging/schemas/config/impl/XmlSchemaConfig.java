@@ -25,9 +25,14 @@ import org.json.JSONObject;
 public class XmlSchemaConfig extends SimpleSchemaConfig {
 
   private static final String NAME = "XML";
+  private static final String ROOT = "root";
   private static final String NAMESPACE_AWARE = "namespaceAware";
   private static final String VALIDATING = "validating";
   private static final String COALESCING = "coalescing";
+
+  @Getter
+  @Setter
+  private String root;
 
   @Getter
   @Setter
@@ -47,11 +52,11 @@ public class XmlSchemaConfig extends SimpleSchemaConfig {
 
   private XmlSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
+    root = config.getOrDefault("root", "").toString();
     namespaceAware = (Boolean) config.getOrDefault(NAMESPACE_AWARE, false);
     validating = (Boolean) config.getOrDefault(VALIDATING, false);
     coalescing = (Boolean) config.getOrDefault(COALESCING, false);
   }
-
 
   protected SchemaConfig getInstance(Map<String, Object> config) {
     return new XmlSchemaConfig(config);
@@ -61,6 +66,7 @@ public class XmlSchemaConfig extends SimpleSchemaConfig {
   protected JSONObject packData() {
     JSONObject data = new JSONObject();
     packData(data);
+    data.put(ROOT, root);
     data.put(NAMESPACE_AWARE, namespaceAware);
     data.put(VALIDATING, validating);
     data.put(COALESCING, coalescing);

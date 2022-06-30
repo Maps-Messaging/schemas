@@ -114,17 +114,22 @@ public abstract class BaseTest {
     long start = System.currentTimeMillis();
     List<byte[]> packed = packList(data);
     System.err.println("Time to Pack:"+(System.currentTimeMillis() - start)+"ms");
+    List<DataSet> dataSet = new ArrayList<>();
+    for(int x=0;x<data.size();x++){
+      dataSet.add(new DataSet(data.get(x), packed.get(x)));
+    }
     start = System.currentTimeMillis();
     SchemaConfig schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
-    packed.parallelStream().forEach(bytes -> {
+    dataSet.parallelStream().forEach(set -> {
       try {
-        ParsedObject parsedObject = formatter.parse(bytes);
-        parsedObject.get("stringId");
-        parsedObject.get("longId");
-        parsedObject.get("intId");
-        parsedObject.get("floatId");
-        parsedObject.get("doubleId");
+        ParsedObject parsedObject = formatter.parse(set.packed);
+        Person p = set.source;
+        validateValues(p.getStringId(), parsedObject.get("stringId"));
+        validateValues(p.getLongId(), parsedObject.get("longId"));
+        validateValues(p.getIntId(), parsedObject.get("intId"));
+        validateValues(p.getFloatId(), parsedObject.get("floatId"));
+        validateValues(p.getDoubleId(), parsedObject.get("doubleId"));
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -165,5 +170,14 @@ public abstract class BaseTest {
       return BigDecimal.valueOf((Float) obj);
     }
     return null;
+  }
+
+  private static class DataSet{
+    Person source;
+    byte[] packed;
+    public DataSet(Person p, byte[] r){
+      source = p;
+      packed = r;
+    }
   }
 }

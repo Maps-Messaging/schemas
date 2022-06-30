@@ -26,7 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 
-class TestProtobuf extends GeneralBaseTest {
+class TestProtobufConfig extends GeneralBaseTest {
 
   Map<String, Object> getProperties(){
     Map<String, Object> props = new LinkedHashMap<>();
@@ -48,7 +48,7 @@ class TestProtobuf extends GeneralBaseTest {
   private byte[] getDescriptor()  {
     ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
     byte[] tmp = new byte[10240];
-    try (InputStream fis = TestProtobuf.class.getClassLoader().getResourceAsStream("Person.desc")) {
+    try (InputStream fis = TestProtobufConfig.class.getClassLoader().getResourceAsStream("Person.desc")) {
       int len = fis.read(tmp);
       baos.write(tmp, 0, len);
     }

@@ -25,7 +25,7 @@ public interface MessageFormatter {
 
   String getName();
 
-  default ParsedObject parse(byte[] payload) throws IOException {
+  default ParsedObject parse(byte[] payload){
     return new ParsedObject() {
       @Override
       public Object getReferenced() {

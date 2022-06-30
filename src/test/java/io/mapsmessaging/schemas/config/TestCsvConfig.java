@@ -17,22 +17,24 @@
 
 package io.mapsmessaging.schemas.config;
 
-import io.mapsmessaging.schemas.config.impl.QpidJmsSchemaConfig;
+import io.mapsmessaging.schemas.config.impl.CsvSchemaConfig;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 
-public class TestQpidJms extends GeneralBaseTest {
+class TestCsvConfig extends GeneralBaseTest {
 
   Map<String, Object> getProperties(){
     Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "QPID-JMS");
+    props.put("format", "CSV");
+    props.put("header", "name, id, email");
     return props;
   }
 
   @Override
   void validate(SchemaConfig schemaConfig) {
-    Assertions.assertTrue(schemaConfig instanceof QpidJmsSchemaConfig);
+    Assertions.assertTrue(schemaConfig instanceof CsvSchemaConfig);
+    CsvSchemaConfig config = (CsvSchemaConfig) schemaConfig;
+    Assertions.assertEquals("name, id, email", config.getHeader());
   }
-
 }

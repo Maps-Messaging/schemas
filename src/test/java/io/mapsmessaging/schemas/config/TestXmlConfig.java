@@ -14,25 +14,30 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
-
 package io.mapsmessaging.schemas.config;
 
-import io.mapsmessaging.schemas.config.impl.RawSchemaConfig;
+import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 
-class TestRaw extends GeneralBaseTest {
+class TestXmlConfig extends GeneralBaseTest {
 
   Map<String, Object> getProperties(){
     Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "RAW");
+    props.put("format", "XML");
+    props.put("validating", true);
+    props.put("coalescing", true);
+    props.put("namespaceAware", true);
     return props;
   }
+
   @Override
   void validate(SchemaConfig schemaConfig) {
-    Assertions.assertTrue(schemaConfig instanceof RawSchemaConfig);
+    Assertions.assertTrue(schemaConfig instanceof XmlSchemaConfig);
+    XmlSchemaConfig config = (XmlSchemaConfig) schemaConfig;
+    Assertions.assertTrue(config.isValidating());
+    Assertions.assertTrue(config.isCoalescing());
+    Assertions.assertTrue(config.isNamespaceAware());
   }
-
-
 }

@@ -17,24 +17,38 @@
 
 package io.mapsmessaging.schemas.config;
 
-import io.mapsmessaging.schemas.config.impl.CsvSchemaConfig;
+import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 
-class TestCsv extends GeneralBaseTest {
+public class TestAvroConfig extends GeneralBaseTest {
 
   Map<String, Object> getProperties(){
     Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "CSV");
-    props.put("header", "name, id, email");
+    props.put("format", "AVRO");
+    props.put("schema", new String(Base64.getEncoder().encode(getSchema().getBytes())));
     return props;
   }
 
   @Override
   void validate(SchemaConfig schemaConfig) {
-    Assertions.assertTrue(schemaConfig instanceof CsvSchemaConfig);
-    CsvSchemaConfig config = (CsvSchemaConfig) schemaConfig;
-    Assertions.assertEquals("name, id, email", config.getHeader());
+    Assertions.assertTrue(schemaConfig instanceof AvroSchemaConfig);
+    AvroSchemaConfig config = (AvroSchemaConfig) schemaConfig;
+    Assertions.assertEquals(getSchema(), config.getSchema());
+  }
+
+  public static String getSchema()  {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
+    byte[] tmp = new byte[10240];
+    try (InputStream fis = TestProtobufConfig.class.getClassLoader().getResourceAsStream("avro/Person.avsc")) {
+      int len = fis.read(tmp);
+      baos.write(tmp, 0, len);
+    }
+    catch (Exception ex){}
+    return baos.toString();
   }
 }

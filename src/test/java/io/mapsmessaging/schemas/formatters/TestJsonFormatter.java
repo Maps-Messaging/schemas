@@ -14,23 +14,20 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
+
 package io.mapsmessaging.schemas.formatters;
 
+
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.config.SchemaConfigFactory;
-import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
-import io.mapsmessaging.selector.IdentifierResolver;
+import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import org.json.JSONObject;
-import org.json.XML;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
-public class TextXML extends BaseTest{
+public class TestJsonFormatter extends BaseTest {
+
+
   byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws IOException {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put("stringId", p.getStringId());
@@ -38,14 +35,7 @@ public class TextXML extends BaseTest{
     jsonObject.put("intId", p.getIntId());
     jsonObject.put("floatId", p.getFloatId());
     jsonObject.put("doubleId", p.getDoubleId());
-    String xml = XML.toString(jsonObject);
-    xml ="<?xml version=\"1.0\"?>\n"+
-        "<!DOCTYPE person  >\n"
-        + "<person>\n"
-        +xml+"\n"+
-        "</person>\n";
-
-    return  xml.getBytes();
+    return jsonObject.toString(2).getBytes();
   }
 
 
@@ -57,10 +47,9 @@ public class TextXML extends BaseTest{
     }
     return packed;
   }
+
   @Override
   SchemaConfig getSchema() throws IOException {
-    XmlSchemaConfig xmlSchemaConfig = new XmlSchemaConfig();
-    xmlSchemaConfig.setRoot("person");
-    return xmlSchemaConfig;
+    return new JsonSchemaConfig();
   }
 }

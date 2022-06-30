@@ -1,4 +1,3 @@
-
 /*
  *
  *     Copyright [ 2020 - 2022 ] [Matthew Buckton]
@@ -15,31 +14,38 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
+
 package io.mapsmessaging.schemas.formatters;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig;
-import io.mapsmessaging.schemas.formatters.PersonProto.Person.Builder;
+import io.mapsmessaging.schemas.config.TestAvroConfig;
+import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.specific.SpecificDatumWriter;
 
-public class TestProtobuf extends BaseTest {
+public class TestAvroFormatter extends BaseTest {
 
-  private byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws IOException {
-    Builder builder = PersonProto.Person.newBuilder();
-    builder.setStringId(p.getStringId());
-    builder.setIntId(p.getIntId());
-    builder.setLongId(p.getLongId());
-    builder.setFloatId(p.getFloatId());
-    builder.setDoubleId(p.getDoubleId());
-    PersonProto.Person person = builder.build();
-    ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
-    person.writeTo(baos);
-    return baos.toByteArray();
+  byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws IOException {
+    PersonAvro personA = new PersonAvro();
+    personA.setStringId(p.getStringId());
+    personA.setIntId(p.getIntId());
+    personA.setLongId(p.getLongId());
+    personA.setFloatId(p.getFloatId());
+    personA.setDoubleId(p.getDoubleId());
+    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    Encoder binaryEncoder = EncoderFactory.get().binaryEncoder(stream, null);
+    DatumWriter<PersonAvro> writer = new SpecificDatumWriter<>(PersonAvro.class);
+    writer.write(personA, binaryEncoder);
+    binaryEncoder.flush();
+    return stream.toByteArray();
   }
+
 
   @Override
   List<byte[]> packList(List<io.mapsmessaging.schemas.formatters.Person> list) throws IOException {
@@ -52,15 +58,8 @@ public class TestProtobuf extends BaseTest {
 
   @Override
   SchemaConfig getSchema() throws IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
-    byte[] tmp = new byte[10240];
-    try (InputStream fis = getClass().getClassLoader().getResourceAsStream("Person.desc")) {
-      int len = fis.read(tmp);
-      baos.write(tmp, 0, len);
-    }
-    ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
-    config.setDescriptor(baos.toByteArray());
-    config.setMessageName("Person");
-    return config;
+    AvroSchemaConfig avroSchemaConfig = new AvroSchemaConfig();
+    avroSchemaConfig.setSchema(TestAvroConfig.getSchema());
+    return avroSchemaConfig;
   }
 }

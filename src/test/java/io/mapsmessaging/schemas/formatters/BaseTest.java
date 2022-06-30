@@ -19,12 +19,19 @@ package io.mapsmessaging.schemas.formatters;
 
 import com.github.javafaker.Faker;
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.selector.ParseException;
+import io.mapsmessaging.selector.SelectorParser;
+import io.mapsmessaging.selector.operators.ParserExecutor;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -122,22 +129,52 @@ public abstract class BaseTest {
     SchemaConfig schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     dataSet.parallelStream().forEach(set -> {
-      try {
-        ParsedObject parsedObject = formatter.parse(set.packed);
-        Person p = set.source;
-        validateValues(p.getStringId(), parsedObject.get("stringId"));
-        validateValues(p.getLongId(), parsedObject.get("longId"));
-        validateValues(p.getIntId(), parsedObject.get("intId"));
-        validateValues(p.getFloatId(), parsedObject.get("floatId"));
-        validateValues(p.getDoubleId(), parsedObject.get("doubleId"));
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      ParsedObject parsedObject = formatter.parse(set.packed);
+      Person p = set.source;
+      validateValues(p.getStringId(), parsedObject.get("stringId"));
+      validateValues(p.getLongId(), parsedObject.get("longId"));
+      validateValues(p.getIntId(), parsedObject.get("intId"));
+      validateValues(p.getFloatId(), parsedObject.get("floatId"));
+      validateValues(p.getDoubleId(), parsedObject.get("doubleId"));
     });
     long time = (System.currentTimeMillis() - start);
     float unitWork = time;
     unitWork = unitWork / data.size();
     System.err.println("Time to Parse:"+time+"ms");
+    int scale = 0;
+    while((int)unitWork == 0){
+      unitWork = unitWork * 1000f;
+      scale++;
+    }
+    System.err.println("Time per event "+unitWork+UNIT[scale]);
+  }
+  @Test
+  void testFiltering() throws IOException, ParseException {
+    Faker faker = new Faker();
+    long start = System.currentTimeMillis();
+    List<byte[]> packed = packList(data);
+    System.err.println("Time to Pack:"+(System.currentTimeMillis() - start)+"ms");
+    List<DataSet> dataSet = new ArrayList<>();
+    for(int x=0;x<data.size();x++){
+      dataSet.add(new DataSet(data.get(x), packed.get(x)));
+    }
+    start = System.currentTimeMillis();
+    SchemaConfig schemaConfig = getSchema();
+    String selector = "stringId = '"+data.get(faker.random().nextInt(0, data.size())).getStringId()+ "' OR "+
+        "longId = "+data.get(faker.random().nextInt(0, data.size())).getLongId() +" OR "+
+        "intId = "+data.get(faker.random().nextInt(0, data.size())).getIntId() +" OR "+
+        "doubleId = "+data.get(faker.random().nextInt(0, data.size())).getDoubleId() +" OR "+
+        "floatId = "+data.get(faker.random().nextInt(0, data.size())).getFloatId();
+
+    ParserExecutor executor = SelectorParser.compile(selector);
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
+    List<DataSet> result = dataSet.parallelStream().filter(dataSet1 -> executor.evaluate(formatter.parse(dataSet1.packed))).collect(Collectors.toList());
+
+    Assertions.assertTrue(result.size() >= 5);
+    long time = (System.currentTimeMillis() - start);
+    float unitWork = time;
+    unitWork = unitWork / data.size();
+    System.err.println("Time to Filter:"+time+"ms");
     int scale = 0;
     while((int)unitWork == 0){
       unitWork = unitWork * 1000f;

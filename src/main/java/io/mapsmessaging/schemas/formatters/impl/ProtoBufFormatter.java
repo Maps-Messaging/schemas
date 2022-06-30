@@ -65,10 +65,15 @@ public class ProtoBufFormatter implements MessageFormatter {
     return "ProtoBuf";
   }
 
-  public ParsedObject parse(byte[] payload) throws InvalidProtocolBufferException {
-    DynamicMessage message = DynamicMessage.parseFrom(descriptor.findMessageTypeByName(messageName), payload);
-    ParsedObject parsed = new MapResolver(convertToMap(message));
-    return new StructuredResolver(parsed, message);
+  public ParsedObject parse(byte[] payload) {
+    try {
+      DynamicMessage message = DynamicMessage.parseFrom(descriptor.findMessageTypeByName(messageName), payload);
+      ParsedObject parsed = new MapResolver(convertToMap(message));
+      return new StructuredResolver(parsed, message);
+    } catch (InvalidProtocolBufferException e) {
+
+    }
+    return null;
   }
 
   @Override

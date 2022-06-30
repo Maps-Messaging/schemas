@@ -14,29 +14,17 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
-
 package io.mapsmessaging.schemas.formatters;
 
-
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
-import io.mapsmessaging.schemas.formatters.impl.JsonFormatter;
-import io.mapsmessaging.selector.IdentifierResolver;
-import java.io.ByteArrayOutputStream;
+import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.io.Encoder;
-import org.apache.avro.io.EncoderFactory;
-import org.apache.avro.specific.SpecificDatumWriter;
 import org.json.JSONObject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.json.XML;
 
-public class TestJson extends BaseTest {
-
-
+public class TextXMLFormatter extends BaseTest{
   byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws IOException {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put("stringId", p.getStringId());
@@ -44,7 +32,14 @@ public class TestJson extends BaseTest {
     jsonObject.put("intId", p.getIntId());
     jsonObject.put("floatId", p.getFloatId());
     jsonObject.put("doubleId", p.getDoubleId());
-    return jsonObject.toString(2).getBytes();
+    String xml = XML.toString(jsonObject);
+    xml ="<?xml version=\"1.0\"?>\n"+
+        "<!DOCTYPE person  >\n"
+        + "<person>\n"
+        +xml+"\n"+
+        "</person>\n";
+
+    return  xml.getBytes();
   }
 
 
@@ -56,9 +51,10 @@ public class TestJson extends BaseTest {
     }
     return packed;
   }
-
   @Override
   SchemaConfig getSchema() throws IOException {
-    return new JsonSchemaConfig();
+    XmlSchemaConfig xmlSchemaConfig = new XmlSchemaConfig();
+    xmlSchemaConfig.setRoot("person");
+    return xmlSchemaConfig;
   }
 }

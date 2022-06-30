@@ -74,15 +74,15 @@ public class XmlFormatter implements MessageFormatter {
   }
 
   @Override
-  public synchronized ParsedObject parse(byte[] payload) throws IOException {
+  public synchronized ParsedObject parse(byte[] payload){
     try {
       Document document = parser.parse(new ByteArrayInputStream(payload));
       Map<String, Object> map = parseToJson(payload).toMap();
       map = (Map) map.get(root);
       return new StructuredResolver(new MapResolver(map), document);
-    } catch (SAXException e) {
-      throw new IOException(e);
+    } catch (IOException| SAXException e) {
     }
+    return null;
   }
 
   public byte[] pack(Object object) throws IOException {

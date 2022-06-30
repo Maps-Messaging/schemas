@@ -3,8 +3,10 @@
    "type": "record",
    "name": "PersonAvro",
    "fields": [
-      {"name": "name", "type": "string"},
-      {"name": "id", "type": "int"},
-      {"name": "email", "type": "string"}
+      {"name": "stringId", "type": "string"},
+      {"name": "intId", "type": "int"},
+      {"name": "longId", "type": "long"},
+      {"name": "floatId", "type": "float"},
+      {"name": "doubleId", "type": "double"}
    ]
 }

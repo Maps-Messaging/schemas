@@ -30,10 +30,11 @@ public class TestProtobuf extends BaseTest {
 
   private byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws IOException {
     Builder builder = PersonProto.Person.newBuilder();
-    builder.setEmail(p.getEmail());
-    builder.setName(p.getName());
-    builder.setIdentity(p.getId());
-    builder.setId(p.getId());
+    builder.setStringId(p.getStringId());
+    builder.setIntId(p.getIntId());
+    builder.setLongId(p.getLongId());
+    builder.setFloatId(p.getFloatId());
+    builder.setDoubleId(p.getDoubleId());
     PersonProto.Person person = builder.build();
     ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
     person.writeTo(baos);

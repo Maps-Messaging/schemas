@@ -33,9 +33,11 @@ import org.junit.jupiter.api.Test;
 public class TextXML extends BaseTest{
   byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws IOException {
     JSONObject jsonObject = new JSONObject();
-    jsonObject.put("name", p.getName());
-    jsonObject.put("id", p.getId());
-    jsonObject.put("email", p.getEmail());
+    jsonObject.put("stringId", p.getStringId());
+    jsonObject.put("longId", p.getLongId());
+    jsonObject.put("intId", p.getIntId());
+    jsonObject.put("floatId", p.getFloatId());
+    jsonObject.put("doubleId", p.getDoubleId());
     String xml = XML.toString(jsonObject);
     xml ="<?xml version=\"1.0\"?>\n"+
         "<!DOCTYPE person  >\n"

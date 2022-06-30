@@ -29,13 +29,18 @@ public class TestCsv extends BaseTest{
   List<byte[]> packList(List<Person> list) throws IOException {
     List<byte[]> packed = new ArrayList<>();
     for(io.mapsmessaging.schemas.formatters.Person p:list){
-      packed.add((p.getId()+",\""+p.getName()+"\","+p.getEmail()).getBytes());
+      packed.add((
+          "\""+p.getStringId()+"\","+
+              p.getLongId()+","+
+              p.getIntId()+","+
+              p.getFloatId()+","+
+              p.getDoubleId()).getBytes());
     }
     return packed;
   }
 
   @Override
   SchemaConfig getSchema() throws IOException {
-    return new CsvSchemaConfig("id, name, email");
+    return new CsvSchemaConfig("stringId, longId, intId, floatId, doubleId");
   }
 }

@@ -20,44 +20,56 @@ package io.mapsmessaging.schemas.formatters;
 import com.github.javafaker.Faker;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public abstract class BaseTest {
 
-  List<Person> createList(int size){
+  private static List<Person> data;
+
+  static List<Person> createList(int size){
     Faker faker = new Faker();
     List<Person> list = new ArrayList<>();
     for(int x=0;x<size;x++){
       Person p = new Person();
-      p.setEmail(faker.internet().emailAddress());
       switch(x%6){
         case 0:
-          p.setName(faker.lordOfTheRings().character());
+          p.setStringId(faker.lordOfTheRings().character());
           break;
         case 1:
-          p.setName(faker.gameOfThrones().character());
+          p.setStringId(faker.gameOfThrones().character());
           break;
         case 2:
-          p.setName(faker.howIMetYourMother().character());
+          p.setStringId(faker.howIMetYourMother().character());
           break;
         case 3:
-          p.setName(faker.hitchhikersGuideToTheGalaxy().character());
+          p.setStringId(faker.hitchhikersGuideToTheGalaxy().character());
           break;
         case 4:
-          p.setName(faker.harryPotter().character());
+          p.setStringId(faker.harryPotter().character());
           break;
         case 5:
-          p.setName(faker.backToTheFuture().character());
+          p.setStringId(faker.backToTheFuture().character());
           break;
 
       }
-      p.setId(x);
+      p.setLongId(faker.random().nextLong());
+      p.setIntId((int)(faker.random().nextLong()));
+      p.setDoubleId(faker.random().nextDouble());
+      p.setFloatId((float)faker.random().nextDouble());
       list.add(p);
     }
     return list;
+  }
+
+  @BeforeAll
+  static void createData(){
+    data = createList(1_000_000);
   }
 
   abstract List<byte[]> packList(List<Person>  list) throws IOException;
@@ -66,16 +78,48 @@ public abstract class BaseTest {
 
   @Test
   void testFormatters() throws IOException {
-    List<Person> list = createList(1_000);
-    List<byte[]> packed = packList(list);
+    long start = System.currentTimeMillis();
+    List<byte[]> packed = packList(data);
+    System.err.println("Time to Pack:"+(System.currentTimeMillis() - start)+"ms");
+    start = System.currentTimeMillis();
     SchemaConfig schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
-    for(int x=0;x<list.size();x++){
+    for(int x=0;x<data.size();x++){
       ParsedObject parsedObject = formatter.parse(packed.get(x));
-      Person p = list.get(x);
-      Assertions.assertEquals(p.getName(), parsedObject.get("name"));
-      Assertions.assertEquals(p.getId(),  parsedObject.get("id"));
-      Assertions.assertEquals(p.getEmail(), parsedObject.get("email"));
+      Person p = data.get(x);
+      validateValues(p.getStringId(), parsedObject.get("stringId"));
+      validateValues(p.getLongId(), parsedObject.get("longId"));
+      validateValues(p.getIntId(), parsedObject.get("intId"));
+      validateValues(p.getFloatId(), parsedObject.get("floatId"));
+      validateValues(p.getDoubleId(), parsedObject.get("doubleId"));
     }
+    System.err.println("Time to Parse:"+(System.currentTimeMillis() - start)+"ms");
+
+  }
+
+  private void validateValues(Object lhs, Object rhs){
+    if(lhs instanceof Float && rhs instanceof Double) {
+      rhs = ((Double) rhs).floatValue();
+    }
+    BigDecimal vlhs = convert(lhs);
+    BigDecimal vrhs = convert(rhs);
+
+    Assertions.assertEquals(vlhs, vrhs);
+  }
+
+  BigDecimal convert(Object obj){
+    if(obj instanceof Long){
+      return new BigDecimal((Long)obj);
+    }
+    if(obj instanceof Double){
+      return BigDecimal.valueOf((Double) obj);
+    }
+    if(obj instanceof Integer){
+      return new BigDecimal((Integer)obj);
+    }
+    if(obj instanceof Float){
+      return BigDecimal.valueOf((Float) obj);
+    }
+    return null;
   }
 }

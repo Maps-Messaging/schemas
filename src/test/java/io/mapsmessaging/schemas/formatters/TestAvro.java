@@ -39,14 +39,16 @@ import org.junit.jupiter.api.Test;
 public class TestAvro extends BaseTest {
 
   byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws IOException {
-    PersonAvro e1 = new PersonAvro();
-    e1.setName(p.getName());;
-    e1.setId(p.getId());
-    e1.setEmail(p.getEmail());
+    PersonAvro personA = new PersonAvro();
+    personA.setStringId(p.getStringId());
+    personA.setIntId(p.getIntId());
+    personA.setLongId(p.getLongId());
+    personA.setFloatId(p.getFloatId());
+    personA.setDoubleId(p.getDoubleId());
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     Encoder binaryEncoder = EncoderFactory.get().binaryEncoder(stream, null);
     DatumWriter<PersonAvro> writer = new SpecificDatumWriter<>(PersonAvro.class);
-    writer.write(e1, binaryEncoder);
+    writer.write(personA, binaryEncoder);
     binaryEncoder.flush();
     return stream.toByteArray();
   }

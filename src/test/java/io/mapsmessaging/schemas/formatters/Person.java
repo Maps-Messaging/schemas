@@ -26,13 +26,23 @@ public class Person {
 
   @Getter
   @Setter
-  private String name;
+  private String stringId;
 
   @Getter
   @Setter
-  private int id;
+  private int intId;
+
 
   @Getter
   @Setter
-  private String email;
+  private long longId;
+
+  @Getter
+  @Setter
+  private float floatId;
+
+  @Getter
+  @Setter
+  private double doubleId;
+
 }

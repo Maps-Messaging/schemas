@@ -55,11 +55,13 @@ public class MapResolver implements ParsedObject {
         return new MapResolver((Map)val);
       }
       if(val instanceof String){
-        if(((String) val).trim().chars().allMatch(value -> {
-          char c = (char)value;
-          return Character.isDigit(c);
-        })){
-          return Integer.parseInt(((String) val).trim());
+        try {
+          return Long.parseLong((String) val);
+        } catch (NumberFormatException e) {
+        }
+        try {
+          return Double.parseDouble((String) val);
+        } catch (NumberFormatException e) {
         }
       }
       return val;

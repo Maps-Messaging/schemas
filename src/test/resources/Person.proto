@@ -19,9 +19,12 @@ option java_outer_classname = "PersonProto";
 
 // [START messages]
 message Person {
-  int32 id = 1;  // Unique ID number for this person.
-  int32 identity = 2;  // Unique ID number for this person.
-  string name = 3;
-  string email = 4;
+  string stringId = 1;
+  int64 longId = 2;
+  int32 intId = 3;
+  float floatId = 4;
+  double doubleId = 5;
+
+
 }
 // [END messages]

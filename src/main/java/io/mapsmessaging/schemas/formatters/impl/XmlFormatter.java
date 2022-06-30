@@ -73,7 +73,8 @@ public class XmlFormatter implements MessageFormatter {
     return XML.toJSONObject(new String(payload));
   }
 
-  public ParsedObject parse(byte[] payload) throws IOException {
+  @Override
+  public synchronized ParsedObject parse(byte[] payload) throws IOException {
     try {
       Document document = parser.parse(new ByteArrayInputStream(payload));
       Map<String, Object> map = parseToJson(payload).toMap();

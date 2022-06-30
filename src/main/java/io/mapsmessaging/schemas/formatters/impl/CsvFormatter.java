@@ -56,7 +56,7 @@ public class CsvFormatter implements MessageFormatter {
 
   }
 
-  public ParsedObject parse(byte[] payload) {
+  public synchronized ParsedObject parse(byte[] payload) {
     String[] values = parser.parseLine(new String(payload));
     Map<String, Object> map = new LinkedHashMap<>();
     for (int x = 0; x < (Math.min(values.length, keys.length)); x++) {

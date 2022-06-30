@@ -24,12 +24,14 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public abstract class BaseTest {
 
+  private static final String[] UNIT = {"ms", "μs", "ns"};
   private static List<Person> data;
 
   static List<Person> createList(int size){
@@ -93,8 +95,50 @@ public abstract class BaseTest {
       validateValues(p.getFloatId(), parsedObject.get("floatId"));
       validateValues(p.getDoubleId(), parsedObject.get("doubleId"));
     }
-    System.err.println("Time to Parse:"+(System.currentTimeMillis() - start)+"ms");
+    long time = (System.currentTimeMillis() - start);
+    float unitWork = time;
+    unitWork = unitWork / data.size();
+    System.err.println("Time to Parse:"+time+"ms");
+    int scale = 0;
+    while((int)unitWork == 0){
+      unitWork = unitWork * 1000f;
+      scale++;
+    }
 
+    System.err.println("Time per event "+unitWork+UNIT[scale]);
+
+  }
+
+  @Test
+  void testParallelFormatters() throws IOException {
+    long start = System.currentTimeMillis();
+    List<byte[]> packed = packList(data);
+    System.err.println("Time to Pack:"+(System.currentTimeMillis() - start)+"ms");
+    start = System.currentTimeMillis();
+    SchemaConfig schemaConfig = getSchema();
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
+    packed.parallelStream().forEach(bytes -> {
+      try {
+        ParsedObject parsedObject = formatter.parse(bytes);
+        parsedObject.get("stringId");
+        parsedObject.get("longId");
+        parsedObject.get("intId");
+        parsedObject.get("floatId");
+        parsedObject.get("doubleId");
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
+    long time = (System.currentTimeMillis() - start);
+    float unitWork = time;
+    unitWork = unitWork / data.size();
+    System.err.println("Time to Parse:"+time+"ms");
+    int scale = 0;
+    while((int)unitWork == 0){
+      unitWork = unitWork * 1000f;
+      scale++;
+    }
+    System.err.println("Time per event "+unitWork+UNIT[scale]);
   }
 
   private void validateValues(Object lhs, Object rhs){

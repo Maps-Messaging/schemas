@@ -57,7 +57,7 @@ public class AvroFormatter implements MessageFormatter {
     datumReader = new GenericDatumReader<>(schema);
   }
 
-  public ParsedObject parse(byte[] payload) throws IOException {
+  public synchronized ParsedObject parse(byte[] payload) throws IOException {
     decoder = DecoderFactory.get().binaryDecoder(payload, decoder);
     GenericRecord genericRecord = datumReader.read(null, decoder);
     return new AvroResolver(genericRecord);

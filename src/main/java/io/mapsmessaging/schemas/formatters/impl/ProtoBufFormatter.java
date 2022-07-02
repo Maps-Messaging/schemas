@@ -78,8 +78,8 @@ public class ProtoBufFormatter implements MessageFormatter {
   }
 
   @Override
-  public JSONObject parseToJson(byte[] payload) throws IOException {
-    DynamicMessage dynamicMessage = (DynamicMessage)((StructuredResolver) parse(payload)).getReferenced();
+  public JSONObject parseToJson(byte[] payload) {
+    DynamicMessage dynamicMessage = (DynamicMessage)(parse(payload)).getReferenced();
     return convertToJson(dynamicMessage);
   }
 
@@ -98,30 +98,25 @@ public class ProtoBufFormatter implements MessageFormatter {
   }
 
   private FileDescriptor loadDescFile(byte[] descriptorImage) throws IOException, DescriptorValidationException {
-    InputStream fin = new ByteArrayInputStream(descriptorImage);
     DescriptorProtos.FileDescriptorSet set;
     List<FileDescriptor> dependencyFileDescriptorList;
-    try {
+    try (InputStream fin = new ByteArrayInputStream(descriptorImage)) {
       set = DescriptorProtos.FileDescriptorSet.parseFrom(fin);
       dependencyFileDescriptorList = new ArrayList<>();
       for (int i = 0; i < set.getFileCount() - 1; i++) {
         dependencyFileDescriptorList.add(FileDescriptor.buildFrom(set.getFile(i), dependencyFileDescriptorList.toArray(new FileDescriptor[i])));
       }
-    } finally {
-      fin.close();
     }
     return Descriptors.FileDescriptor.buildFrom(set.getFile(set.getFileCount() - 1), dependencyFileDescriptorList.toArray(new FileDescriptor[0]));
   }
 
   private JSONObject convertToJson(DynamicMessage message) {
     JSONObject jsonObject = new JSONObject();
-    Map<String, Object> map = new LinkedHashMap<>();
     for (Entry<FieldDescriptor, Object> entry : message.getAllFields().entrySet()) {
       if (entry.getValue() instanceof Collection) {
         jsonObject.put(entry.getKey().getName(), convertToJson((Collection) entry.getValue()));
       } else {
         jsonObject.put(entry.getKey().getName(), entry.getValue());
-        map.put(entry.getKey().getName(), entry.getValue());
       }
     }
     return jsonObject;

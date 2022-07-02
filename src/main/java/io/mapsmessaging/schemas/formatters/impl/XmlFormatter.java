@@ -78,7 +78,7 @@ public class XmlFormatter implements MessageFormatter {
     try {
       Document document = parser.parse(new ByteArrayInputStream(payload));
       Map<String, Object> map = parseToJson(payload).toMap();
-      map = (Map) map.get(root);
+      map = (Map<String, Object>) map.get(root);
       return new StructuredResolver(new MapResolver(map), document);
     } catch (IOException| SAXException e) {
 

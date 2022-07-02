@@ -24,13 +24,8 @@ import io.mapsmessaging.selector.SelectorParser;
 import io.mapsmessaging.selector.operators.ParserExecutor;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -148,6 +143,7 @@ public abstract class BaseTest {
     }
     System.err.println("Time per event "+unitWork+UNIT[scale]);
   }
+
   @Test
   void testFiltering() throws IOException, ParseException {
     Faker faker = new Faker();
@@ -181,6 +177,32 @@ public abstract class BaseTest {
       scale++;
     }
     System.err.println("Time per event "+unitWork+UNIT[scale]);
+  }
+
+  @Test
+  void testFilteringLookup() throws IOException, ParseException {
+    Faker faker = new Faker();
+    List<byte[]> packed = packList(data);
+    List<DataSet> dataSet = new ArrayList<>();
+    for(int x=0;x<data.size();x++){
+      dataSet.add(new DataSet(data.get(x), packed.get(x)));
+    }
+    SchemaConfig schemaConfig = getSchema();
+    int index = faker.random().nextInt(0, data.size());
+
+    ParserExecutor stringExecutor = SelectorParser.compile("stringId = '"+data.get(index).getStringId()+"'");
+    ParserExecutor longExecutor = SelectorParser.compile("longId = "+data.get(index).getLongId());
+    ParserExecutor intExecutor = SelectorParser.compile("intId = "+data.get(index).getIntId());
+    ParserExecutor doubleExecutor = SelectorParser.compile("doubleId = "+data.get(index).getDoubleId());
+    ParserExecutor floatExecutor = SelectorParser.compile("floatId = "+data.get(index).getFloatId());
+
+
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
+    Assertions.assertTrue(stringExecutor.evaluate(formatter.parse(dataSet.get(index).packed)));
+    Assertions.assertTrue(longExecutor.evaluate(formatter.parse(dataSet.get(index).packed)));
+    Assertions.assertTrue(intExecutor.evaluate(formatter.parse(dataSet.get(index).packed)));
+    Assertions.assertTrue(doubleExecutor.evaluate(formatter.parse(dataSet.get(index).packed)));
+    Assertions.assertTrue(floatExecutor.evaluate(formatter.parse(dataSet.get(index).packed)));
   }
 
   private void validateValues(Object lhs, Object rhs){

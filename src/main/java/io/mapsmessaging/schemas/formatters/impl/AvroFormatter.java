@@ -77,8 +77,7 @@ public class AvroFormatter implements MessageFormatter {
     GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
     writer.write(genericRecord, binaryEncoder);
     binaryEncoder.flush();
-    byte[] data = stream.toByteArray();
-    return new JSONObject(new String(data));
+    return new JSONObject(stream.toString());
   }
 
   @Override

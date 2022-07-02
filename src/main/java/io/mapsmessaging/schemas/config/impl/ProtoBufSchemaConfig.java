@@ -16,6 +16,9 @@
  */
 package io.mapsmessaging.schemas.config.impl;
 
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.PROTOBUF_DESCRIPTOR_NOT_DEFINED;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.PROTOBUF_MESSAGE_NAME_NOT_DEFINED;
+
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.io.IOException;
 import java.util.Base64;
@@ -52,9 +55,11 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
   @Override
   protected JSONObject packData() throws IOException {
     if(descriptorValue == null || descriptorValue.length == 0){
+      logger.log(PROTOBUF_DESCRIPTOR_NOT_DEFINED, format, uniqueId);
       throw new IOException("No descriptor specified");
     }
     if(messageName == null || messageName.length() == 0){
+      logger.log(PROTOBUF_MESSAGE_NAME_NOT_DEFINED, format, uniqueId);
       throw new IOException("No message name specified");
     }
 

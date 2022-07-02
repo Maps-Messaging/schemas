@@ -17,6 +17,8 @@
 
 package io.mapsmessaging.schemas.config.impl;
 
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.NATIVE_TYPE_UNKNOWN;
+
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.io.IOException;
 import java.util.Map;
@@ -68,14 +70,15 @@ public class NativeSchemaConfig extends SimpleSchemaConfig {
         break;
 
       default:
+        logger.log(NATIVE_TYPE_UNKNOWN, getFormat(), uniqueId);
         type = TYPE.STRING;
-
     }
   }
 
   @Override
   protected JSONObject packData() throws IOException {
     if(type == null){
+      logger.log(NATIVE_TYPE_UNKNOWN, getFormat(), uniqueId);
       throw new IOException("No type defined specified");
     }
     JSONObject data = new JSONObject();

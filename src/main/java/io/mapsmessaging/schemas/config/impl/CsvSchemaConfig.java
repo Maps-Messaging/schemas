@@ -17,6 +17,9 @@
 
 package io.mapsmessaging.schemas.config.impl;
 
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.AVRO_SCHEMA_NOT_DEFINED;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.CSV_HEADER_NOT_DEFINED;
+
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.io.IOException;
 import java.util.Map;
@@ -51,6 +54,7 @@ public class CsvSchemaConfig extends SchemaConfig {
   @Override
   protected JSONObject packData() throws IOException {
     if(headerValues == null || headerValues.length() == 0){
+      logger.log(CSV_HEADER_NOT_DEFINED, format, uniqueId);
       throw new IOException("No header specified");
     }
     JSONObject data = new JSONObject();

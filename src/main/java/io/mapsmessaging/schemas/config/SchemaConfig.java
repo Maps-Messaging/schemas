@@ -21,6 +21,8 @@ import static io.mapsmessaging.schemas.config.Constants.FORMAT;
 import static io.mapsmessaging.schemas.config.Constants.NOT_BEFORE;
 import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
 
+import io.mapsmessaging.logging.Logger;
+import io.mapsmessaging.logging.LoggerFactory;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -31,12 +33,14 @@ import org.json.JSONObject;
 
 public abstract class SchemaConfig {
 
+  protected Logger logger;
+
   @Getter
-  private final String format;
+  protected final String format;
 
   @Getter
   @Setter
-  private UUID uniqueId;
+  protected UUID uniqueId;
 
   @Getter
   @Setter
@@ -48,10 +52,11 @@ public abstract class SchemaConfig {
 
   protected SchemaConfig(String format) {
     this.format = format;
+    logger = LoggerFactory.getLogger(SchemaConfig.class);
   }
 
   protected SchemaConfig(String format, Map<String, Object> config){
-    this.format = format;
+    this(format);
     uniqueId = UUID.fromString(config.get(io.mapsmessaging.schemas.config.Constants.UUID).toString());
     if(config.containsKey(EXPIRES_AFTER)){
       expiresAfter = LocalDateTime.parse(config.get(EXPIRES_AFTER).toString());

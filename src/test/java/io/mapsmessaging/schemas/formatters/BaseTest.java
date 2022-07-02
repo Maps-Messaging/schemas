@@ -78,7 +78,7 @@ public abstract class BaseTest {
 
   @BeforeAll
   static void createData(){
-    data = createList(1_000_000);
+    data = createList(1_000);
   }
 
   abstract List<byte[]> packList(List<Person>  list) throws IOException;

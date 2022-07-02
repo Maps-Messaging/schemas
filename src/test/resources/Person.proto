@@ -7,7 +7,7 @@
 // https://developers.google.com/protocol-buffers/docs/tutorials
 
 // [START declaration]
-syntax = "proto3";
+syntax = "proto2";
 package io.mapsmessaging.schemas.formatters;
 // [END declaration]
 
@@ -19,11 +19,11 @@ option java_outer_classname = "PersonProto";
 
 // [START messages]
 message Person {
-  string stringId = 1;
-  int64 longId = 2;
-  int32 intId = 3;
-  float floatId = 4;
-  double doubleId = 5;
+  required string stringId = 1;
+  required int64 longId = 2;
+  required int32 intId = 3;
+  required float floatId = 4;
+  required double doubleId = 5;
 
 
 }

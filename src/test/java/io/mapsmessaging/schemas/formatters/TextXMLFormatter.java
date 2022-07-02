@@ -54,7 +54,7 @@ public class TextXMLFormatter extends BaseTest{
   @Override
   SchemaConfig getSchema() throws IOException {
     XmlSchemaConfig xmlSchemaConfig = new XmlSchemaConfig();
-    xmlSchemaConfig.setRoot("person");
+    xmlSchemaConfig.setRootEntry("person");
     return xmlSchemaConfig;
   }
 }

@@ -31,7 +31,7 @@ public class CsvSchemaConfig extends SchemaConfig {
 
   @Getter
   @Setter
-  private String header;
+  private String headerValues;
 
   public CsvSchemaConfig() {
     super(NAME);
@@ -39,23 +39,23 @@ public class CsvSchemaConfig extends SchemaConfig {
 
   public CsvSchemaConfig(String header) {
     super(NAME);
-    this.header = header;
+    this.headerValues = header;
   }
 
   protected CsvSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
-    this.header = config.getOrDefault(HEADER, "").toString();
+    this.headerValues = config.getOrDefault(HEADER, "").toString();
   }
 
 
   @Override
   protected JSONObject packData() throws IOException {
-    if(header == null || header.length() == 0){
+    if(headerValues == null || headerValues.length() == 0){
       throw new IOException("No header specified");
     }
     JSONObject data = new JSONObject();
     packData(data);
-    data.put(HEADER, header);
+    data.put(HEADER, headerValues);
     return data;
   }
 

@@ -65,6 +65,7 @@ public class ProtoBufFormatter implements MessageFormatter {
     return "ProtoBuf";
   }
 
+  @Override
   public ParsedObject parse(byte[] payload) {
     try {
       DynamicMessage message = DynamicMessage.parseFrom(descriptor.findMessageTypeByName(messageName), payload);
@@ -82,6 +83,7 @@ public class ProtoBufFormatter implements MessageFormatter {
     return convertToJson(dynamicMessage);
   }
 
+  @Override
   public byte[] pack(Object object) throws IOException {
     if (object instanceof com.google.protobuf.GeneratedMessageV3) {
       return ((com.google.protobuf.GeneratedMessageV3) object).toByteArray();
@@ -92,7 +94,7 @@ public class ProtoBufFormatter implements MessageFormatter {
   @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     ProtoBufSchemaConfig protoBufSchemaConfig = (ProtoBufSchemaConfig) config;
-    return new ProtoBufFormatter(protoBufSchemaConfig.getMessageName(), protoBufSchemaConfig.getDescriptor());
+    return new ProtoBufFormatter(protoBufSchemaConfig.getMessageName(), protoBufSchemaConfig.getDescriptorValue());
   }
 
   private FileDescriptor loadDescFile(byte[] descriptorImage) throws IOException, DescriptorValidationException {

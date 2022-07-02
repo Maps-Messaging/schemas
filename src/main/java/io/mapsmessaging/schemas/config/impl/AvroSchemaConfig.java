@@ -29,7 +29,7 @@ import org.json.JSONObject;
 
 public class AvroSchemaConfig extends SchemaConfig {
 
-  public static String NAME = "AVRO";
+  private static final String NAME = "AVRO";
 
   @Getter
   @Setter

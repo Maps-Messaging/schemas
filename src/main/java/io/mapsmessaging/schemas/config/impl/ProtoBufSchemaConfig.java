@@ -32,7 +32,7 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
 
   @Getter
   @Setter
-  private byte[] descriptor;
+  private byte[] descriptorValue;
 
   @Getter
   @Setter
@@ -45,13 +45,13 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
   protected ProtoBufSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
     messageName = config.getOrDefault(MESSAGE_NAME, "").toString();
-    descriptor = Base64.getDecoder().decode(config.getOrDefault(DESCRIPTOR, "").toString());
+    descriptorValue = Base64.getDecoder().decode(config.getOrDefault(DESCRIPTOR, "").toString());
   }
 
 
   @Override
   protected JSONObject packData() throws IOException {
-    if(descriptor == null || descriptor.length == 0){
+    if(descriptorValue == null || descriptorValue.length == 0){
       throw new IOException("No descriptor specified");
     }
     if(messageName == null || messageName.length() == 0){
@@ -60,7 +60,7 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
 
     JSONObject data = new JSONObject();
     packData(data);
-    data.put(DESCRIPTOR, new String(Base64.getEncoder().encode(descriptor)));
+    data.put(DESCRIPTOR, new String(Base64.getEncoder().encode(descriptorValue)));
     data.put(MESSAGE_NAME, messageName);
     return data;
   }

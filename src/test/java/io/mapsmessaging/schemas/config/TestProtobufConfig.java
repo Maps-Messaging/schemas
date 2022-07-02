@@ -40,7 +40,7 @@ class TestProtobufConfig extends GeneralBaseTest {
   void validate(SchemaConfig schemaConfig) {
     Assertions.assertTrue(schemaConfig instanceof ProtoBufSchemaConfig);
     ProtoBufSchemaConfig config = (ProtoBufSchemaConfig) schemaConfig;
-    Assertions.assertArrayEquals(getDescriptor(), config.getDescriptor());
+    Assertions.assertArrayEquals(getDescriptor(), config.getDescriptorValue());
     Assertions.assertEquals("Person", config.getMessageName());
   }
 

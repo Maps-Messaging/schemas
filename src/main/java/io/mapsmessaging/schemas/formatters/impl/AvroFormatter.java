@@ -57,6 +57,7 @@ public class AvroFormatter implements MessageFormatter {
     datumReader = new GenericDatumReader<>(schema);
   }
 
+  @Override
   public synchronized ParsedObject parse(byte[] payload){
     try {
       decoder = DecoderFactory.get().binaryDecoder(payload, decoder);
@@ -76,10 +77,10 @@ public class AvroFormatter implements MessageFormatter {
     GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
     writer.write(genericRecord, binaryEncoder);
     binaryEncoder.flush();
-    byte[] data = stream.toByteArray();
-    return new JSONObject(new String(data));
+    return new JSONObject(stream.toString());
   }
 
+  @Override
   public byte[] pack(Object object) throws IOException {
     String toPack = null;
     if (object instanceof String) {

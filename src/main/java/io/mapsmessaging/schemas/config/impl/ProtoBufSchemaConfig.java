@@ -16,6 +16,9 @@
  */
 package io.mapsmessaging.schemas.config.impl;
 
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.PROTOBUF_DESCRIPTOR_NOT_DEFINED;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.PROTOBUF_MESSAGE_NAME_NOT_DEFINED;
+
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.io.IOException;
 import java.util.Base64;
@@ -32,7 +35,7 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
 
   @Getter
   @Setter
-  private byte[] descriptor;
+  private byte[] descriptorValue;
 
   @Getter
   @Setter
@@ -45,22 +48,24 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
   protected ProtoBufSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
     messageName = config.getOrDefault(MESSAGE_NAME, "").toString();
-    descriptor = Base64.getDecoder().decode(config.getOrDefault(DESCRIPTOR, "").toString());
+    descriptorValue = Base64.getDecoder().decode(config.getOrDefault(DESCRIPTOR, "").toString());
   }
 
 
   @Override
   protected JSONObject packData() throws IOException {
-    if(descriptor == null || descriptor.length == 0){
+    if(descriptorValue == null || descriptorValue.length == 0){
+      logger.log(PROTOBUF_DESCRIPTOR_NOT_DEFINED, format, uniqueId);
       throw new IOException("No descriptor specified");
     }
     if(messageName == null || messageName.length() == 0){
+      logger.log(PROTOBUF_MESSAGE_NAME_NOT_DEFINED, format, uniqueId);
       throw new IOException("No message name specified");
     }
 
     JSONObject data = new JSONObject();
     packData(data);
-    data.put(DESCRIPTOR, new String(Base64.getEncoder().encode(descriptor)));
+    data.put(DESCRIPTOR, new String(Base64.getEncoder().encode(descriptorValue)));
     data.put(MESSAGE_NAME, messageName);
     return data;
   }

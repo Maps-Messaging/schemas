@@ -58,7 +58,7 @@ public class XmlFormatter implements MessageFormatter {
       dbf.setValidating(config.isValidating());
       dbf.setCoalescing(config.isCoalescing());
       parser = dbf.newDocumentBuilder();
-      root = config.getRoot();
+      root = config.getRootEntry();
     } catch (ParserConfigurationException e) {
       throw new IOException(e);
     }
@@ -78,13 +78,15 @@ public class XmlFormatter implements MessageFormatter {
     try {
       Document document = parser.parse(new ByteArrayInputStream(payload));
       Map<String, Object> map = parseToJson(payload).toMap();
-      map = (Map) map.get(root);
+      map = (Map<String, Object>) map.get(root);
       return new StructuredResolver(new MapResolver(map), document);
     } catch (IOException| SAXException e) {
+
     }
     return null;
   }
 
+  @Override
   public byte[] pack(Object object) throws IOException {
     String toPack = null;
     if (object instanceof String) {
@@ -95,7 +97,7 @@ public class XmlFormatter implements MessageFormatter {
         DOMSource domSource = new DOMSource((Document) object);
         StringWriter writer = new StringWriter();
         StreamResult result = new StreamResult(writer);
-        TransformerFactory tf = TransformerFactory.newInstance();
+        TransformerFactory tf = TransformerFactory.newDefaultInstance();
         Transformer transformer = tf.newTransformer();
         transformer.transform(domSource, result);
         toPack = writer.toString();

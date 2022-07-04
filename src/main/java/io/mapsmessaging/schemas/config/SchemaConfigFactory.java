@@ -20,14 +20,17 @@ package io.mapsmessaging.schemas.config;
 import static io.mapsmessaging.schemas.config.Constants.DEFAULT_FORMAT;
 import static io.mapsmessaging.schemas.config.Constants.FORMAT;
 import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.SCHEMA_CONFIG_FACTORY_INVALID_CONFIG;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND;
 
+import io.mapsmessaging.logging.Logger;
+import io.mapsmessaging.logging.LoggerFactory;
 import java.io.IOException;
 import java.util.Map;
 import java.util.ServiceLoader;
 import org.json.JSONObject;
 
 public class SchemaConfigFactory {
-
 
 
   private static final SchemaConfigFactory instance = new SchemaConfigFactory();
@@ -37,6 +40,7 @@ public class SchemaConfigFactory {
   }
 
   private final ServiceLoader<SchemaConfig> schemaConfigServiceLoader;
+  private final Logger logger;
 
   public SchemaConfig constructConfig(Map<String, Object> properties) throws IOException {
     if(properties.containsKey(SCHEMA)){
@@ -51,6 +55,7 @@ public class SchemaConfigFactory {
         }
       }
     }
+    logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
     throw new IOException("Unknown schema config found");
   }
 
@@ -61,11 +66,13 @@ public class SchemaConfigFactory {
   public SchemaConfig constructConfig(String payload) throws IOException {
     JSONObject schemaJson = new JSONObject(payload);
     if (!schemaJson.has(SCHEMA)) {
+      logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
       throw new IOException("Not a valid schema config");
     }
 
     schemaJson = schemaJson.getJSONObject(SCHEMA);
     if (!schemaJson.has(FORMAT)) {
+      logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
       throw new IOException("Not a valid schema config");
     }
 
@@ -75,11 +82,13 @@ public class SchemaConfigFactory {
         return config.getInstance(schemaJson.toMap());
       }
     }
+    logger.log(SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND, formatName);
     throw new IOException("Unknown schema config found");
   }
 
   private SchemaConfigFactory() {
     schemaConfigServiceLoader = ServiceLoader.load(SchemaConfig.class);
+    logger = LoggerFactory.getLogger(SchemaConfigFactory.class);
   }
 
 }

@@ -35,6 +35,6 @@ class TestCsvConfig extends GeneralBaseTest {
   void validate(SchemaConfig schemaConfig) {
     Assertions.assertTrue(schemaConfig instanceof CsvSchemaConfig);
     CsvSchemaConfig config = (CsvSchemaConfig) schemaConfig;
-    Assertions.assertEquals("name, id, email", config.getHeader());
+    Assertions.assertEquals("name, id, email", config.getHeaderValues());
   }
 }

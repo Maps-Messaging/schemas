@@ -18,6 +18,7 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.AVRO_SCHEMA_NOT_DEFINED;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.io.IOException;
@@ -29,7 +30,7 @@ import org.json.JSONObject;
 
 public class AvroSchemaConfig extends SchemaConfig {
 
-  public static String NAME = "AVRO";
+  private static final String NAME = "AVRO";
 
   @Getter
   @Setter
@@ -48,6 +49,7 @@ public class AvroSchemaConfig extends SchemaConfig {
   @Override
   protected JSONObject packData() throws IOException{
     if(schema == null || schema.length() == 0){
+      logger.log(AVRO_SCHEMA_NOT_DEFINED, format, uniqueId);
       throw new IOException("No schema specified");
     }
     JSONObject data = new JSONObject();

@@ -56,6 +56,7 @@ public class CsvFormatter implements MessageFormatter {
 
   }
 
+  @Override
   public synchronized ParsedObject parse(byte[] payload) {
     String[] values = parser.parseLine(new String(payload));
     Map<String, Object> map = new LinkedHashMap<>();
@@ -71,6 +72,7 @@ public class CsvFormatter implements MessageFormatter {
     return new JSONObject(map);
   }
 
+  @Override
   public byte[] pack(Object object) throws IOException {
     String toPack = null;
     if (object instanceof String) {
@@ -109,7 +111,7 @@ public class CsvFormatter implements MessageFormatter {
   @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     CsvSchemaConfig csvSchemaConfig = (CsvSchemaConfig) config;
-    return new CsvFormatter(csvSchemaConfig.getHeader());
+    return new CsvFormatter(csvSchemaConfig.getHeaderValues());
   }
 
   @Override

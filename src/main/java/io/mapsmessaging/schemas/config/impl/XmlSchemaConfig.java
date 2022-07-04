@@ -32,7 +32,7 @@ public class XmlSchemaConfig extends SimpleSchemaConfig {
 
   @Getter
   @Setter
-  private String root;
+  private String rootEntry;
 
   @Getter
   @Setter
@@ -52,7 +52,7 @@ public class XmlSchemaConfig extends SimpleSchemaConfig {
 
   private XmlSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
-    root = config.getOrDefault("root", "").toString();
+    rootEntry = config.getOrDefault("root", "").toString();
     namespaceAware = (Boolean) config.getOrDefault(NAMESPACE_AWARE, false);
     validating = (Boolean) config.getOrDefault(VALIDATING, false);
     coalescing = (Boolean) config.getOrDefault(COALESCING, false);
@@ -66,7 +66,7 @@ public class XmlSchemaConfig extends SimpleSchemaConfig {
   protected JSONObject packData() {
     JSONObject data = new JSONObject();
     packData(data);
-    data.put(ROOT, root);
+    data.put(ROOT, rootEntry);
     data.put(NAMESPACE_AWARE, namespaceAware);
     data.put(VALIDATING, validating);
     data.put(COALESCING, coalescing);

@@ -20,7 +20,6 @@ package io.mapsmessaging.schemas.formatters.walker;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import java.util.List;
 import java.util.Map;
-import java.util.function.IntPredicate;
 
 public class MapResolver implements ParsedObject {
 
@@ -51,22 +50,26 @@ public class MapResolver implements ParsedObject {
           return null;
         }
       }
-      if(val instanceof Map){
-        return new MapResolver((Map)val);
-      }
-      if(val instanceof String){
-        try {
-          return Long.parseLong((String) val);
-        } catch (NumberFormatException e) {
-        }
-        try {
-          return Double.parseDouble((String) val);
-        } catch (NumberFormatException e) {
-        }
-      }
-      return val;
+      return parseValue(val);
     }
     return null;
+  }
+
+  private Object parseValue(Object val){
+    if(val instanceof Map){
+      return new MapResolver((Map)val);
+    }
+    if(val instanceof String){
+      try {
+        return Long.parseLong((String) val);
+      } catch (NumberFormatException e) {
+      }
+      try {
+        return Double.parseDouble((String) val);
+      } catch (NumberFormatException e) {
+      }
+    }
+    return val;
   }
 
   @Override

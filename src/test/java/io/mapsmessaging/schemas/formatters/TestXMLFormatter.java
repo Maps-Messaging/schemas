@@ -24,8 +24,8 @@ import java.util.List;
 import org.json.JSONObject;
 import org.json.XML;
 
-public class TextXMLFormatter extends BaseTest{
-  byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws IOException {
+public class TestXMLFormatter extends BaseTest{
+  byte[] pack(io.mapsmessaging.schemas.formatters.Person p) {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put("stringId", p.getStringId());
     jsonObject.put("longId", p.getLongId());
@@ -52,9 +52,9 @@ public class TextXMLFormatter extends BaseTest{
     return packed;
   }
   @Override
-  SchemaConfig getSchema() throws IOException {
+  SchemaConfig getSchema() {
     XmlSchemaConfig xmlSchemaConfig = new XmlSchemaConfig();
-    xmlSchemaConfig.setRoot("person");
+    xmlSchemaConfig.setRootEntry("person");
     return xmlSchemaConfig;
   }
 }

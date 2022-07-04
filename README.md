@@ -15,3 +15,4 @@ Current supported protocols are
 | RAW       | Opaque data load            | This schema does no field loading                               |
 | Native    | Single Native Java types    | This schema supports single value like what a sensor might send |
 
+[![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/summary/new_code?id=Schemas)

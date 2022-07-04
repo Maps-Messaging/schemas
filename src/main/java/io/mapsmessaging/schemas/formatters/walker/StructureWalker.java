@@ -53,4 +53,6 @@ public class StructureWalker {
     }
     return lookup.toString();
   }
+
+  private StructureWalker(){}
 }

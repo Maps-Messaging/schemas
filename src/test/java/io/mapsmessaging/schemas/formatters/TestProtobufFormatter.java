@@ -59,7 +59,7 @@ public class TestProtobufFormatter extends BaseTest {
       baos.write(tmp, 0, len);
     }
     ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
-    config.setDescriptor(baos.toByteArray());
+    config.setDescriptorValue(baos.toByteArray());
     config.setMessageName("Person");
     return config;
   }

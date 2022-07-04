@@ -31,6 +31,7 @@ public class JsonFormatter implements MessageFormatter {
   public JsonFormatter() {
   }
 
+  @Override
   public ParsedObject parse(byte[] payload) {
     JSONObject json = new JSONObject(new String(payload));
     return new StructuredResolver(new MapResolver(json.toMap()), json);
@@ -41,6 +42,7 @@ public class JsonFormatter implements MessageFormatter {
     return (JSONObject) parse(payload);
   }
 
+  @Override
   public byte[] pack(Object object) throws IOException {
     String toPack = null;
     if (object instanceof String) {

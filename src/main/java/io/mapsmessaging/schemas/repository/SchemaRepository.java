@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public interface SchemaRepository {
 
-  void addSchema(String context, SchemaConfig config);
+  SchemaConfig addSchema(String context, SchemaConfig config);
 
   SchemaConfig getSchema(UUID uuid);
 

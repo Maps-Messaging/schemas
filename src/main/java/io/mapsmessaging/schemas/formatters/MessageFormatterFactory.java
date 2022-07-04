@@ -19,20 +19,26 @@ package io.mapsmessaging.schemas.formatters;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ServiceLoader;
 
 public class MessageFormatterFactory {
 
-  private static final MessageFormatterFactory instance = new MessageFormatterFactory();
+  private static final MessageFormatterFactory instance;
+
+  static{
+    instance = new MessageFormatterFactory();
+  }
 
   public static MessageFormatterFactory getInstance() {
     return instance;
   }
 
-  private final ServiceLoader<MessageFormatter> messageFormatterServiceLoader;
+  private final List<MessageFormatter> messageFormatters;
 
   public MessageFormatter getFormatter(SchemaConfig config) throws IOException {
-    for (MessageFormatter formatter : messageFormatterServiceLoader) {
+    for (MessageFormatter formatter : messageFormatters) {
       if (formatter.getName().equalsIgnoreCase(config.getFormat())) {
         return formatter.getInstance(config);
       }
@@ -41,9 +47,11 @@ public class MessageFormatterFactory {
   }
 
   private MessageFormatterFactory() {
-    messageFormatterServiceLoader = ServiceLoader.load(MessageFormatter.class);
+    messageFormatters = new ArrayList<>();
+    ServiceLoader<MessageFormatter> messageFormatterServiceLoader = ServiceLoader.load(MessageFormatter.class);
+    for(MessageFormatter messageFormatter:messageFormatterServiceLoader){
+      messageFormatters.add(messageFormatter);
+    }
   }
-
-
 }
 

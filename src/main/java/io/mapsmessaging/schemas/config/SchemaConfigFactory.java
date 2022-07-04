@@ -26,6 +26,8 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.SCHEMA_CONFIG_F
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import org.json.JSONObject;
@@ -33,13 +35,16 @@ import org.json.JSONObject;
 public class SchemaConfigFactory {
 
 
-  private static final SchemaConfigFactory instance = new SchemaConfigFactory();
+  private static final SchemaConfigFactory instance;
+  static{
+    instance = new SchemaConfigFactory();
+  }
 
   public static SchemaConfigFactory getInstance() {
     return instance;
   }
 
-  private final ServiceLoader<SchemaConfig> schemaConfigServiceLoader;
+  private final List<SchemaConfig> schemaConfigs;
   private final Logger logger;
 
   public SchemaConfig constructConfig(Map<String, Object> properties) throws IOException {
@@ -49,7 +54,7 @@ public class SchemaConfigFactory {
       if(formatName == null){
         formatName = DEFAULT_FORMAT;
       }
-      for (SchemaConfig config : schemaConfigServiceLoader) {
+      for (SchemaConfig config : schemaConfigs) {
         if (config.getFormat().equalsIgnoreCase(formatName.toString())) {
           return config.getInstance(formatMap);
         }
@@ -77,7 +82,7 @@ public class SchemaConfigFactory {
     }
 
     String formatName = schemaJson.getString(FORMAT);
-    for (SchemaConfig config : schemaConfigServiceLoader) {
+    for (SchemaConfig config : schemaConfigs) {
       if (config.getFormat().equalsIgnoreCase(formatName)) {
         return config.getInstance(schemaJson.toMap());
       }
@@ -87,7 +92,11 @@ public class SchemaConfigFactory {
   }
 
   private SchemaConfigFactory() {
-    schemaConfigServiceLoader = ServiceLoader.load(SchemaConfig.class);
+    schemaConfigs = new ArrayList<>();
+    ServiceLoader<SchemaConfig> schemaConfigServiceLoader = ServiceLoader.load(SchemaConfig.class);
+    for(SchemaConfig config:schemaConfigServiceLoader){
+      schemaConfigs.add(config);
+    }
     logger = LoggerFactory.getLogger(SchemaConfigFactory.class);
   }
 

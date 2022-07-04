@@ -67,9 +67,17 @@ public abstract class SchemaConfig {
   }
 
   public String pack() throws IOException {
+    return packtoJSON().toString(2);
+  }
+
+  public Map<String, Object> toMap() throws IOException {
+    return packtoJSON().toMap();
+  }
+
+  private JSONObject packtoJSON() throws IOException {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put(SCHEMA, packData());
-    return jsonObject.toString(2);
+    return jsonObject;
   }
 
   protected void packData(JSONObject jsonObject) {

@@ -49,7 +49,7 @@ public class MapResolver implements ParsedObject {
       if (val instanceof List && isArray) {
         String index = s.substring(s.indexOf("[") + 1, s.indexOf("]"));
         var idx = Integer.parseInt(index.trim());
-        List vList = (List) val;
+        List<Object> vList = (List<Object>) val;
         if (vList.size() > idx) {
           val = vList.get(idx);
         } else {
@@ -63,7 +63,7 @@ public class MapResolver implements ParsedObject {
 
   private Object parseValue(Object val) {
     if (val instanceof Map) {
-      return new MapResolver((Map) val);
+      return new MapResolver((Map<String, Object>) val);
     }
     if (val instanceof String && parseStringNumerics) {
       try {

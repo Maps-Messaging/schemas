@@ -39,7 +39,7 @@ public class JsonFormatter extends MessageFormatter {
 
   @Override
   public JSONObject parseToJson(byte[] payload) throws IOException {
-    return (JSONObject) parse(payload);
+    return new JSONObject(new String(payload));
   }
 
   @Override

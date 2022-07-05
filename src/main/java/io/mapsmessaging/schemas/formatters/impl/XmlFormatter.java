@@ -69,7 +69,11 @@ public class XmlFormatter extends MessageFormatter {
 
   @Override
   public JSONObject parseToJson(byte[] payload) {
-    return XML.toJSONObject(new String(payload));
+    JSONObject jsonObject = XML.toJSONObject(new String(payload));
+    if (root != null && root.length() > 0) {
+      return jsonObject.getJSONObject(root);
+    }
+    return jsonObject;
   }
 
   @Override
@@ -77,7 +81,9 @@ public class XmlFormatter extends MessageFormatter {
     try {
       Document document = parser.parse(new ByteArrayInputStream(payload));
       Map<String, Object> map = parseToJson(payload).toMap();
-      map = (Map<String, Object>) map.get(root);
+      if (root != null && root.length() > 0 && map.containsKey(root)) {
+        map = (Map<String, Object>) map.get(root);
+      }
       return new StructuredResolver(new MapResolver(map), document);
     } catch (IOException | SAXException e) {
       logger.log(XML_PARSE_EXCEPTION, getName(), e);

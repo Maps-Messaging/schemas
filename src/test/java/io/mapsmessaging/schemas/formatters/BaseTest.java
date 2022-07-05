@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -80,6 +81,24 @@ public abstract class BaseTest {
 
   abstract SchemaConfig getSchema() throws IOException;
 
+
+  @Test
+  void testFormatterToJSON() throws IOException {
+    List<byte[]> packed = packList(data);
+    SchemaConfig schemaConfig = getSchema();
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
+    for (int x = 0; x < data.size(); x++) {
+      Person p = data.get(x);
+      JSONObject jsonObject = formatter.parseToJson(packed.get(x));
+      validateValues(p.getStringId(), jsonObject.get("stringId"));
+      validateValues(p.getLongId(), jsonObject.get("longId"));
+      validateValues(p.getIntId(), jsonObject.get("intId"));
+      validateValues(p.getFloatId(), jsonObject.get("floatId"));
+      validateValues(p.getDoubleId(), jsonObject.get("doubleId"));
+    }
+  }
+
+
   @Test
   void testFormatters() throws IOException {
     long start = System.currentTimeMillis();
@@ -106,9 +125,7 @@ public abstract class BaseTest {
       unitWork = unitWork * 1000f;
       scale++;
     }
-
     System.err.println("Time per event " + unitWork + UNIT[scale]);
-
   }
 
   @Test
@@ -181,13 +198,13 @@ public abstract class BaseTest {
 
   @Test
   void testFilteringLookup() throws IOException, ParseException {
-    Faker faker = new Faker();
     List<byte[]> packed = packList(data);
     List<DataSet> dataSet = new ArrayList<>();
     for (int x = 0; x < data.size(); x++) {
       dataSet.add(new DataSet(data.get(x), packed.get(x)));
     }
     SchemaConfig schemaConfig = getSchema();
+    Faker faker = new Faker();
     int index = faker.random().nextInt(0, data.size());
 
     ParserExecutor stringExecutor = SelectorParser.compile("stringId = '" + data.get(index).getStringId() + "'");
@@ -205,13 +222,17 @@ public abstract class BaseTest {
   }
 
   private void validateValues(Object lhs, Object rhs) {
-    if (lhs instanceof Float && rhs instanceof Double) {
-      rhs = ((Double) rhs).floatValue();
-    }
-    BigDecimal vlhs = convert(lhs);
-    BigDecimal vrhs = convert(rhs);
+    if (lhs instanceof String) {
+      Assertions.assertEquals(lhs.toString(), rhs.toString());
+    } else {
+      if (lhs instanceof Float && rhs instanceof Double) {
+        rhs = ((Double) rhs).floatValue();
+      }
+      BigDecimal vlhs = convert(lhs);
+      BigDecimal vrhs = convert(rhs);
 
-    Assertions.assertEquals(vlhs, vrhs);
+      Assertions.assertEquals(vlhs, vrhs);
+    }
   }
 
   BigDecimal convert(Object obj) {
@@ -225,7 +246,10 @@ public abstract class BaseTest {
       return new BigDecimal((Integer) obj);
     }
     if (obj instanceof Float) {
-      return BigDecimal.valueOf((Float) obj);
+      return new BigDecimal(obj.toString());
+    }
+    if (obj instanceof BigDecimal) {
+      return (BigDecimal) obj;
     }
     return null;
   }

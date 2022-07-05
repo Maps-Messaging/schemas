@@ -60,18 +60,17 @@ public class CsvFormatter extends MessageFormatter {
 
   @Override
   public synchronized ParsedObject parse(byte[] payload) {
-    String[] values = parser.parseLine(new String(payload));
-    Map<String, Object> map = new LinkedHashMap<>();
-    for (int x = 0; x < (Math.min(values.length, keys.length)); x++) {
-      map.put(keys[x], values[x]);
-    }
-    return new MapResolver(map, interpretNumericStrings);
+    return new MapResolver(parseToMap(payload), interpretNumericStrings);
   }
 
   @Override
   public JSONObject parseToJson(byte[] payload) throws IOException {
-    Map<String, Object> map = (Map) parse(payload);
-    return new JSONObject(map);
+    ParsedObject parsedObject = parse(payload);
+    JSONObject jsonObject = new JSONObject();
+    for (String key : keys) {
+      jsonObject.put(key, parsedObject.get(key));
+    }
+    return jsonObject;
   }
 
   @Override
@@ -83,6 +82,15 @@ public class CsvFormatter extends MessageFormatter {
   @Override
   public String getName() {
     return "CSV";
+  }
+
+  private Map<String, Object> parseToMap(byte[] payload) {
+    String[] values = parser.parseLine(new String(payload));
+    Map<String, Object> map = new LinkedHashMap<>();
+    for (int x = 0; x < (Math.min(values.length, keys.length)); x++) {
+      map.put(keys[x], values[x]);
+    }
+    return map;
   }
 
 }

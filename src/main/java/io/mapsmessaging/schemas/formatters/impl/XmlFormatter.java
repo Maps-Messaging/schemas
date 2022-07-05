@@ -71,7 +71,7 @@ public class XmlFormatter extends MessageFormatter {
   public JSONObject parseToJson(byte[] payload) {
     JSONObject jsonObject = XML.toJSONObject(new String(payload));
     if (root != null && root.length() > 0) {
-      return jsonObject.getJSONObject(root);
+      jsonObject = jsonObject.getJSONObject(root);
     }
     return jsonObject;
   }

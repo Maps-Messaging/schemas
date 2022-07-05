@@ -11,7 +11,7 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class TestNativeConfig extends GeneralBaseTest {
+class TestNativeConfig extends GeneralBaseTest {
 
   Map<String, Object> getProperties() {
     Map<String, Object> props = new LinkedHashMap<>();

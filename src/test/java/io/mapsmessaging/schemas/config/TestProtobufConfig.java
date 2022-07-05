@@ -20,6 +20,7 @@ package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.Base64;
@@ -30,7 +31,7 @@ import org.junit.jupiter.api.Assertions;
 
 class TestProtobufConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties() {
+  Map<String, Object> getProperties() throws IOException {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "ProtoBuf");
     props.put("descriptor", new String(Base64.getEncoder().encode(getDescriptor())));
@@ -39,7 +40,7 @@ class TestProtobufConfig extends GeneralBaseTest {
   }
 
   @Override
-  SchemaConfig buildConfig() {
+  SchemaConfig buildConfig() throws IOException {
     ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
     config.setDescriptorValue(getDescriptor());
     config.setMessageName("Person");
@@ -50,7 +51,7 @@ class TestProtobufConfig extends GeneralBaseTest {
   }
 
   @Override
-  void validate(SchemaConfig schemaConfig) {
+  void validate(SchemaConfig schemaConfig) throws IOException {
     Assertions.assertTrue(schemaConfig instanceof ProtoBufSchemaConfig);
     ProtoBufSchemaConfig config = (ProtoBufSchemaConfig) schemaConfig;
     Assertions.assertArrayEquals(getDescriptor(), config.getDescriptorValue());
@@ -58,13 +59,12 @@ class TestProtobufConfig extends GeneralBaseTest {
   }
 
 
-  private byte[] getDescriptor() {
+  private byte[] getDescriptor() throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
     byte[] tmp = new byte[10240];
     try (InputStream fis = TestProtobufConfig.class.getClassLoader().getResourceAsStream("Person.desc")) {
       int len = fis.read(tmp);
       baos.write(tmp, 0, len);
-    } catch (Exception ex) {
     }
     return baos.toByteArray();
   }

@@ -27,20 +27,20 @@ import org.junit.jupiter.api.Test;
 
 public abstract class GeneralBaseTest {
 
-  abstract Map<String, Object> getProperties();
+  abstract Map<String, Object> getProperties() throws IOException;
 
-  abstract SchemaConfig buildConfig();
+  abstract SchemaConfig buildConfig() throws IOException;
 
-  abstract void validate(SchemaConfig schemaConfig);
+  abstract void validate(SchemaConfig schemaConfig) throws IOException;
 
-  void validateSchema(SchemaConfig schemaConfig) {
+  void validateSchema(SchemaConfig schemaConfig) throws IOException {
     validate(schemaConfig);
     Assertions.assertTrue(schemaConfig.getExpiresAfter().isAfter(LocalDateTime.now()));
     Assertions.assertTrue(schemaConfig.getNotBefore().isBefore(LocalDateTime.now()));
     Assertions.assertNotNull(schemaConfig.getUniqueId());
   }
 
-  Map<String, Object> getSchemaProperties() {
+  Map<String, Object> getSchemaProperties() throws IOException {
     Map<String, Object> schema = new LinkedHashMap<>();
     Map<String, Object> props = getProperties();
     props.put("uuid", UUID.randomUUID());
@@ -51,7 +51,7 @@ public abstract class GeneralBaseTest {
   }
 
   @Test
-  void validateBaseConstructor() {
+  void validateBaseConstructor() throws IOException {
     SchemaConfig schemaConfig = buildConfig();
     validate(schemaConfig);
     validateSchema(schemaConfig);

@@ -19,6 +19,7 @@ package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.Base64;
@@ -26,21 +27,21 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class TestAvroConfig extends GeneralBaseTest {
 
-  public static String getSchema() {
+  public static String getSchema() throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
     byte[] tmp = new byte[10240];
     try (InputStream fis = TestProtobufConfig.class.getClassLoader().getResourceAsStream("avro/Person.avsc")) {
       int len = fis.read(tmp);
       baos.write(tmp, 0, len);
-    } catch (Exception ex) {
     }
     return baos.toString();
   }
 
-  Map<String, Object> getProperties() {
+  Map<String, Object> getProperties() throws IOException {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "AVRO");
     props.put("schema", new String(Base64.getEncoder().encode(getSchema().getBytes())));
@@ -48,7 +49,7 @@ public class TestAvroConfig extends GeneralBaseTest {
   }
 
   @Override
-  SchemaConfig buildConfig() {
+  SchemaConfig buildConfig() throws IOException {
     AvroSchemaConfig config = new AvroSchemaConfig();
     config.setSchema(getSchema());
     config.setUniqueId(UUID.randomUUID());
@@ -58,9 +59,18 @@ public class TestAvroConfig extends GeneralBaseTest {
   }
 
   @Override
-  void validate(SchemaConfig schemaConfig) {
+  void validate(SchemaConfig schemaConfig) throws IOException {
     Assertions.assertTrue(schemaConfig instanceof AvroSchemaConfig);
     AvroSchemaConfig config = (AvroSchemaConfig) schemaConfig;
     Assertions.assertEquals(getSchema(), config.getSchema());
+  }
+
+  @Test
+  void invalidConfig() {
+    AvroSchemaConfig config = new AvroSchemaConfig();
+    config.setUniqueId(UUID.randomUUID());
+    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
+    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    Assertions.assertThrowsExactly(IOException.class, () -> config.pack());
   }
 }

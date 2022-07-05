@@ -71,4 +71,19 @@ public abstract class GeneralBaseTest {
     Assertions.assertEquals(format, parsed.getFormat());
   }
 
+  @Test
+  void validateConstructorFromMap() throws IOException {
+    Map<String, Object> schemaProps = getSchemaProperties();
+    String format = ((Map<String, Object>) schemaProps.get("schema")).get("format").toString();
+    SchemaConfig schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaProps);
+    Assertions.assertEquals(format, schemaConfig.getFormat());
+    validate(schemaConfig);
+    validateSchema(schemaConfig);
+    schemaProps = schemaConfig.toMap();
+    SchemaConfig schemaConfigCheck = SchemaConfigFactory.getInstance().constructConfig(schemaProps);
+    Assertions.assertNotNull(schemaConfigCheck);
+    validate(schemaConfigCheck);
+    validateSchema(schemaConfigCheck);
+  }
+
 }

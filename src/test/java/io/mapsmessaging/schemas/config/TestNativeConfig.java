@@ -58,5 +58,19 @@ public class TestNativeConfig extends GeneralBaseTest {
       JSONObject jsonObject = new JSONObject(config.pack());
       Assertions.assertEquals(type.toString(), jsonObject.getJSONObject("schema").getString("type"));
     }
+
+    for (TYPE type : NativeSchemaConfig.TYPE.values()) {
+
+      Map<String, Object> props = new LinkedHashMap<>();
+      props.put("format", "Native");
+      props.put("type", type.toString());
+      props.put("uuid", UUID.randomUUID());
+      Map<String, Object> schema = new LinkedHashMap<>();
+      schema.put("schema", props);
+
+      SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
+      JSONObject jsonObject = new JSONObject(config.pack());
+      Assertions.assertEquals(type.toString(), jsonObject.getJSONObject("schema").getString("type"));
+    }
   }
 }

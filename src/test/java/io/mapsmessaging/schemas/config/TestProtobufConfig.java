@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 class TestProtobufConfig extends GeneralBaseTest {
 
@@ -69,5 +70,33 @@ class TestProtobufConfig extends GeneralBaseTest {
     return baos.toByteArray();
   }
 
+  @Test
+  void invalidConfigWithName() {
+    ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
+    config.setMessageName("justAName");
+    config.setUniqueId(UUID.randomUUID());
+    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
+    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    Assertions.assertThrowsExactly(IOException.class, () -> config.pack());
+  }
 
+  @Test
+  void invalidConfigWithDescriptor() throws IOException {
+    ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
+    config.setDescriptorValue(getDescriptor());
+    config.setUniqueId(UUID.randomUUID());
+    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
+    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    Assertions.assertThrowsExactly(IOException.class, () -> config.pack());
+  }
+
+
+  @Test
+  void invalidConfig() {
+    ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
+    config.setUniqueId(UUID.randomUUID());
+    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
+    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    Assertions.assertThrowsExactly(IOException.class, () -> config.pack());
+  }
 }

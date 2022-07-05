@@ -18,11 +18,13 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.CsvSchemaConfig;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 class TestCsvConfig extends GeneralBaseTest {
 
@@ -48,5 +50,14 @@ class TestCsvConfig extends GeneralBaseTest {
     Assertions.assertTrue(schemaConfig instanceof CsvSchemaConfig);
     CsvSchemaConfig config = (CsvSchemaConfig) schemaConfig;
     Assertions.assertEquals("name, id, email", config.getHeaderValues());
+  }
+
+  @Test
+  void invalidConfig() {
+    CsvSchemaConfig config = new CsvSchemaConfig();
+    config.setUniqueId(UUID.randomUUID());
+    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
+    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    Assertions.assertThrowsExactly(IOException.class, () -> config.pack());
   }
 }

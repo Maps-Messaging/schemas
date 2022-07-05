@@ -27,7 +27,7 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class TestJsonFormatter extends BaseTest {
+class TestJsonFormatter extends BaseTest {
 
 
   byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws IOException {

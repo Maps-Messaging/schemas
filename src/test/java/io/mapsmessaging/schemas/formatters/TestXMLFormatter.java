@@ -24,7 +24,7 @@ import java.util.List;
 import org.json.JSONObject;
 import org.json.XML;
 
-public class TestXMLFormatter extends BaseTest {
+class TestXMLFormatter extends BaseTest {
 
   byte[] pack(io.mapsmessaging.schemas.formatters.Person p) {
     JSONObject jsonObject = new JSONObject();

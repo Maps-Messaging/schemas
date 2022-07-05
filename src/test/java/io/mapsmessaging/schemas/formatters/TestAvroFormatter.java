@@ -29,7 +29,7 @@ import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
 
-public class TestAvroFormatter extends BaseTest {
+class TestAvroFormatter extends BaseTest {
 
   byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws IOException {
     PersonAvro personA = new PersonAvro();

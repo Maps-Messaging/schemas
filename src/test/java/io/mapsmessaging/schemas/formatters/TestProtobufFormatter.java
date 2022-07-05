@@ -26,7 +26,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestProtobufFormatter extends BaseTest {
+class TestProtobufFormatter extends BaseTest {
 
   private byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws IOException {
     Builder builder = PersonProto.Person.newBuilder();

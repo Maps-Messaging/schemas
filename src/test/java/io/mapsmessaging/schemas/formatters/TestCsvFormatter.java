@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestCsvFormatter extends BaseTest {
+class TestCsvFormatter extends BaseTest {
 
   @Override
   List<byte[]> packList(List<Person> list) throws IOException {

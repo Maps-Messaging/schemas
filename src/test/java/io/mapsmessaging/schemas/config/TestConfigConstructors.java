@@ -2,6 +2,7 @@ package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.RawSchemaConfig;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.json.JSONObject;
@@ -38,6 +39,9 @@ class TestConfigConstructors {
   @Test
   void invalidDataLoad() {
     Assertions.assertThrowsExactly(IOException.class, () -> SchemaConfigFactory.getInstance().constructConfig(new JSONObject().toString()));
+
+    Assertions.assertThrowsExactly(IOException.class, () -> SchemaConfigFactory.getInstance().constructConfig("".getBytes()));
+    Assertions.assertThrowsExactly(IOException.class, () -> SchemaConfigFactory.getInstance().constructConfig(new LinkedHashMap<>()));
 
     JSONObject schema = new JSONObject();
     schema.put("schema", 2);

@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class SchemaConfigFactory {
@@ -82,27 +83,33 @@ public class SchemaConfigFactory {
   }
 
   public SchemaConfig constructConfig(String payload) throws IOException {
-    JSONObject schemaJson = new JSONObject(payload);
-    if (!schemaJson.has(SCHEMA)) {
-      logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
-      throw new IOException(ERROR_MESSAGE);
-    }
-    if (!(schemaJson.get(SCHEMA) instanceof JSONObject)) {
-      logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
-      throw new IOException(ERROR_MESSAGE);
-    }
-
-    schemaJson = schemaJson.getJSONObject(SCHEMA);
-    if (!schemaJson.has(FORMAT)) {
-      logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
-      throw new IOException(CONFIG_ERROR);
-    }
-
-    String formatName = schemaJson.getString(FORMAT);
-    for (SchemaConfig config : schemaConfigs) {
-      if (config.getFormat().equalsIgnoreCase(formatName)) {
-        return config.getInstance(schemaJson.toMap());
+    String formatName = null;
+    try {
+      JSONObject schemaJson = new JSONObject(payload);
+      if (!schemaJson.has(SCHEMA)) {
+        logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
+        throw new IOException(ERROR_MESSAGE);
       }
+      if (!(schemaJson.get(SCHEMA) instanceof JSONObject)) {
+        logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
+        throw new IOException(ERROR_MESSAGE);
+      }
+
+      schemaJson = schemaJson.getJSONObject(SCHEMA);
+      if (!schemaJson.has(FORMAT)) {
+        logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
+        throw new IOException(CONFIG_ERROR);
+      }
+
+      formatName = schemaJson.getString(FORMAT);
+      for (SchemaConfig config : schemaConfigs) {
+        if (config.getFormat().equalsIgnoreCase(formatName)) {
+          return config.getInstance(schemaJson.toMap());
+        }
+      }
+    } catch (JSONException e) {
+      logger.log(SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND, formatName);
+      throw new IOException(CONFIG_ERROR, e);
     }
     logger.log(SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND, formatName);
     throw new IOException(CONFIG_ERROR);

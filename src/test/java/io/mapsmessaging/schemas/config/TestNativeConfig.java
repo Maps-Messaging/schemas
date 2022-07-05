@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -44,5 +45,18 @@ public class TestNativeConfig extends GeneralBaseTest {
     config.setExpiresAfter(LocalDateTime.now().plusDays(10));
     config.setNotBefore(LocalDateTime.now().minusDays(10));
     Assertions.assertThrowsExactly(IOException.class, () -> config.pack());
+  }
+
+  @Test
+  void checkAllTypes() throws IOException {
+    for (TYPE type : NativeSchemaConfig.TYPE.values()) {
+      NativeSchemaConfig config = new NativeSchemaConfig();
+      config.setType(type);
+      config.setUniqueId(UUID.randomUUID());
+      config.setExpiresAfter(LocalDateTime.now().plusDays(10));
+      config.setNotBefore(LocalDateTime.now().minusDays(10));
+      JSONObject jsonObject = new JSONObject(config.pack());
+      Assertions.assertEquals(type.toString(), jsonObject.getJSONObject("schema").getString("type"));
+    }
   }
 }

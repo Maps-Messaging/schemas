@@ -27,7 +27,7 @@ import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.Map;
 import org.apache.avro.Schema;
@@ -39,6 +39,7 @@ import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.avro.util.Utf8;
 import org.json.JSONObject;
 
@@ -85,15 +86,10 @@ public class AvroFormatter extends MessageFormatter {
 
   @Override
   public byte[] pack(Object object) throws IOException {
-    String toPack = null;
-    if (object instanceof String) {
-      toPack = (String) object;
-    }
-    if (object instanceof JSONObject) {
-      toPack = ((JSONObject) object).toString(2);
-    }
-    if (toPack != null) {
-      return toPack.getBytes(StandardCharsets.UTF_8);
+    if(object instanceof SpecificRecordBase){
+      ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(1024);
+      ((SpecificRecordBase)object).writeExternal(new ObjectOutputStream(byteArrayOutputStream));
+      return byteArrayOutputStream.toByteArray();
     }
     logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), object.getClass().toString());
     throw new IOException("Unexpected object to be packed");

@@ -24,7 +24,8 @@ import java.util.List;
 import org.json.JSONObject;
 import org.json.XML;
 
-public class TestXMLFormatter extends BaseTest{
+public class TestXMLFormatter extends BaseTest {
+
   byte[] pack(io.mapsmessaging.schemas.formatters.Person p) {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put("stringId", p.getStringId());
@@ -33,24 +34,25 @@ public class TestXMLFormatter extends BaseTest{
     jsonObject.put("floatId", p.getFloatId());
     jsonObject.put("doubleId", p.getDoubleId());
     String xml = XML.toString(jsonObject);
-    xml ="<?xml version=\"1.0\"?>\n"+
+    xml = "<?xml version=\"1.0\"?>\n" +
         "<!DOCTYPE person  >\n"
         + "<person>\n"
-        +xml+"\n"+
+        + xml + "\n" +
         "</person>\n";
 
-    return  xml.getBytes();
+    return xml.getBytes();
   }
 
 
   @Override
   List<byte[]> packList(List<io.mapsmessaging.schemas.formatters.Person> list) throws IOException {
     List<byte[]> packed = new ArrayList<>();
-    for(io.mapsmessaging.schemas.formatters.Person p:list){
+    for (io.mapsmessaging.schemas.formatters.Person p : list) {
       packed.add(pack(p));
     }
     return packed;
   }
+
   @Override
   SchemaConfig getSchema() {
     XmlSchemaConfig xmlSchemaConfig = new XmlSchemaConfig();

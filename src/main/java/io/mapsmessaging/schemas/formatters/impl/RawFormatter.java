@@ -22,7 +22,7 @@ import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import java.io.IOException;
 import org.json.JSONObject;
 
-public class RawFormatter implements MessageFormatter {
+public class RawFormatter extends MessageFormatter {
 
   public RawFormatter() {
   }

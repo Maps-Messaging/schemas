@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Assertions;
 
 class TestProtobufConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties(){
+  Map<String, Object> getProperties() {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "ProtoBuf");
     props.put("descriptor", new String(Base64.getEncoder().encode(getDescriptor())));
@@ -45,14 +45,14 @@ class TestProtobufConfig extends GeneralBaseTest {
   }
 
 
-  private byte[] getDescriptor()  {
+  private byte[] getDescriptor() {
     ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
     byte[] tmp = new byte[10240];
     try (InputStream fis = TestProtobufConfig.class.getClassLoader().getResourceAsStream("Person.desc")) {
       int len = fis.read(tmp);
       baos.write(tmp, 0, len);
+    } catch (Exception ex) {
     }
-    catch (Exception ex){}
     return baos.toByteArray();
   }
 

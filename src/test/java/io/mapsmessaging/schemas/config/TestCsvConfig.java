@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Assertions;
 
 class TestCsvConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties(){
+  Map<String, Object> getProperties() {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "CSV");
     props.put("header", "name, id, email");

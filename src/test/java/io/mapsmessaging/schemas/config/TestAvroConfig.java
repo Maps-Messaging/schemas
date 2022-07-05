@@ -27,7 +27,18 @@ import org.junit.jupiter.api.Assertions;
 
 public class TestAvroConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties(){
+  public static String getSchema() {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
+    byte[] tmp = new byte[10240];
+    try (InputStream fis = TestProtobufConfig.class.getClassLoader().getResourceAsStream("avro/Person.avsc")) {
+      int len = fis.read(tmp);
+      baos.write(tmp, 0, len);
+    } catch (Exception ex) {
+    }
+    return baos.toString();
+  }
+
+  Map<String, Object> getProperties() {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "AVRO");
     props.put("schema", new String(Base64.getEncoder().encode(getSchema().getBytes())));
@@ -39,16 +50,5 @@ public class TestAvroConfig extends GeneralBaseTest {
     Assertions.assertTrue(schemaConfig instanceof AvroSchemaConfig);
     AvroSchemaConfig config = (AvroSchemaConfig) schemaConfig;
     Assertions.assertEquals(getSchema(), config.getSchema());
-  }
-
-  public static String getSchema()  {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
-    byte[] tmp = new byte[10240];
-    try (InputStream fis = TestProtobufConfig.class.getClassLoader().getResourceAsStream("avro/Person.avsc")) {
-      int len = fis.read(tmp);
-      baos.write(tmp, 0, len);
-    }
-    catch (Exception ex){}
-    return baos.toString();
   }
 }

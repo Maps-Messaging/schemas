@@ -15,7 +15,7 @@ public class SimpleSchemaRepository implements SchemaRepository {
   private final Map<UUID, SchemaConfig> mapByUUID;
 
 
-  public SimpleSchemaRepository(){
+  public SimpleSchemaRepository() {
     mapByContext = new LinkedHashMap<>();
     mapByUUID = new LinkedHashMap<>();
   }
@@ -23,10 +23,9 @@ public class SimpleSchemaRepository implements SchemaRepository {
   @Override
   public SchemaConfig addSchema(String context, SchemaConfig config) {
     SchemaConfig existing = mapByUUID.get(config.getUniqueId());
-    if(existing != null){
+    if (existing != null) {
       config = existing;
-    }
-    else{
+    } else {
       mapByUUID.put(config.getUniqueId(), config);
     }
     List<SchemaConfig> list = mapByContext.computeIfAbsent(context, k -> new ArrayList<>());
@@ -60,8 +59,8 @@ public class SimpleSchemaRepository implements SchemaRepository {
   @Override
   public void removeSchema(UUID uuid) {
     SchemaConfig config = mapByUUID.remove(uuid);
-    if(config != null){
-      for(List<SchemaConfig> list :mapByContext.values()){
+    if (config != null) {
+      for (List<SchemaConfig> list : mapByContext.values()) {
         list.remove(config);
       }
     }

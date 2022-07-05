@@ -29,5 +29,6 @@ public class Constants {
 
   public static final String DEFAULT_FORMAT = "RAW";
 
-  private Constants(){}
+  private Constants() {
+  }
 }

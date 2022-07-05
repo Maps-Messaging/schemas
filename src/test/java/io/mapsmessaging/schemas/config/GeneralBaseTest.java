@@ -28,9 +28,10 @@ import org.junit.jupiter.api.Test;
 public abstract class GeneralBaseTest {
 
   abstract Map<String, Object> getProperties();
+
   abstract void validate(SchemaConfig schemaConfig);
 
-  void validateSchema(SchemaConfig schemaConfig){
+  void validateSchema(SchemaConfig schemaConfig) {
     validate(schemaConfig);
     Assertions.assertTrue(schemaConfig.getExpiresAfter().isBefore(LocalDateTime.now()));
     Assertions.assertTrue(schemaConfig.getNotBefore().isAfter(LocalDateTime.now()));
@@ -38,20 +39,20 @@ public abstract class GeneralBaseTest {
 
   }
 
-  Map<String, Object>  getSchemaProperties(){
+  Map<String, Object> getSchemaProperties() {
     Map<String, Object> schema = new LinkedHashMap<>();
-    Map<String, Object> props =  getProperties();
+    Map<String, Object> props = getProperties();
     props.put("uuid", UUID.randomUUID());
     props.put("notBefore", LocalDateTime.now().minusDays(10));
     props.put("expiresAfter", LocalDateTime.now().plusDays(10));
-    schema.put("schema",props);
+    schema.put("schema", props);
     return schema;
   }
 
   @Test
   void validateConstructors() throws IOException {
     Map<String, Object> schemaProps = getSchemaProperties();
-    String format = ((Map<String, Object>)schemaProps.get("schema")).get("format").toString();
+    String format = ((Map<String, Object>) schemaProps.get("schema")).get("format").toString();
     SchemaConfig schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaProps);
     Assertions.assertEquals(format, schemaConfig.getFormat());
     validate(schemaConfig);
@@ -60,7 +61,7 @@ public abstract class GeneralBaseTest {
   @Test
   void validateStreamConstructors() throws IOException {
     Map<String, Object> schemaProps = getSchemaProperties();
-    String format = ((Map<String, Object>)schemaProps.get("schema")).get("format").toString();
+    String format = ((Map<String, Object>) schemaProps.get("schema")).get("format").toString();
     SchemaConfig schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaProps);
     validate(schemaConfig);
     Assertions.assertEquals(format, schemaConfig.getFormat());

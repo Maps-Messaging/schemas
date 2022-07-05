@@ -25,23 +25,32 @@ import lombok.Getter;
 public enum SchemaLogMessages implements LogMessage {
 
   //<editor-fold desc="Config messages">
-  SCHEMA_CONFIG_FACTORY_INVALID_CONFIG (LEVEL.WARN, STORAGE_CATEGORY.CONFIG, "Unknown schema config found"),
-  SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND (LEVEL.WARN, STORAGE_CATEGORY.CONFIG, "Unknown format in config, {}"),
-  AVRO_SCHEMA_NOT_DEFINED(LEVEL.WARN, STORAGE_CATEGORY.CONFIG, "No {} Schema found for Schema Id {}"),
-  CSV_HEADER_NOT_DEFINED(LEVEL.WARN, STORAGE_CATEGORY.CONFIG, "No {} header found for Schema Id {}"),
-  NATIVE_TYPE_UNKNOWN(LEVEL.WARN, STORAGE_CATEGORY.CONFIG, "Type for {} not defined for Schema Id {}"),
-  PROTOBUF_DESCRIPTOR_NOT_DEFINED(LEVEL.WARN, STORAGE_CATEGORY.CONFIG, "No {} descriptor defined for Schema Id {}"),
-  PROTOBUF_MESSAGE_NAME_NOT_DEFINED(LEVEL.WARN, STORAGE_CATEGORY.CONFIG, "No {} message name defined for Schema Id {}"),
+  SCHEMA_CONFIG_FACTORY_INVALID_CONFIG(LEVEL.WARN, SCHEMA_CATEGORY.CONFIG, "Unknown schema config found"),
+  SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND(LEVEL.WARN, SCHEMA_CATEGORY.CONFIG, "Unknown format in config, {}"),
+  AVRO_SCHEMA_NOT_DEFINED(LEVEL.WARN, SCHEMA_CATEGORY.CONFIG, "No {} Schema found for Schema Id {}"),
+  CSV_HEADER_NOT_DEFINED(LEVEL.WARN, SCHEMA_CATEGORY.CONFIG, "No {} header found for Schema Id {}"),
+  NATIVE_TYPE_UNKNOWN(LEVEL.WARN, SCHEMA_CATEGORY.CONFIG, "Type for {} not defined for Schema Id {}"),
+  PROTOBUF_DESCRIPTOR_NOT_DEFINED(LEVEL.WARN, SCHEMA_CATEGORY.CONFIG, "No {} descriptor defined for Schema Id {}"),
+  PROTOBUF_MESSAGE_NAME_NOT_DEFINED(LEVEL.WARN, SCHEMA_CATEGORY.CONFIG, "No {} message name defined for Schema Id {}"),
   //</editor-fold>
 
+  //<editor-fold desc="Formatter specific log messages">
+  AVRO_PARSE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "Avro format raised exception during parsing, {}"),
+  FORMATTER_UNEXPECTED_OBJECT(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "{} formatter unable to pack object, unexpected type {}"),
+  PROTOBUF_PARSE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "Protobuf format raised exception during parsing {}"),
+  XML_CONFIGURATION_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "XML formatter raised exception during construction {}"),
+  XML_PARSE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "XML formatter raised exception during parsing {}"),
+  //</editor-fold>
   ;
+
+
   private final @Getter String message;
   private final @Getter LEVEL level;
   private final @Getter Category category;
   private final @Getter int parameterCount;
 
 
-  SchemaLogMessages(LEVEL level, STORAGE_CATEGORY category, String message) {
+  SchemaLogMessages(LEVEL level, SCHEMA_CATEGORY category, String message) {
     this.message = message;
     this.level = level;
     this.category = category;
@@ -54,19 +63,19 @@ public enum SchemaLogMessages implements LogMessage {
     this.parameterCount = count;
   }
 
-  public enum STORAGE_CATEGORY implements Category {
+  public enum SCHEMA_CATEGORY implements Category {
     CONFIG("Config"),
     FORMATTER("Formatter"),
     REPOSITORY("Repository");
 
     private final @Getter String description;
 
-    public String getDivision(){
-      return "Schema";
+    SCHEMA_CATEGORY(String description) {
+      this.description = description;
     }
 
-    STORAGE_CATEGORY(String description) {
-      this.description = description;
+    public String getDivision() {
+      return "Schema";
     }
   }
 }

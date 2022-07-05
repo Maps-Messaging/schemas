@@ -17,6 +17,8 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
+
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
@@ -26,7 +28,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.json.JSONObject;
 
-public class JsonFormatter implements MessageFormatter {
+public class JsonFormatter extends MessageFormatter {
 
   public JsonFormatter() {
   }
@@ -54,6 +56,7 @@ public class JsonFormatter implements MessageFormatter {
     if (toPack != null) {
       return toPack.getBytes(StandardCharsets.UTF_8);
     }
+    logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), object.getClass().toString());
     throw new IOException("Unexpected object to be packed");
   }
 

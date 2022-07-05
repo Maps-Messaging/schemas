@@ -17,6 +17,9 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.AVRO_PARSE_EXCEPTION;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
+
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
@@ -39,7 +42,7 @@ import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.util.Utf8;
 import org.json.JSONObject;
 
-public class AvroFormatter implements MessageFormatter {
+public class AvroFormatter extends MessageFormatter {
 
   private final DatumReader<GenericRecord> datumReader;
   private final Schema schema;
@@ -58,13 +61,13 @@ public class AvroFormatter implements MessageFormatter {
   }
 
   @Override
-  public synchronized ParsedObject parse(byte[] payload){
+  public synchronized ParsedObject parse(byte[] payload) {
     try {
       decoder = DecoderFactory.get().binaryDecoder(payload, decoder);
       GenericRecord genericRecord = datumReader.read(null, decoder);
       return new AvroResolver(genericRecord);
     } catch (IOException e) {
-
+      logger.log(AVRO_PARSE_EXCEPTION, e);
     }
     return null;
   }
@@ -92,6 +95,7 @@ public class AvroFormatter implements MessageFormatter {
     if (toPack != null) {
       return toPack.getBytes(StandardCharsets.UTF_8);
     }
+    logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), object.getClass().toString());
     throw new IOException("Unexpected object to be packed");
   }
 
@@ -112,7 +116,7 @@ public class AvroFormatter implements MessageFormatter {
 
     private final GenericRecord genericRecord;
 
-    public AvroResolver(GenericRecord genericRecord){
+    public AvroResolver(GenericRecord genericRecord) {
       this.genericRecord = genericRecord;
     }
 
@@ -120,29 +124,28 @@ public class AvroFormatter implements MessageFormatter {
     public Object get(String s) {
       String lookup = s;
       boolean isArray = false;
-      if(s.endsWith("]")){
+      if (s.endsWith("]")) {
         lookup = s.substring(0, s.indexOf("["));
         isArray = true;
       }
-      if(genericRecord.hasField(lookup)) {
+      if (genericRecord.hasField(lookup)) {
         Object val = genericRecord.get(lookup);
-        if(val instanceof List && isArray){
-          String index = s.substring(s.indexOf("[")+1, s.indexOf("]"));
+        if (val instanceof List && isArray) {
+          String index = s.substring(s.indexOf("[") + 1, s.indexOf("]"));
           var idx = Integer.parseInt(index.trim());
-          if( ( (List)val).size() > idx) {
+          if (((List) val).size() > idx) {
             val = ((List) val).get(idx);
-          }
-          else{
+          } else {
             return null;
           }
         }
-        if(val instanceof GenericRecord){
+        if (val instanceof GenericRecord) {
           return new AvroResolver((GenericRecord) val);
         }
-        if(val instanceof Map){
-          return new MapResolver((Map)val);
+        if (val instanceof Map) {
+          return new MapResolver((Map) val);
         }
-        if(val instanceof Utf8){
+        if (val instanceof Utf8) {
           return val.toString();
         }
         return val;

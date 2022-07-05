@@ -17,15 +17,27 @@
 
 package io.mapsmessaging.schemas.formatters;
 
+import io.mapsmessaging.logging.Logger;
+import io.mapsmessaging.logging.LoggerFactory;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.io.IOException;
 import org.json.JSONObject;
 
-public interface MessageFormatter {
+public abstract class MessageFormatter {
 
-  String getName();
+  protected Logger logger;
 
-  default ParsedObject parse(byte[] payload){
+  protected MessageFormatter() {
+    logger = LoggerFactory.getLogger(MessageFormatter.class);
+  }
+
+  public abstract String getName();
+
+  public abstract MessageFormatter getInstance(SchemaConfig config) throws IOException;
+
+  public abstract JSONObject parseToJson(byte[] payload) throws IOException;
+
+  public ParsedObject parse(byte[] payload) {
     return new ParsedObject() {
       @Override
       public Object getReferenced() {
@@ -39,15 +51,12 @@ public interface MessageFormatter {
     };
   }
 
-  JSONObject parseToJson(byte[] payload) throws IOException;
-
-  default byte[] pack(Object object) throws IOException {
+  public byte[] pack(Object object) throws IOException {
     if (object instanceof byte[]) {
       return (byte[]) object;
     }
     throw new IOException("Unexpected object to be packed");
   }
 
-  MessageFormatter getInstance(SchemaConfig config) throws IOException;
 
 }

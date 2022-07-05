@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Assertions;
 
 public class TestNativeConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties(){
+  Map<String, Object> getProperties() {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "Native");
     props.put("type", TYPE.DOUBLE.toString());

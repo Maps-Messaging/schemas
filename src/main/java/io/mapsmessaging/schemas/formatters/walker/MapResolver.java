@@ -24,29 +24,35 @@ import java.util.Map;
 public class MapResolver implements ParsedObject {
 
   private final Map<String, Object> map;
+  private final boolean parseStringNumerics;
 
-  public MapResolver(Map<String, Object> map){
-    this.map = map;
+  public MapResolver(Map<String, Object> map) {
+    this(map, false);
   }
+
+  public MapResolver(Map<String, Object> map, boolean parseStringNumerics) {
+    this.map = map;
+    this.parseStringNumerics = parseStringNumerics;
+  }
+
 
   @Override
   public Object get(String s) {
     String lookup = s;
     boolean isArray = false;
-    if(s.endsWith("]")){
+    if (s.endsWith("]")) {
       lookup = s.substring(0, s.indexOf("["));
       isArray = true;
     }
-    if(map.containsKey(lookup)) {
+    if (map.containsKey(lookup)) {
       Object val = map.get(lookup);
-      if(val instanceof List && isArray){
-        String index = s.substring(s.indexOf("[")+1, s.indexOf("]"));
+      if (val instanceof List && isArray) {
+        String index = s.substring(s.indexOf("[") + 1, s.indexOf("]"));
         var idx = Integer.parseInt(index.trim());
         List vList = (List) val;
-        if( vList.size() > idx) {
+        if (vList.size() > idx) {
           val = vList.get(idx);
-        }
-        else{
+        } else {
           return null;
         }
       }
@@ -55,18 +61,20 @@ public class MapResolver implements ParsedObject {
     return null;
   }
 
-  private Object parseValue(Object val){
-    if(val instanceof Map){
-      return new MapResolver((Map)val);
+  private Object parseValue(Object val) {
+    if (val instanceof Map) {
+      return new MapResolver((Map) val);
     }
-    if(val instanceof String){
-      try {
-        return Long.parseLong((String) val);
-      } catch (NumberFormatException e) {
-      }
-      try {
-        return Double.parseDouble((String) val);
-      } catch (NumberFormatException e) {
+    if (val instanceof String) {
+      if (parseStringNumerics) {
+        try {
+          return Long.parseLong((String) val);
+        } catch (NumberFormatException e) {
+        }
+        try {
+          return Double.parseDouble((String) val);
+        } catch (NumberFormatException e) {
+        }
       }
     }
     return val;

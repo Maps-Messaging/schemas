@@ -44,7 +44,7 @@ public class TestProtobufFormatter extends BaseTest {
   @Override
   List<byte[]> packList(List<io.mapsmessaging.schemas.formatters.Person> list) throws IOException {
     List<byte[]> packed = new ArrayList<>();
-    for(io.mapsmessaging.schemas.formatters.Person p:list){
+    for (io.mapsmessaging.schemas.formatters.Person p : list) {
       packed.add(pack(p));
     }
     return packed;

@@ -17,6 +17,8 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
+
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
@@ -39,13 +41,13 @@ import org.apache.qpid.proton.message.Message;
 import org.apache.qpid.proton.message.Message.Factory;
 import org.json.JSONObject;
 
-public class QpidJmsFormatter implements MessageFormatter {
+public class QpidJmsFormatter extends MessageFormatter {
+
+  public QpidJmsFormatter() {
+  }
 
   public String getName() {
     return "QPID-JMS";
-  }
-
-  public QpidJmsFormatter() {
   }
 
   @Override
@@ -67,7 +69,7 @@ public class QpidJmsFormatter implements MessageFormatter {
     return parse(protonMsg);
   }
 
-  private JSONObject parse(Message protonMsg){
+  private JSONObject parse(Message protonMsg) {
     JSONObject jsonObject = new JSONObject();
     pack(jsonObject, "address", protonMsg.getAddress());
     pack(jsonObject, "content-type", protonMsg.getContentType());
@@ -157,6 +159,7 @@ public class QpidJmsFormatter implements MessageFormatter {
       }
       return data;
     }
+    logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), object.getClass().toString());
     throw new IOException("Unexpected object to be packed");
   }
 

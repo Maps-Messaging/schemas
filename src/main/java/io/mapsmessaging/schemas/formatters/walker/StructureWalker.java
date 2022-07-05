@@ -24,20 +24,25 @@ import java.util.List;
 public class StructureWalker {
 
 
-  public static Object locateObject(IdentifierResolver resolver, List<String> searchPath){
+  private StructureWalker() {
+  }
+
+  public static Object locateObject(IdentifierResolver resolver, List<String> searchPath) {
     Object context = null;
-    while(!searchPath.isEmpty()){
+    while (!searchPath.isEmpty()) {
       var path = searchPath.remove(0);
       context = resolver.get(path);
-      if(context instanceof  IdentifierResolver){
-        resolver= (IdentifierResolver) context;
+      if (context instanceof IdentifierResolver) {
+        resolver = (IdentifierResolver) context;
       }
     }
     return parse(context);
   }
 
-  private static Object parse(Object lookup){
-    if(lookup == null) return null;
+  private static Object parse(Object lookup) {
+    if (lookup == null) {
+      return null;
+    }
     if (lookup instanceof String ||
         lookup instanceof Float ||
         lookup instanceof Double ||
@@ -47,12 +52,9 @@ public class StructureWalker {
         lookup instanceof Integer ||
         lookup instanceof Long) {
       return lookup;
-    }
-    else if(lookup instanceof BigDecimal){
-      return ((BigDecimal)lookup).doubleValue();
+    } else if (lookup instanceof BigDecimal) {
+      return ((BigDecimal) lookup).doubleValue();
     }
     return lookup.toString();
   }
-
-  private StructureWalker(){}
 }

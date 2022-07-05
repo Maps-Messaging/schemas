@@ -27,7 +27,7 @@ public class StructuredResolver implements ParsedObject {
   private final IdentifierResolver resolver;
   private final Object reference;
 
-  public StructuredResolver(IdentifierResolver resolver, Object reference){
+  public StructuredResolver(IdentifierResolver resolver, Object reference) {
     this.resolver = resolver;
     this.reference = reference;
   }
@@ -36,10 +36,9 @@ public class StructuredResolver implements ParsedObject {
   public Object get(String s) {
     List<String> keys = new ArrayList<>();
 
-    if(s.contains(".")){
+    if (s.contains(".")) {
       keys.addAll(List.of(s.split("\\.")));
-    }
-    else{
+    } else {
       keys.add(s);
     }
     return StructureWalker.locateObject(resolver, keys);

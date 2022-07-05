@@ -29,9 +29,6 @@ import org.json.JSONObject;
 public class NativeSchemaConfig extends SimpleSchemaConfig {
 
   private static final String NAME = "Native";
-
-  public enum TYPE {STRING, NUMERIC_STRING, INT8, INT16, INT32, INT64, FLOAT, DOUBLE }
-
   @Getter
   @Setter
   private TYPE type;
@@ -43,30 +40,30 @@ public class NativeSchemaConfig extends SimpleSchemaConfig {
   protected NativeSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
     String typeName = config.get("type").toString();
-    switch (typeName.toUpperCase()){
+    switch (typeName.toUpperCase()) {
       case "STRING":
-        type  = TYPE.STRING;
+        type = TYPE.STRING;
         break;
       case "NUMERIC_STRING":
-        type  = TYPE.NUMERIC_STRING;
+        type = TYPE.NUMERIC_STRING;
         break;
       case "INT8":
-        type  = TYPE.INT8;
+        type = TYPE.INT8;
         break;
       case "INT16":
-        type  = TYPE.INT16;
+        type = TYPE.INT16;
         break;
       case "INT32":
-        type  = TYPE.INT32;
+        type = TYPE.INT32;
         break;
       case "INT64":
-        type  = TYPE.INT64;
+        type = TYPE.INT64;
         break;
       case "FLOAT":
-        type  = TYPE.FLOAT;
+        type = TYPE.FLOAT;
         break;
       case "DOUBLE":
-        type  = TYPE.DOUBLE;
+        type = TYPE.DOUBLE;
         break;
 
       default:
@@ -77,7 +74,7 @@ public class NativeSchemaConfig extends SimpleSchemaConfig {
 
   @Override
   protected JSONObject packData() throws IOException {
-    if(type == null){
+    if (type == null) {
       logger.log(NATIVE_TYPE_UNKNOWN, getFormat(), uniqueId);
       throw new IOException("No type defined specified");
     }
@@ -90,5 +87,7 @@ public class NativeSchemaConfig extends SimpleSchemaConfig {
   protected SchemaConfig getInstance(Map<String, Object> config) {
     return new NativeSchemaConfig(config);
   }
+
+  public enum TYPE {STRING, NUMERIC_STRING, INT8, INT16, INT32, INT64, FLOAT, DOUBLE}
 }
 

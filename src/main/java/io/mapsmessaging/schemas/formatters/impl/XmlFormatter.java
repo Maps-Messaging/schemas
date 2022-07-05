@@ -17,6 +17,10 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.XML_CONFIGURATION_EXCEPTION;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.XML_PARSE_EXCEPTION;
+
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
@@ -41,7 +45,9 @@ import org.json.XML;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-public class XmlFormatter implements MessageFormatter {
+public class XmlFormatter extends MessageFormatter {
+
+  private static final String NAME = "XML";
 
   private final DocumentBuilder parser;
   private final String root;
@@ -60,12 +66,13 @@ public class XmlFormatter implements MessageFormatter {
       parser = dbf.newDocumentBuilder();
       root = config.getRootEntry();
     } catch (ParserConfigurationException e) {
+      logger.log(XML_CONFIGURATION_EXCEPTION, e);
       throw new IOException(e);
     }
   }
 
   public String getName() {
-    return "XML";
+    return NAME;
   }
 
   @Override
@@ -74,14 +81,14 @@ public class XmlFormatter implements MessageFormatter {
   }
 
   @Override
-  public synchronized ParsedObject parse(byte[] payload){
+  public synchronized ParsedObject parse(byte[] payload) {
     try {
       Document document = parser.parse(new ByteArrayInputStream(payload));
       Map<String, Object> map = parseToJson(payload).toMap();
       map = (Map<String, Object>) map.get(root);
       return new StructuredResolver(new MapResolver(map), document);
-    } catch (IOException| SAXException e) {
-
+    } catch (IOException | SAXException e) {
+      logger.log(XML_PARSE_EXCEPTION, getName(), e);
     }
     return null;
   }
@@ -108,12 +115,13 @@ public class XmlFormatter implements MessageFormatter {
     if (toPack != null) {
       return toPack.getBytes(StandardCharsets.UTF_8);
     }
+    logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), object.getClass().toString());
     throw new IOException("Unexpected object to be packed");
   }
 
   @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {
-    return new XmlFormatter( (XmlSchemaConfig) config);
+    return new XmlFormatter((XmlSchemaConfig) config);
   }
 
 }

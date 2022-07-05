@@ -36,12 +36,12 @@ public abstract class BaseTest {
   private static final String[] UNIT = {"ms", "μs", "ns"};
   private static List<Person> data;
 
-  static List<Person> createList(int size){
+  static List<Person> createList(int size) {
     Faker faker = new Faker();
     List<Person> list = new ArrayList<>();
-    for(int x=0;x<size;x++){
+    for (int x = 0; x < size; x++) {
       Person p = new Person();
-      switch(x%6){
+      switch (x % 6) {
         case 0:
           p.setStringId(faker.lordOfTheRings().character());
           break;
@@ -63,20 +63,20 @@ public abstract class BaseTest {
 
       }
       p.setLongId(faker.random().nextLong());
-      p.setIntId((int)(faker.random().nextLong()));
+      p.setIntId((int) (faker.random().nextLong()));
       p.setDoubleId(faker.random().nextDouble());
-      p.setFloatId((float)faker.random().nextDouble());
+      p.setFloatId((float) faker.random().nextDouble());
       list.add(p);
     }
     return list;
   }
 
   @BeforeAll
-  static void createData(){
+  static void createData() {
     data = createList(1_000);
   }
 
-  abstract List<byte[]> packList(List<Person>  list) throws IOException;
+  abstract List<byte[]> packList(List<Person> list) throws IOException;
 
   abstract SchemaConfig getSchema() throws IOException;
 
@@ -84,11 +84,11 @@ public abstract class BaseTest {
   void testFormatters() throws IOException {
     long start = System.currentTimeMillis();
     List<byte[]> packed = packList(data);
-    System.err.println("Time to Pack:"+(System.currentTimeMillis() - start)+"ms");
+    System.err.println("Time to Pack:" + (System.currentTimeMillis() - start) + "ms");
     start = System.currentTimeMillis();
     SchemaConfig schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
-    for(int x=0;x<data.size();x++){
+    for (int x = 0; x < data.size(); x++) {
       ParsedObject parsedObject = formatter.parse(packed.get(x));
       Person p = data.get(x);
       validateValues(p.getStringId(), parsedObject.get("stringId"));
@@ -100,14 +100,14 @@ public abstract class BaseTest {
     long time = (System.currentTimeMillis() - start);
     float unitWork = time;
     unitWork = unitWork / data.size();
-    System.err.println("Time to Parse:"+time+"ms");
+    System.err.println("Time to Parse:" + time + "ms");
     int scale = 0;
-    while((int)unitWork == 0){
+    while ((int) unitWork == 0) {
       unitWork = unitWork * 1000f;
       scale++;
     }
 
-    System.err.println("Time per event "+unitWork+UNIT[scale]);
+    System.err.println("Time per event " + unitWork + UNIT[scale]);
 
   }
 
@@ -115,9 +115,9 @@ public abstract class BaseTest {
   void testParallelFormatters() throws IOException {
     long start = System.currentTimeMillis();
     List<byte[]> packed = packList(data);
-    System.err.println("Time to Pack:"+(System.currentTimeMillis() - start)+"ms");
+    System.err.println("Time to Pack:" + (System.currentTimeMillis() - start) + "ms");
     List<DataSet> dataSet = new ArrayList<>();
-    for(int x=0;x<data.size();x++){
+    for (int x = 0; x < data.size(); x++) {
       dataSet.add(new DataSet(data.get(x), packed.get(x)));
     }
     start = System.currentTimeMillis();
@@ -135,13 +135,13 @@ public abstract class BaseTest {
     long time = (System.currentTimeMillis() - start);
     float unitWork = time;
     unitWork = unitWork / data.size();
-    System.err.println("Time to Parse:"+time+"ms");
+    System.err.println("Time to Parse:" + time + "ms");
     int scale = 0;
-    while((int)unitWork == 0){
+    while ((int) unitWork == 0) {
       unitWork = unitWork * 1000f;
       scale++;
     }
-    System.err.println("Time per event "+unitWork+UNIT[scale]);
+    System.err.println("Time per event " + unitWork + UNIT[scale]);
   }
 
   @Test
@@ -149,18 +149,18 @@ public abstract class BaseTest {
     Faker faker = new Faker();
     long start = System.currentTimeMillis();
     List<byte[]> packed = packList(data);
-    System.err.println("Time to Pack:"+(System.currentTimeMillis() - start)+"ms");
+    System.err.println("Time to Pack:" + (System.currentTimeMillis() - start) + "ms");
     List<DataSet> dataSet = new ArrayList<>();
-    for(int x=0;x<data.size();x++){
+    for (int x = 0; x < data.size(); x++) {
       dataSet.add(new DataSet(data.get(x), packed.get(x)));
     }
     start = System.currentTimeMillis();
     SchemaConfig schemaConfig = getSchema();
-    String selector = "stringId = '"+data.get(faker.random().nextInt(0, data.size())).getStringId()+ "' OR "+
-        "longId = "+data.get(faker.random().nextInt(0, data.size())).getLongId() +" OR "+
-        "intId = "+data.get(faker.random().nextInt(0, data.size())).getIntId() +" OR "+
-        "doubleId = "+data.get(faker.random().nextInt(0, data.size())).getDoubleId() +" OR "+
-        "floatId = "+data.get(faker.random().nextInt(0, data.size())).getFloatId();
+    String selector = "stringId = '" + data.get(faker.random().nextInt(0, data.size())).getStringId() + "' OR " +
+        "longId = " + data.get(faker.random().nextInt(0, data.size())).getLongId() + " OR " +
+        "intId = " + data.get(faker.random().nextInt(0, data.size())).getIntId() + " OR " +
+        "doubleId = " + data.get(faker.random().nextInt(0, data.size())).getDoubleId() + " OR " +
+        "floatId = " + data.get(faker.random().nextInt(0, data.size())).getFloatId();
 
     ParserExecutor executor = SelectorParser.compile(selector);
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
@@ -170,13 +170,13 @@ public abstract class BaseTest {
     long time = (System.currentTimeMillis() - start);
     float unitWork = time;
     unitWork = unitWork / data.size();
-    System.err.println("Time to Filter:"+time+"ms");
+    System.err.println("Time to Filter:" + time + "ms");
     int scale = 0;
-    while((int)unitWork == 0){
+    while ((int) unitWork == 0) {
       unitWork = unitWork * 1000f;
       scale++;
     }
-    System.err.println("Time per event "+unitWork+UNIT[scale]);
+    System.err.println("Time per event " + unitWork + UNIT[scale]);
   }
 
   @Test
@@ -184,18 +184,17 @@ public abstract class BaseTest {
     Faker faker = new Faker();
     List<byte[]> packed = packList(data);
     List<DataSet> dataSet = new ArrayList<>();
-    for(int x=0;x<data.size();x++){
+    for (int x = 0; x < data.size(); x++) {
       dataSet.add(new DataSet(data.get(x), packed.get(x)));
     }
     SchemaConfig schemaConfig = getSchema();
     int index = faker.random().nextInt(0, data.size());
 
-    ParserExecutor stringExecutor = SelectorParser.compile("stringId = '"+data.get(index).getStringId()+"'");
-    ParserExecutor longExecutor = SelectorParser.compile("longId = "+data.get(index).getLongId());
-    ParserExecutor intExecutor = SelectorParser.compile("intId = "+data.get(index).getIntId());
-    ParserExecutor doubleExecutor = SelectorParser.compile("doubleId = "+data.get(index).getDoubleId());
-    ParserExecutor floatExecutor = SelectorParser.compile("floatId = "+data.get(index).getFloatId());
-
+    ParserExecutor stringExecutor = SelectorParser.compile("stringId = '" + data.get(index).getStringId() + "'");
+    ParserExecutor longExecutor = SelectorParser.compile("longId = " + data.get(index).getLongId());
+    ParserExecutor intExecutor = SelectorParser.compile("intId = " + data.get(index).getIntId());
+    ParserExecutor doubleExecutor = SelectorParser.compile("doubleId = " + data.get(index).getDoubleId());
+    ParserExecutor floatExecutor = SelectorParser.compile("floatId = " + data.get(index).getFloatId());
 
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     Assertions.assertTrue(stringExecutor.evaluate(formatter.parse(dataSet.get(index).packed)));
@@ -205,8 +204,8 @@ public abstract class BaseTest {
     Assertions.assertTrue(floatExecutor.evaluate(formatter.parse(dataSet.get(index).packed)));
   }
 
-  private void validateValues(Object lhs, Object rhs){
-    if(lhs instanceof Float && rhs instanceof Double) {
+  private void validateValues(Object lhs, Object rhs) {
+    if (lhs instanceof Float && rhs instanceof Double) {
       rhs = ((Double) rhs).floatValue();
     }
     BigDecimal vlhs = convert(lhs);
@@ -215,26 +214,28 @@ public abstract class BaseTest {
     Assertions.assertEquals(vlhs, vrhs);
   }
 
-  BigDecimal convert(Object obj){
-    if(obj instanceof Long){
-      return new BigDecimal((Long)obj);
+  BigDecimal convert(Object obj) {
+    if (obj instanceof Long) {
+      return new BigDecimal((Long) obj);
     }
-    if(obj instanceof Double){
+    if (obj instanceof Double) {
       return BigDecimal.valueOf((Double) obj);
     }
-    if(obj instanceof Integer){
-      return new BigDecimal((Integer)obj);
+    if (obj instanceof Integer) {
+      return new BigDecimal((Integer) obj);
     }
-    if(obj instanceof Float){
+    if (obj instanceof Float) {
       return BigDecimal.valueOf((Float) obj);
     }
     return null;
   }
 
-  private static class DataSet{
+  private static class DataSet {
+
     Person source;
     byte[] packed;
-    public DataSet(Person p, byte[] r){
+
+    public DataSet(Person p, byte[] r) {
       source = p;
       packed = r;
     }

@@ -36,22 +36,32 @@ public class SchemaConfigFactory {
 
 
   private static final SchemaConfigFactory instance;
-  static{
+
+  static {
     instance = new SchemaConfigFactory();
+  }
+
+  private final List<SchemaConfig> schemaConfigs;
+  private final Logger logger;
+
+  private SchemaConfigFactory() {
+    schemaConfigs = new ArrayList<>();
+    ServiceLoader<SchemaConfig> schemaConfigServiceLoader = ServiceLoader.load(SchemaConfig.class);
+    for (SchemaConfig config : schemaConfigServiceLoader) {
+      schemaConfigs.add(config);
+    }
+    logger = LoggerFactory.getLogger(SchemaConfigFactory.class);
   }
 
   public static SchemaConfigFactory getInstance() {
     return instance;
   }
 
-  private final List<SchemaConfig> schemaConfigs;
-  private final Logger logger;
-
   public SchemaConfig constructConfig(Map<String, Object> properties) throws IOException {
-    if(properties.containsKey(SCHEMA)){
+    if (properties.containsKey(SCHEMA)) {
       Map<String, Object> formatMap = (Map) properties.get(SCHEMA);
       Object formatName = formatMap.get(FORMAT);
-      if(formatName == null){
+      if (formatName == null) {
         formatName = DEFAULT_FORMAT;
       }
       for (SchemaConfig config : schemaConfigs) {
@@ -89,15 +99,6 @@ public class SchemaConfigFactory {
     }
     logger.log(SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND, formatName);
     throw new IOException("Unknown schema config found");
-  }
-
-  private SchemaConfigFactory() {
-    schemaConfigs = new ArrayList<>();
-    ServiceLoader<SchemaConfig> schemaConfigServiceLoader = ServiceLoader.load(SchemaConfig.class);
-    for(SchemaConfig config:schemaConfigServiceLoader){
-      schemaConfigs.add(config);
-    }
-    logger = LoggerFactory.getLogger(SchemaConfigFactory.class);
   }
 
 }

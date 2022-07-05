@@ -47,8 +47,8 @@ public class AvroSchemaConfig extends SchemaConfig {
 
 
   @Override
-  protected JSONObject packData() throws IOException{
-    if(schema == null || schema.length() == 0){
+  protected JSONObject packData() throws IOException {
+    if (schema == null || schema.length() == 0) {
       logger.log(AVRO_SCHEMA_NOT_DEFINED, format, uniqueId);
       throw new IOException("No schema specified");
     }

@@ -27,15 +27,23 @@ public class MessageFormatterFactory {
 
   private static final MessageFormatterFactory instance;
 
-  static{
+  static {
     instance = new MessageFormatterFactory();
+  }
+
+  private final List<MessageFormatter> messageFormatters;
+
+  private MessageFormatterFactory() {
+    messageFormatters = new ArrayList<>();
+    ServiceLoader<MessageFormatter> messageFormatterServiceLoader = ServiceLoader.load(MessageFormatter.class);
+    for (MessageFormatter messageFormatter : messageFormatterServiceLoader) {
+      messageFormatters.add(messageFormatter);
+    }
   }
 
   public static MessageFormatterFactory getInstance() {
     return instance;
   }
-
-  private final List<MessageFormatter> messageFormatters;
 
   public MessageFormatter getFormatter(SchemaConfig config) throws IOException {
     for (MessageFormatter formatter : messageFormatters) {
@@ -44,14 +52,6 @@ public class MessageFormatterFactory {
       }
     }
     throw new IOException("Unknown format config received");
-  }
-
-  private MessageFormatterFactory() {
-    messageFormatters = new ArrayList<>();
-    ServiceLoader<MessageFormatter> messageFormatterServiceLoader = ServiceLoader.load(MessageFormatter.class);
-    for(MessageFormatter messageFormatter:messageFormatterServiceLoader){
-      messageFormatters.add(messageFormatter);
-    }
   }
 }
 

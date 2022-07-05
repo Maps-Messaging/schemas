@@ -17,7 +17,6 @@
 
 package io.mapsmessaging.schemas.config.impl;
 
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.AVRO_SCHEMA_NOT_DEFINED;
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.CSV_HEADER_NOT_DEFINED;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
@@ -31,35 +30,44 @@ public class CsvSchemaConfig extends SchemaConfig {
 
   private static final String NAME = "CSV";
   private static final String HEADER = "header";
+  private static final String NUMERIC_STRINGS = "numericStrings";
 
   @Getter
   @Setter
   private String headerValues;
 
+  @Getter
+  @Setter
+  private boolean interpretNumericStrings;
+
+
   public CsvSchemaConfig() {
     super(NAME);
   }
 
-  public CsvSchemaConfig(String header) {
+  public CsvSchemaConfig(String header, boolean interpretNumericStrings) {
     super(NAME);
     this.headerValues = header;
+    this.interpretNumericStrings = interpretNumericStrings;
   }
 
   protected CsvSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
     this.headerValues = config.getOrDefault(HEADER, "").toString();
+    this.interpretNumericStrings = Boolean.parseBoolean(config.getOrDefault(NUMERIC_STRINGS, "false").toString());
   }
 
 
   @Override
   protected JSONObject packData() throws IOException {
-    if(headerValues == null || headerValues.length() == 0){
+    if (headerValues == null || headerValues.length() == 0) {
       logger.log(CSV_HEADER_NOT_DEFINED, format, uniqueId);
       throw new IOException("No header specified");
     }
     JSONObject data = new JSONObject();
     packData(data);
     data.put(HEADER, headerValues);
+    data.put(NUMERIC_STRINGS, interpretNumericStrings);
     return data;
   }
 

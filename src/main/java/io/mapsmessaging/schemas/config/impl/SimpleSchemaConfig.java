@@ -26,6 +26,7 @@ abstract class SimpleSchemaConfig extends SchemaConfig {
   protected SimpleSchemaConfig(String format) {
     super(format);
   }
+
   protected SimpleSchemaConfig(String format, Map<String, Object> config) {
     super(format, config);
   }

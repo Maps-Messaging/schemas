@@ -17,6 +17,9 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.PROTOBUF_PARSE_EXCEPTION;
+
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Descriptors.DescriptorValidationException;
@@ -42,7 +45,7 @@ import java.util.Map.Entry;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class ProtoBufFormatter implements MessageFormatter {
+public class ProtoBufFormatter extends MessageFormatter {
 
   private final String messageName;
   private final FileDescriptor descriptor;
@@ -72,14 +75,14 @@ public class ProtoBufFormatter implements MessageFormatter {
       ParsedObject parsed = new MapResolver(convertToMap(message));
       return new StructuredResolver(parsed, message);
     } catch (InvalidProtocolBufferException e) {
-
+      logger.log(PROTOBUF_PARSE_EXCEPTION, e);
     }
     return null;
   }
 
   @Override
   public JSONObject parseToJson(byte[] payload) {
-    DynamicMessage dynamicMessage = (DynamicMessage)(parse(payload)).getReferenced();
+    DynamicMessage dynamicMessage = (DynamicMessage) (parse(payload)).getReferenced();
     return convertToJson(dynamicMessage);
   }
 
@@ -88,6 +91,7 @@ public class ProtoBufFormatter implements MessageFormatter {
     if (object instanceof com.google.protobuf.GeneratedMessageV3) {
       return ((com.google.protobuf.GeneratedMessageV3) object).toByteArray();
     }
+    logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), object.getClass().toString());
     throw new IOException("Unexpected object received");
   }
 
@@ -134,23 +138,22 @@ public class ProtoBufFormatter implements MessageFormatter {
     return list;
   }
 
-  private Map<String, Object> convertToMap(DynamicMessage message){
+  private Map<String, Object> convertToMap(DynamicMessage message) {
     Map<String, Object> map = new LinkedHashMap<>();
-    for(Entry<FieldDescriptor, Object> entry:message.getAllFields().entrySet()){
-      if(entry.getValue() instanceof Collection){
-        map.put(entry.getKey().getName(), createMap((Collection)entry.getValue()));
-      }
-      else{
+    for (Entry<FieldDescriptor, Object> entry : message.getAllFields().entrySet()) {
+      if (entry.getValue() instanceof Collection) {
+        map.put(entry.getKey().getName(), createMap((Collection) entry.getValue()));
+      } else {
         map.put(entry.getKey().getName(), entry.getValue());
       }
     }
     return map;
   }
 
-  private List<Map<String, Object>> createMap(Collection<Object> collection){
+  private List<Map<String, Object>> createMap(Collection<Object> collection) {
     List<Map<String, Object>> list = new ArrayList<>();
-    for(Object obj:collection){
-      if(obj instanceof DynamicMessage){
+    for (Object obj : collection) {
+      if (obj instanceof DynamicMessage) {
         list.add(convertToMap((DynamicMessage) obj));
       }
     }

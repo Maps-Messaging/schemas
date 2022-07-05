@@ -24,11 +24,12 @@ import org.junit.jupiter.api.Assertions;
 
 class Config extends GeneralBaseTest {
 
-  Map<String, Object> getProperties(){
+  Map<String, Object> getProperties() {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "RAW");
     return props;
   }
+
   @Override
   void validate(SchemaConfig schemaConfig) {
     Assertions.assertTrue(schemaConfig instanceof RawSchemaConfig);

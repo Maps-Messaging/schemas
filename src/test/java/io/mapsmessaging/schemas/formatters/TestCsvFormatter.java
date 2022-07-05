@@ -23,17 +23,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestCsvFormatter extends BaseTest{
+public class TestCsvFormatter extends BaseTest {
 
   @Override
   List<byte[]> packList(List<Person> list) throws IOException {
     List<byte[]> packed = new ArrayList<>();
-    for(io.mapsmessaging.schemas.formatters.Person p:list){
+    for (io.mapsmessaging.schemas.formatters.Person p : list) {
       packed.add((
-          "\""+p.getStringId()+"\","+
-              p.getLongId()+","+
-              p.getIntId()+","+
-              p.getFloatId()+","+
+          "\"" + p.getStringId() + "\"," +
+              p.getLongId() + "," +
+              p.getIntId() + "," +
+              p.getFloatId() + "," +
               p.getDoubleId()).getBytes());
     }
     return packed;
@@ -41,6 +41,6 @@ public class TestCsvFormatter extends BaseTest{
 
   @Override
   SchemaConfig getSchema() throws IOException {
-    return new CsvSchemaConfig("stringId, longId, intId, floatId, doubleId");
+    return new CsvSchemaConfig("stringId, longId, intId, floatId, doubleId", true);
   }
 }

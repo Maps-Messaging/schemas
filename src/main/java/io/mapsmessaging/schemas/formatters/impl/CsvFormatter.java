@@ -17,6 +17,8 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
+
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 import io.mapsmessaging.schemas.config.SchemaConfig;
@@ -33,17 +35,19 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import org.json.JSONObject;
 
-public class CsvFormatter implements MessageFormatter {
+public class CsvFormatter extends MessageFormatter {
 
   private final String[] keys;
+  private final boolean interpretNumericStrings;
   private final CsvParser parser;
 
   public CsvFormatter() {
     keys = new String[0];
     parser = null;
+    interpretNumericStrings = false;
   }
 
-  public CsvFormatter(String keyList) {
+  public CsvFormatter(String keyList, boolean interpretNumericStrings) {
     StringTokenizer tokenizer = new StringTokenizer(keyList, ",");
     List<String> header = new ArrayList<>();
     while (tokenizer.hasMoreElements()) {
@@ -51,6 +55,7 @@ public class CsvFormatter implements MessageFormatter {
     }
     String[] tmp = new String[header.size()];
     keys = header.toArray(tmp);
+    this.interpretNumericStrings = interpretNumericStrings;
     CsvParserSettings settings = new CsvParserSettings();
     parser = new CsvParser(settings);
 
@@ -63,7 +68,7 @@ public class CsvFormatter implements MessageFormatter {
     for (int x = 0; x < (Math.min(values.length, keys.length)); x++) {
       map.put(keys[x], values[x]);
     }
-    return new MapResolver(map);
+    return new MapResolver(map, interpretNumericStrings);
   }
 
   @Override
@@ -89,6 +94,7 @@ public class CsvFormatter implements MessageFormatter {
     if (toPack != null) {
       return toPack.getBytes(StandardCharsets.UTF_8);
     }
+    logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), object.getClass().toString());
     throw new IOException("Unexpected object to be packed");
   }
 
@@ -111,7 +117,7 @@ public class CsvFormatter implements MessageFormatter {
   @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     CsvSchemaConfig csvSchemaConfig = (CsvSchemaConfig) config;
-    return new CsvFormatter(csvSchemaConfig.getHeaderValues());
+    return new CsvFormatter(csvSchemaConfig.getHeaderValues(), csvSchemaConfig.isInterpretNumericStrings());
   }
 
   @Override

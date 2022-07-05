@@ -33,11 +33,9 @@ import org.json.JSONObject;
 
 public abstract class SchemaConfig {
 
-  protected Logger logger;
-
   @Getter
   protected final String format;
-
+  protected Logger logger;
   @Getter
   @Setter
   protected UUID uniqueId;
@@ -55,13 +53,13 @@ public abstract class SchemaConfig {
     logger = LoggerFactory.getLogger(SchemaConfig.class);
   }
 
-  protected SchemaConfig(String format, Map<String, Object> config){
+  protected SchemaConfig(String format, Map<String, Object> config) {
     this(format);
     uniqueId = UUID.fromString(config.get(io.mapsmessaging.schemas.config.Constants.UUID).toString());
-    if(config.containsKey(EXPIRES_AFTER)){
+    if (config.containsKey(EXPIRES_AFTER)) {
       expiresAfter = LocalDateTime.parse(config.get(EXPIRES_AFTER).toString());
     }
-    if(config.containsKey(NOT_BEFORE)){
+    if (config.containsKey(NOT_BEFORE)) {
       notBefore = LocalDateTime.parse(config.get(NOT_BEFORE).toString());
     }
   }
@@ -82,9 +80,15 @@ public abstract class SchemaConfig {
 
   protected void packData(JSONObject jsonObject) {
     jsonObject.put(FORMAT, format);
-    if(expiresAfter != null)jsonObject.put(EXPIRES_AFTER, expiresAfter.toString() );
-    if(notBefore != null)jsonObject.put(NOT_BEFORE, notBefore.toString() );
-    if(notBefore != null)jsonObject.put(NOT_BEFORE, notBefore.toString() );
+    if (expiresAfter != null) {
+      jsonObject.put(EXPIRES_AFTER, expiresAfter.toString());
+    }
+    if (notBefore != null) {
+      jsonObject.put(NOT_BEFORE, notBefore.toString());
+    }
+    if (notBefore != null) {
+      jsonObject.put(NOT_BEFORE, notBefore.toString());
+    }
     jsonObject.put(io.mapsmessaging.schemas.config.Constants.UUID, uniqueId.toString());
 
   }

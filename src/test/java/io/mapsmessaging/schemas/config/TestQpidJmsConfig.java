@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Assertions;
 
 public class TestQpidJmsConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties(){
+  Map<String, Object> getProperties() {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "QPID-JMS");
     return props;

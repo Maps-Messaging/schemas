@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Assertions;
 
 class TestXmlConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties(){
+  Map<String, Object> getProperties() {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "XML");
     props.put("validating", true);

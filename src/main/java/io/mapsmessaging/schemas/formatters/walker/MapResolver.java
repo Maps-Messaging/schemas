@@ -65,16 +65,16 @@ public class MapResolver implements ParsedObject {
     if (val instanceof Map) {
       return new MapResolver((Map) val);
     }
-    if (val instanceof String) {
-      if (parseStringNumerics) {
-        try {
-          return Long.parseLong((String) val);
-        } catch (NumberFormatException e) {
-        }
-        try {
-          return Double.parseDouble((String) val);
-        } catch (NumberFormatException e) {
-        }
+    if (val instanceof String && parseStringNumerics) {
+      try {
+        return Long.parseLong((String) val);
+      } catch (NumberFormatException e) {
+        // We can ignore this since we don't actually know if it is numeric or not
+      }
+      try {
+        return Double.parseDouble((String) val);
+      } catch (NumberFormatException e) {
+        // We can ignore this since we don't actually know if it is numeric or not
       }
     }
     return val;

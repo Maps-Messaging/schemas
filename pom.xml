@@ -137,6 +137,7 @@
           <excludes>
             <!-- test code, lets not track the testing -->
             <exclude>**/*Test.*</exclude>
+            <exclude>**/Test*.*</exclude>
           </excludes>
         </configuration>
         <executions>

@@ -19,6 +19,7 @@ package io.mapsmessaging.schemas.formatters.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParsedObject;
 import java.io.IOException;
 import java.util.Base64;
 import org.json.JSONObject;
@@ -39,6 +40,21 @@ public class RawFormatter extends MessageFormatter {
     JSONObject obj = new JSONObject();
     obj.put("payload", new String(Base64.getEncoder().encode(payload)));
     return obj;
+  }
+
+  @Override
+  public ParsedObject parse(byte[] payload) {
+    return new ParsedObject() {
+      @Override
+      public Object getReferenced() {
+        return null;
+      }
+
+      @Override
+      public Object get(String s) {
+        return payload;
+      }
+    };
   }
 
   @Override

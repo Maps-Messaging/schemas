@@ -37,18 +37,6 @@ public abstract class MessageFormatter {
 
   public abstract JSONObject parseToJson(byte[] payload) throws IOException;
 
-  public ParsedObject parse(byte[] payload) {
-    return new ParsedObject() {
-      @Override
-      public Object getReferenced() {
-        return null;
-      }
-
-      @Override
-      public Object get(String s) {
-        return payload;
-      }
-    };
-  }
+  public abstract ParsedObject parse(byte[] payload);
 
 }

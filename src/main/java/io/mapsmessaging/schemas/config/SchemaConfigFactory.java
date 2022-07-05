@@ -17,7 +17,6 @@
 
 package io.mapsmessaging.schemas.config;
 
-import static io.mapsmessaging.schemas.config.Constants.DEFAULT_FORMAT;
 import static io.mapsmessaging.schemas.config.Constants.FORMAT;
 import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.SCHEMA_CONFIG_FACTORY_INVALID_CONFIG;
@@ -34,6 +33,8 @@ import org.json.JSONObject;
 
 public class SchemaConfigFactory {
 
+  private static final String ERROR_MESSAGE = "Not a valid schema config";
+  private static final String CONFIG_ERROR = "Unknown schema config found";
 
   private static final SchemaConfigFactory instance;
 
@@ -59,19 +60,21 @@ public class SchemaConfigFactory {
 
   public SchemaConfig constructConfig(Map<String, Object> properties) throws IOException {
     if (properties.containsKey(SCHEMA)) {
-      Map<String, Object> formatMap = (Map) properties.get(SCHEMA);
-      Object formatName = formatMap.get(FORMAT);
-      if (formatName == null) {
-        formatName = DEFAULT_FORMAT;
-      }
-      for (SchemaConfig config : schemaConfigs) {
-        if (config.getFormat().equalsIgnoreCase(formatName.toString())) {
-          return config.getInstance(formatMap);
+      Object val = properties.get(SCHEMA);
+      if (val instanceof Map) {
+        Map<String, Object> formatMap = (Map) properties.get(SCHEMA);
+        Object formatName = formatMap.get(FORMAT);
+        if (formatName != null) {
+          for (SchemaConfig config : schemaConfigs) {
+            if (config.getFormat().equalsIgnoreCase(formatName.toString())) {
+              return config.getInstance(formatMap);
+            }
+          }
         }
       }
     }
     logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
-    throw new IOException("Unknown schema config found");
+    throw new IOException(CONFIG_ERROR);
   }
 
   public SchemaConfig constructConfig(byte[] rawPayload) throws IOException {
@@ -82,13 +85,17 @@ public class SchemaConfigFactory {
     JSONObject schemaJson = new JSONObject(payload);
     if (!schemaJson.has(SCHEMA)) {
       logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
-      throw new IOException("Not a valid schema config");
+      throw new IOException(ERROR_MESSAGE);
+    }
+    if (!(schemaJson.get(SCHEMA) instanceof JSONObject)) {
+      logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
+      throw new IOException(ERROR_MESSAGE);
     }
 
     schemaJson = schemaJson.getJSONObject(SCHEMA);
     if (!schemaJson.has(FORMAT)) {
       logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
-      throw new IOException("Not a valid schema config");
+      throw new IOException(CONFIG_ERROR);
     }
 
     String formatName = schemaJson.getString(FORMAT);
@@ -98,7 +105,7 @@ public class SchemaConfigFactory {
       }
     }
     logger.log(SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND, formatName);
-    throw new IOException("Unknown schema config found");
+    throw new IOException(CONFIG_ERROR);
   }
 
 }

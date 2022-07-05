@@ -162,7 +162,6 @@ public class QpidJmsFormatter extends MessageFormatter {
 
   }
 
-  @Override
   public byte[] pack(Object object) throws IOException {
     if (object instanceof Message) {
       Message protonMsg = (Message) object;

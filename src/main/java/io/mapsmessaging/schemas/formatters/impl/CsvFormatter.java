@@ -17,8 +17,6 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
-
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 import io.mapsmessaging.schemas.config.SchemaConfig;
@@ -27,7 +25,6 @@ import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -75,43 +72,6 @@ public class CsvFormatter extends MessageFormatter {
   public JSONObject parseToJson(byte[] payload) throws IOException {
     Map<String, Object> map = (Map) parse(payload);
     return new JSONObject(map);
-  }
-
-  @Override
-  public byte[] pack(Object object) throws IOException {
-    String toPack = null;
-    if (object instanceof String) {
-      toPack = (String) object;
-    }
-    if (object instanceof JSONObject) {
-      JSONObject jsonObject = (JSONObject) object;
-      toPack = packMap(jsonObject.toMap());
-    }
-    if (object instanceof Map) {
-      toPack = packMap((Map) object);
-    }
-
-    if (toPack != null) {
-      return toPack.getBytes(StandardCharsets.UTF_8);
-    }
-    logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), object.getClass().toString());
-    throw new IOException("Unexpected object to be packed");
-  }
-
-  private String packMap(Map<String, Object> map) {
-    StringBuilder stringBuilder = new StringBuilder();
-    boolean first = true;
-    for (String key : keys) {
-      if (!first) {
-        stringBuilder.append(",");
-      }
-      first = false;
-      Object val = map.get(key);
-      if (val != null) {
-        stringBuilder.append(val);
-      }
-    }
-    return stringBuilder.toString();
   }
 
   @Override

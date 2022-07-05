@@ -17,7 +17,6 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.PROTOBUF_PARSE_EXCEPTION;
 
 import com.google.protobuf.DescriptorProtos;
@@ -84,15 +83,6 @@ public class ProtoBufFormatter extends MessageFormatter {
   public JSONObject parseToJson(byte[] payload) {
     DynamicMessage dynamicMessage = (DynamicMessage) (parse(payload)).getReferenced();
     return convertToJson(dynamicMessage);
-  }
-
-  @Override
-  public byte[] pack(Object object) throws IOException {
-    if (object instanceof com.google.protobuf.GeneratedMessageV3) {
-      return ((com.google.protobuf.GeneratedMessageV3) object).toByteArray();
-    }
-    logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), object.getClass().toString());
-    throw new IOException("Unexpected object received");
   }
 
   @Override

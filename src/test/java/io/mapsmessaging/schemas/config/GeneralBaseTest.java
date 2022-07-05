@@ -33,10 +33,9 @@ public abstract class GeneralBaseTest {
 
   void validateSchema(SchemaConfig schemaConfig) {
     validate(schemaConfig);
-    Assertions.assertTrue(schemaConfig.getExpiresAfter().isBefore(LocalDateTime.now()));
-    Assertions.assertTrue(schemaConfig.getNotBefore().isAfter(LocalDateTime.now()));
+    Assertions.assertTrue(schemaConfig.getExpiresAfter().isAfter(LocalDateTime.now()));
+    Assertions.assertTrue(schemaConfig.getNotBefore().isBefore(LocalDateTime.now()));
     Assertions.assertNotNull(schemaConfig.getUniqueId());
-
   }
 
   Map<String, Object> getSchemaProperties() {
@@ -56,6 +55,7 @@ public abstract class GeneralBaseTest {
     SchemaConfig schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaProps);
     Assertions.assertEquals(format, schemaConfig.getFormat());
     validate(schemaConfig);
+    validateSchema(schemaConfig);
   }
 
   @Test

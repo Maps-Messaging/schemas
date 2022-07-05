@@ -18,7 +18,6 @@
 package io.mapsmessaging.schemas.formatters.impl;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.AVRO_PARSE_EXCEPTION;
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
@@ -27,7 +26,6 @@ import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.Map;
 import org.apache.avro.Schema;
@@ -39,7 +37,6 @@ import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
-import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.avro.util.Utf8;
 import org.json.JSONObject;
 
@@ -83,18 +80,6 @@ public class AvroFormatter extends MessageFormatter {
     binaryEncoder.flush();
     return new JSONObject(stream.toString());
   }
-
-  @Override
-  public byte[] pack(Object object) throws IOException {
-    if(object instanceof SpecificRecordBase){
-      ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(1024);
-      ((SpecificRecordBase)object).writeExternal(new ObjectOutputStream(byteArrayOutputStream));
-      return byteArrayOutputStream.toByteArray();
-    }
-    logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), object.getClass().toString());
-    throw new IOException("Unexpected object to be packed");
-  }
-
 
   @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {

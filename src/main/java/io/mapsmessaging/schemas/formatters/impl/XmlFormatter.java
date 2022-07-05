@@ -17,7 +17,6 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.XML_CONFIGURATION_EXCEPTION;
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.XML_PARSE_EXCEPTION;
 
@@ -29,17 +28,10 @@ import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import org.json.JSONObject;
 import org.json.XML;
 import org.w3c.dom.Document;
@@ -91,32 +83,6 @@ public class XmlFormatter extends MessageFormatter {
       logger.log(XML_PARSE_EXCEPTION, getName(), e);
     }
     return null;
-  }
-
-  @Override
-  public byte[] pack(Object object) throws IOException {
-    String toPack = null;
-    if (object instanceof String) {
-      toPack = (String) object;
-    }
-    if (object instanceof Document) {
-      try {
-        DOMSource domSource = new DOMSource((Document) object);
-        StringWriter writer = new StringWriter();
-        StreamResult result = new StreamResult(writer);
-        TransformerFactory tf = TransformerFactory.newDefaultInstance();
-        Transformer transformer = tf.newTransformer();
-        transformer.transform(domSource, result);
-        toPack = writer.toString();
-      } catch (TransformerException e) {
-        throw new IOException(e);
-      }
-    }
-    if (toPack != null) {
-      return toPack.getBytes(StandardCharsets.UTF_8);
-    }
-    logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), object.getClass().toString());
-    throw new IOException("Unexpected object to be packed");
   }
 
   @Override

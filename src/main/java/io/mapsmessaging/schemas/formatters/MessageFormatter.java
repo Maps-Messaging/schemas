@@ -51,12 +51,4 @@ public abstract class MessageFormatter {
     };
   }
 
-  public byte[] pack(Object object) throws IOException {
-    if (object instanceof byte[]) {
-      return (byte[]) object;
-    }
-    throw new IOException("Unexpected object to be packed");
-  }
-
-
 }

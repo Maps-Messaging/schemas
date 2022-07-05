@@ -97,14 +97,6 @@ public class NativeFormatter extends MessageFormatter {
   }
 
   @Override
-  public byte[] pack(Object object) throws IOException {
-    if (encoderDecoder != null) {
-      return encoderDecoder.encode(object);
-    }
-    return new byte[0];
-  }
-
-  @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     NativeSchemaConfig schemaConfig = (NativeSchemaConfig) config;
     return new NativeFormatter(schemaConfig.getType());

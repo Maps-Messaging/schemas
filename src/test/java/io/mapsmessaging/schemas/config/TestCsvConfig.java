@@ -18,8 +18,10 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.CsvSchemaConfig;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 
 class TestCsvConfig extends GeneralBaseTest {
@@ -29,6 +31,16 @@ class TestCsvConfig extends GeneralBaseTest {
     props.put("format", "CSV");
     props.put("header", "name, id, email");
     return props;
+  }
+
+  @Override
+  SchemaConfig buildConfig() {
+    CsvSchemaConfig config = new CsvSchemaConfig();
+    config.setHeaderValues("name, id, email");
+    config.setUniqueId(UUID.randomUUID());
+    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
+    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    return config;
   }
 
   @Override

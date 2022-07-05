@@ -18,16 +18,27 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.RawSchemaConfig;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 
-class Config extends GeneralBaseTest {
+class TestRawConfig extends GeneralBaseTest {
 
   Map<String, Object> getProperties() {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "RAW");
     return props;
+  }
+
+  @Override
+  SchemaConfig buildConfig() {
+    RawSchemaConfig config = new RawSchemaConfig();
+    config.setUniqueId(UUID.randomUUID());
+    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
+    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    return config;
   }
 
   @Override

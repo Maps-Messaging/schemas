@@ -20,9 +20,11 @@ package io.mapsmessaging.schemas.config;
 import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 
 public class TestAvroConfig extends GeneralBaseTest {
@@ -43,6 +45,16 @@ public class TestAvroConfig extends GeneralBaseTest {
     props.put("format", "AVRO");
     props.put("schema", new String(Base64.getEncoder().encode(getSchema().getBytes())));
     return props;
+  }
+
+  @Override
+  SchemaConfig buildConfig() {
+    AvroSchemaConfig config = new AvroSchemaConfig();
+    config.setSchema(getSchema());
+    config.setUniqueId(UUID.randomUUID());
+    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
+    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    return config;
   }
 
   @Override

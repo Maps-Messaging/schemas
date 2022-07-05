@@ -17,8 +17,10 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 
 class TestXmlConfig extends GeneralBaseTest {
@@ -31,6 +33,19 @@ class TestXmlConfig extends GeneralBaseTest {
     props.put("namespaceAware", true);
     return props;
   }
+
+  @Override
+  SchemaConfig buildConfig() {
+    XmlSchemaConfig config = new XmlSchemaConfig();
+    config.setValidating(true);
+    config.setCoalescing(true);
+    config.setNamespaceAware(true);
+    config.setUniqueId(UUID.randomUUID());
+    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
+    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    return config;
+  }
+
 
   @Override
   void validate(SchemaConfig schemaConfig) {

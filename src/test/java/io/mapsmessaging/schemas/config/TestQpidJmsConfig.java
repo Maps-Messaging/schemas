@@ -18,8 +18,10 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.QpidJmsSchemaConfig;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 
 public class TestQpidJmsConfig extends GeneralBaseTest {
@@ -28,6 +30,16 @@ public class TestQpidJmsConfig extends GeneralBaseTest {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "QPID-JMS");
     return props;
+  }
+
+
+  @Override
+  SchemaConfig buildConfig() {
+    QpidJmsSchemaConfig config = new QpidJmsSchemaConfig();
+    config.setUniqueId(UUID.randomUUID());
+    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
+    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    return config;
   }
 
   @Override

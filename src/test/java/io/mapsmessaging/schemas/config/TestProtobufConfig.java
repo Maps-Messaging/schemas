@@ -21,9 +21,11 @@ package io.mapsmessaging.schemas.config;
 import io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 
 class TestProtobufConfig extends GeneralBaseTest {
@@ -34,6 +36,17 @@ class TestProtobufConfig extends GeneralBaseTest {
     props.put("descriptor", new String(Base64.getEncoder().encode(getDescriptor())));
     props.put("messageName", "Person");
     return props;
+  }
+
+  @Override
+  SchemaConfig buildConfig() {
+    ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
+    config.setDescriptorValue(getDescriptor());
+    config.setMessageName("Person");
+    config.setUniqueId(UUID.randomUUID());
+    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
+    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    return config;
   }
 
   @Override

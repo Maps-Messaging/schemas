@@ -29,6 +29,8 @@ public abstract class GeneralBaseTest {
 
   abstract Map<String, Object> getProperties();
 
+  abstract SchemaConfig buildConfig();
+
   abstract void validate(SchemaConfig schemaConfig);
 
   void validateSchema(SchemaConfig schemaConfig) {
@@ -47,6 +49,14 @@ public abstract class GeneralBaseTest {
     schema.put("schema", props);
     return schema;
   }
+
+  @Test
+  void validateBaseConstructor() {
+    SchemaConfig schemaConfig = buildConfig();
+    validate(schemaConfig);
+    validateSchema(schemaConfig);
+  }
+
 
   @Test
   void validateConstructors() throws IOException {

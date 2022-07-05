@@ -43,11 +43,14 @@ import org.json.JSONObject;
 
 public class QpidJmsFormatter extends MessageFormatter {
 
+  private static final String NAME = "QPID-JMS";
+
   public QpidJmsFormatter() {
+    // Used by the service loader, there is nothing to do
   }
 
   public String getName() {
-    return "QPID-JMS";
+    return NAME;
   }
 
   @Override
@@ -111,37 +114,52 @@ public class QpidJmsFormatter extends MessageFormatter {
     } else if (val instanceof Number) {
       jsonObject.put(key, val);
     } else if (val instanceof Footer) {
-      Footer footer = (Footer) val;
-      JSONObject jsonFooter = new JSONObject();
-      for (Object lookup : footer.getValue().entrySet()) {
-        Entry entry = (Entry) lookup;
-        pack(jsonFooter, entry.getKey().toString(), entry.getValue());
-      }
-      jsonObject.put(key, jsonFooter);
+      packFooter(key,  (Footer) val, jsonObject);
     } else if (val instanceof ApplicationProperties) {
-      ApplicationProperties applicationProperties = (ApplicationProperties) val;
-      JSONObject jsonApplication = new JSONObject();
-      for (Entry<String, Object> entry : applicationProperties.getValue().entrySet()) {
-        pack(jsonApplication, entry.getKey(), entry.getValue());
-      }
-      jsonObject.put(key, jsonApplication);
+      packApplicationProperties(key, (ApplicationProperties) val, jsonObject);
     } else if (val instanceof DeliveryAnnotations) {
-      DeliveryAnnotations deliveryAnnotations = (DeliveryAnnotations) val;
-      JSONObject jsonDeliveryAnnotations = new JSONObject();
-      for (Entry<Symbol, Object> entry : deliveryAnnotations.getValue().entrySet()) {
-        pack(jsonDeliveryAnnotations, entry.getKey().toString(), entry.getValue());
-      }
-      jsonObject.put(key, jsonDeliveryAnnotations);
+      packDeliveryAnnotations(key, (DeliveryAnnotations) val, jsonObject);
     } else if (val instanceof MessageAnnotations) {
-      MessageAnnotations messageAnnotations = (MessageAnnotations) val;
-      JSONObject jsonMessageAnnotations = new JSONObject();
-      for (Entry<Symbol, Object> entry : messageAnnotations.getValue().entrySet()) {
-        pack(jsonMessageAnnotations, entry.getKey().toString(), entry.getValue());
-      }
-      jsonObject.put(key, jsonMessageAnnotations);
+      packMessageAnnotations(key, (MessageAnnotations) val, jsonObject);
     } else {
       jsonObject.put(key, val.toString());
     }
+  }
+
+  private void packMessageAnnotations(String key, MessageAnnotations messageAnnotations, JSONObject jsonObject){
+    JSONObject jsonMessageAnnotations = new JSONObject();
+    for (Entry<Symbol, Object> entry : messageAnnotations.getValue().entrySet()) {
+      pack(jsonMessageAnnotations, entry.getKey().toString(), entry.getValue());
+    }
+    jsonObject.put(key, jsonMessageAnnotations);
+  }
+
+  private void packFooter(String key, Footer footer, JSONObject jsonObject){
+    JSONObject jsonFooter = new JSONObject();
+    for (Object lookup : footer.getValue().entrySet()) {
+      if (lookup instanceof Entry) {
+        Entry<Object, Object> entry = (Entry<Object, Object>) lookup;
+        pack(jsonFooter, entry.getKey().toString(), entry.getValue());
+      }
+    }
+    jsonObject.put(key, jsonFooter);
+  }
+
+  private void packApplicationProperties(String key, ApplicationProperties applicationProperties, JSONObject jsonObject){
+    JSONObject jsonApplication = new JSONObject();
+    for (Entry<String, Object> entry : applicationProperties.getValue().entrySet()) {
+      pack(jsonApplication, entry.getKey(), entry.getValue());
+    }
+    jsonObject.put(key, jsonApplication);
+  }
+
+  private void packDeliveryAnnotations(String key, DeliveryAnnotations deliveryAnnotations, JSONObject jsonObject){
+    JSONObject jsonDeliveryAnnotations = new JSONObject();
+    for (Entry<Symbol, Object> entry : deliveryAnnotations.getValue().entrySet()) {
+      pack(jsonDeliveryAnnotations, entry.getKey().toString(), entry.getValue());
+    }
+    jsonObject.put(key, jsonDeliveryAnnotations);
+
   }
 
   @Override

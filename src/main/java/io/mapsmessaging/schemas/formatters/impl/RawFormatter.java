@@ -25,6 +25,7 @@ import org.json.JSONObject;
 public class RawFormatter extends MessageFormatter {
 
   public RawFormatter() {
+    // Used by the service loader, there is nothing to do
   }
 
   @Override

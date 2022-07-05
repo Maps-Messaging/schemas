@@ -31,6 +31,7 @@ import org.json.JSONObject;
 public class JsonFormatter extends MessageFormatter {
 
   public JsonFormatter() {
+    // Used by the service loader, there is nothing to do
   }
 
   @Override

@@ -26,9 +26,9 @@ public class XmlSchemaConfig extends SimpleSchemaConfig {
 
   private static final String NAME = "XML";
   private static final String ROOT = "root";
-  private static final String NAMESPACE_AWARE = "namespaceAware";
-  private static final String VALIDATING = "validating";
-  private static final String COALESCING = "coalescing";
+  private static final String NAMESPACE_AWARE_HEADER = "namespaceAware";
+  private static final String VALIDATING_HEADER = "validating";
+  private static final String COALESCING_HEADER = "coalescing";
 
   @Getter
   @Setter
@@ -53,9 +53,9 @@ public class XmlSchemaConfig extends SimpleSchemaConfig {
   private XmlSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
     rootEntry = config.getOrDefault("root", "").toString();
-    namespaceAware = (Boolean) config.getOrDefault(NAMESPACE_AWARE, false);
-    validating = (Boolean) config.getOrDefault(VALIDATING, false);
-    coalescing = (Boolean) config.getOrDefault(COALESCING, false);
+    namespaceAware = (Boolean) config.getOrDefault(NAMESPACE_AWARE_HEADER, false);
+    validating = (Boolean) config.getOrDefault(VALIDATING_HEADER, false);
+    coalescing = (Boolean) config.getOrDefault(COALESCING_HEADER, false);
   }
 
   protected SchemaConfig getInstance(Map<String, Object> config) {
@@ -67,9 +67,9 @@ public class XmlSchemaConfig extends SimpleSchemaConfig {
     JSONObject data = new JSONObject();
     packData(data);
     data.put(ROOT, rootEntry);
-    data.put(NAMESPACE_AWARE, namespaceAware);
-    data.put(VALIDATING, validating);
-    data.put(COALESCING, coalescing);
+    data.put(NAMESPACE_AWARE_HEADER, namespaceAware);
+    data.put(VALIDATING_HEADER, validating);
+    data.put(COALESCING_HEADER, coalescing);
     return data;
   }
 

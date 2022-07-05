@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONObject;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class TestJsonFormatter extends BaseTest {
 
@@ -38,7 +40,6 @@ public class TestJsonFormatter extends BaseTest {
     return jsonObject.toString(2).getBytes();
   }
 
-
   @Override
   List<byte[]> packList(List<io.mapsmessaging.schemas.formatters.Person> list) throws IOException {
     List<byte[]> packed = new ArrayList<>();
@@ -52,4 +53,26 @@ public class TestJsonFormatter extends BaseTest {
   SchemaConfig getSchema() throws IOException {
     return new JsonSchemaConfig();
   }
+
+  @Test
+  void testStructuredLookups() throws IOException {
+    SchemaConfig config = new JsonSchemaConfig();
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
+
+    JSONObject top = new JSONObject();
+    for (int x = 0; x < 10; x++) {
+      top.put("" + x, x);
+    }
+    JSONObject next = new JSONObject();
+    for (int x = 0; x < 10; x++) {
+      next.put("" + x, x + 10);
+    }
+    top.put("next", next);
+    ParsedObject parsed = formatter.parse(top.toString(2).getBytes());
+    Assertions.assertEquals(11, parsed.get("next.1"));
+    Assertions.assertEquals(1, parsed.get("1"));
+
+  }
+
+
 }

@@ -23,6 +23,7 @@ import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -71,8 +72,26 @@ class TestJsonFormatter extends BaseTest {
     ParsedObject parsed = formatter.parse(top.toString(2).getBytes());
     Assertions.assertEquals(11, parsed.get("next.1"));
     Assertions.assertEquals(1, parsed.get("1"));
-
   }
 
+
+  @Test
+  void testArrayLookups() throws IOException {
+    SchemaConfig config = new JsonSchemaConfig();
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
+
+    JSONArray jsonArray = new JSONArray();
+    for (int x = 0; x < 10; x++) {
+      jsonArray.put(x);
+    }
+    JSONObject top = new JSONObject();
+    top.put("arr", jsonArray);
+    ParsedObject parsed = formatter.parse(top.toString(2).getBytes());
+    Assertions.assertEquals(1, parsed.get("arr[1]"));
+    Assertions.assertEquals(0, parsed.get("arr[0]"));
+    Assertions.assertEquals(9, parsed.get("arr[9]"));
+    Assertions.assertNull(parsed.get("arr[10]"));
+    Assertions.assertNull(parsed.get("invalidEntry"));
+  }
 
 }

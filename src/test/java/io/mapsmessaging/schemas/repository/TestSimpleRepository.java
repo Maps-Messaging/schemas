@@ -17,6 +17,8 @@
 
 package io.mapsmessaging.schemas.repository;
 
+import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
 import io.mapsmessaging.schemas.repository.impl.SimpleSchemaRepository;
 import java.util.UUID;
@@ -41,4 +43,73 @@ class TestSimpleRepository {
     Assertions.assertNull(repository.getSchema("/root"));
     Assertions.assertNull(repository.getSchema(xml.getUniqueId()));
   }
+
+  @Test
+  void simpleQueryAccess(){
+    SimpleSchemaRepository repository = new SimpleSchemaRepository();
+    for(int x=0;x<10;x++) {
+      XmlSchemaConfig xml = new XmlSchemaConfig();
+      xml.setUniqueId(UUID.randomUUID());
+      repository.addSchema("/root/xml/"+x, xml);
+      Assertions.assertNotNull(repository.getSchema(xml.getUniqueId()));
+      Assertions.assertEquals(xml, repository.getSchema(xml.getUniqueId()));
+
+      Assertions.assertNotNull(repository.getSchema("/root/xml/"+x));
+      Assertions.assertEquals(xml, repository.getSchema("/root/xml/"+x).get(0));
+    }
+    for(int x=0;x<10;x++) {
+      JsonSchemaConfig json = new JsonSchemaConfig();
+      json.setUniqueId(UUID.randomUUID());
+      repository.addSchema("/root/json/"+x, json);
+      Assertions.assertNotNull(repository.getSchema(json.getUniqueId()));
+      Assertions.assertEquals(json, repository.getSchema(json.getUniqueId()));
+
+      Assertions.assertNotNull(repository.getSchema("/root/json/"+x));
+      Assertions.assertEquals(json, repository.getSchema("/root/json/"+x).get(0));
+    }
+    Assertions.assertEquals(10, repository.getSchemas("json").size());
+    Assertions.assertEquals(10, repository.getSchemas("xml").size());
+    Assertions.assertEquals(20, repository.getAll().size());
+
+    for(SchemaConfig config: repository.getSchemas("xml")){
+      repository.removeSchema(config.getUniqueId());
+    }
+    Assertions.assertEquals(10, repository.getSchemas("json").size());
+    Assertions.assertEquals(0, repository.getSchemas("xml").size());
+
+    for(SchemaConfig config: repository.getSchemas("json")){
+      repository.removeSchema(config.getUniqueId());
+    }
+    Assertions.assertEquals(0, repository.getSchemas("json").size());
+    Assertions.assertEquals(0, repository.getSchemas("xml").size());
+  }
+
+  @Test
+  void simpleAddRemoveAccess(){
+    SimpleSchemaRepository repository = new SimpleSchemaRepository();
+    XmlSchemaConfig xml = new XmlSchemaConfig();
+    xml.setUniqueId(UUID.randomUUID());
+    repository.addSchema("/root", xml);
+    Assertions.assertNotNull(repository.getSchema(xml.getUniqueId()));
+    Assertions.assertEquals(xml, repository.getSchema(xml.getUniqueId()));
+
+    repository.removeSchema(xml.getUniqueId());
+    Assertions.assertEquals(0, repository.getSchema("/root").size());
+    Assertions.assertNull(repository.getSchema(xml.getUniqueId()));
+  }
+
+  @Test
+  void simpleAddRemoveAllAccess(){
+    SimpleSchemaRepository repository = new SimpleSchemaRepository();
+    XmlSchemaConfig xml = new XmlSchemaConfig();
+    xml.setUniqueId(UUID.randomUUID());
+    repository.addSchema("/root", xml);
+    Assertions.assertNotNull(repository.getSchema(xml.getUniqueId()));
+    Assertions.assertEquals(xml, repository.getSchema(xml.getUniqueId()));
+
+    repository.removeAllSchemas();
+    Assertions.assertNull(repository.getSchema("/root"));
+    Assertions.assertNull(repository.getSchema(xml.getUniqueId()));
+  }
+
 }

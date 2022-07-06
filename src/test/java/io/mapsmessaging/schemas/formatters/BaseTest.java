@@ -173,11 +173,11 @@ public abstract class BaseTest {
     }
     start = System.currentTimeMillis();
     SchemaConfig schemaConfig = getSchema();
-    String selector = "stringId = '" + data.get(faker.random().nextInt(0, data.size())).getStringId() + "' OR " +
-        "longId = " + data.get(faker.random().nextInt(0, data.size())).getLongId() + " OR " +
-        "intId = " + data.get(faker.random().nextInt(0, data.size())).getIntId() + " OR " +
-        "doubleId = " + data.get(faker.random().nextInt(0, data.size())).getDoubleId() + " OR " +
-        "floatId = " + data.get(faker.random().nextInt(0, data.size())).getFloatId();
+    String selector = "stringId = '" + data.get(faker.random().nextInt(0, data.size() -1)).getStringId() + "' OR " +
+        "longId = " + data.get(faker.random().nextInt(0, data.size() -1)).getLongId() + " OR " +
+        "intId = " + data.get(faker.random().nextInt(0, data.size() -1)).getIntId() + " OR " +
+        "doubleId = " + data.get(faker.random().nextInt(0, data.size() -1)).getDoubleId() + " OR " +
+        "floatId = " + data.get(faker.random().nextInt(0, data.size() -1)).getFloatId();
 
     ParserExecutor executor = SelectorParser.compile(selector);
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
@@ -205,7 +205,7 @@ public abstract class BaseTest {
     }
     SchemaConfig schemaConfig = getSchema();
     Faker faker = new Faker();
-    int index = faker.random().nextInt(0, data.size());
+    int index = faker.random().nextInt(0, data.size() -1);
 
     ParserExecutor stringExecutor = SelectorParser.compile("stringId = '" + data.get(index).getStringId() + "'");
     ParserExecutor longExecutor = SelectorParser.compile("longId = " + data.get(index).getLongId());

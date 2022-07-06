@@ -16,6 +16,8 @@
  */
 package io.mapsmessaging.schemas.config;
 
+import static io.mapsmessaging.schemas.config.Constants.COMMENTS;
+import static io.mapsmessaging.schemas.config.Constants.CREATION;
 import static io.mapsmessaging.schemas.config.Constants.EXPIRES_AFTER;
 import static io.mapsmessaging.schemas.config.Constants.FORMAT;
 import static io.mapsmessaging.schemas.config.Constants.NOT_BEFORE;
@@ -36,9 +38,12 @@ public abstract class SchemaConfig {
   @Getter
   protected final String format;
   protected Logger logger;
+
   @Getter
-  @Setter
   protected UUID uniqueId;
+
+  @Getter
+  private LocalDateTime creation;
 
   @Getter
   @Setter
@@ -47,6 +52,10 @@ public abstract class SchemaConfig {
   @Getter
   @Setter
   private LocalDateTime notBefore;
+
+  @Setter
+  @Getter
+  private String comments;
 
   protected SchemaConfig(String format) {
     this.format = format;
@@ -62,6 +71,12 @@ public abstract class SchemaConfig {
     if (config.containsKey(NOT_BEFORE)) {
       notBefore = LocalDateTime.parse(config.get(NOT_BEFORE).toString());
     }
+    if (config.containsKey(CREATION)) {
+      creation = LocalDateTime.parse(config.get(CREATION).toString());
+    }
+    if (config.containsKey(COMMENTS)) {
+      comments = config.get(COMMENTS).toString();
+    }
   }
 
   public String pack() throws IOException {
@@ -72,6 +87,10 @@ public abstract class SchemaConfig {
     return packtoJSON().toMap();
   }
 
+  public void setUniqueId(UUID uniqueId){
+    this.uniqueId = uniqueId;
+    creation = LocalDateTime.now();
+  }
   private JSONObject packtoJSON() throws IOException {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put(SCHEMA, packData());
@@ -90,6 +109,11 @@ public abstract class SchemaConfig {
       jsonObject.put(NOT_BEFORE, notBefore.toString());
     }
     jsonObject.put(io.mapsmessaging.schemas.config.Constants.UUID, uniqueId.toString());
+    if(creation == null){
+      creation = LocalDateTime.now();
+    }
+    jsonObject.put(CREATION, creation.toString());
+    if(comments != null) jsonObject.put(COMMENTS, comments);
 
   }
 

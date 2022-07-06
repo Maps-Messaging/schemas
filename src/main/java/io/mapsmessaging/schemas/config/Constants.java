@@ -27,7 +27,8 @@ public class Constants {
   public static final String NOT_BEFORE = "notBefore";
   public static final String EXPIRES_AFTER = "expiresAfter";
 
-  public static final String DEFAULT_FORMAT = "RAW";
+  public static final String CREATION = "creation";
+  public static final String COMMENTS = "comments";
 
   private Constants() {
   }

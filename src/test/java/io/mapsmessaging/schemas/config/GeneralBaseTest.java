@@ -46,6 +46,7 @@ public abstract class GeneralBaseTest {
     props.put("uuid", UUID.randomUUID());
     props.put("notBefore", LocalDateTime.now().minusDays(10));
     props.put("expiresAfter", LocalDateTime.now().plusDays(10));
+    props.put("comments", "Unit Tests");
     schema.put("schema", props);
     return schema;
   }

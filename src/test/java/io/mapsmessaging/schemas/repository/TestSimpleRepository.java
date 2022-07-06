@@ -23,7 +23,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class TestSimpleRepository {
+class TestSimpleRepository {
 
   @Test
   void simpleAccess(){

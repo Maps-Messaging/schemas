@@ -18,11 +18,14 @@ package io.mapsmessaging.schemas.formatters;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
+import io.mapsmessaging.schemas.formatters.impl.XmlFormatter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONObject;
 import org.json.XML;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 class TestXMLFormatter extends BaseTest {
 
@@ -59,4 +62,58 @@ class TestXMLFormatter extends BaseTest {
     xmlSchemaConfig.setRootEntry("person");
     return xmlSchemaConfig;
   }
+
+
+  @Test
+  void testComplexDocument() throws IOException {
+    XmlSchemaConfig config = new XmlSchemaConfig();
+    config.setRootEntry("catalog");
+    XmlFormatter xmlFormatter = (XmlFormatter) MessageFormatterFactory.getInstance().getFormatter(config);
+    Assertions.assertEquals("Cardigan Sweater", xmlFormatter.parse(XMLString.getBytes()).get("product.description"));
+    Assertions.assertEquals(39.95, xmlFormatter.parse(XMLString.getBytes()).get("product.catalog_item[0].price"));
+
+  }
+
+  private static final String XMLString = "<?xml version=\"1.0\"?>\n"
+      + "<?xml-stylesheet href=\"catalog.xsl\" type=\"text/xsl\"?>\n"
+      + "<!DOCTYPE catalog  >\n"
+      + "<catalog>\n"
+      + "   <product description=\"Cardigan Sweater\" product_image=\"cardigan.jpg\">\n"
+      + "      <catalog_item gender=\"Men's\">\n"
+      + "         <item_number>QWZ5671</item_number>\n"
+      + "         <price>39.95</price>\n"
+      + "         <size description=\"Medium\">\n"
+      + "            <color_swatch image=\"red_cardigan.jpg\">Red</color_swatch>\n"
+      + "            <color_swatch image=\"burgundy_cardigan.jpg\">Burgundy</color_swatch>\n"
+      + "         </size>\n"
+      + "         <size description=\"Large\">\n"
+      + "            <color_swatch image=\"red_cardigan.jpg\">Red</color_swatch>\n"
+      + "            <color_swatch image=\"burgundy_cardigan.jpg\">Burgundy</color_swatch>\n"
+      + "         </size>\n"
+      + "      </catalog_item>\n"
+      + "      <catalog_item gender=\"Women's\">\n"
+      + "         <item_number>RRX9856</item_number>\n"
+      + "         <price>42.50</price>\n"
+      + "         <size description=\"Small\">\n"
+      + "            <color_swatch image=\"red_cardigan.jpg\">Red</color_swatch>\n"
+      + "            <color_swatch image=\"navy_cardigan.jpg\">Navy</color_swatch>\n"
+      + "            <color_swatch image=\"burgundy_cardigan.jpg\">Burgundy</color_swatch>\n"
+      + "         </size>\n"
+      + "         <size description=\"Medium\">\n"
+      + "            <color_swatch image=\"red_cardigan.jpg\">Red</color_swatch>\n"
+      + "            <color_swatch image=\"navy_cardigan.jpg\">Navy</color_swatch>\n"
+      + "            <color_swatch image=\"burgundy_cardigan.jpg\">Burgundy</color_swatch>\n"
+      + "            <color_swatch image=\"black_cardigan.jpg\">Black</color_swatch>\n"
+      + "         </size>\n"
+      + "         <size description=\"Large\">\n"
+      + "            <color_swatch image=\"navy_cardigan.jpg\">Navy</color_swatch>\n"
+      + "            <color_swatch image=\"black_cardigan.jpg\">Black</color_swatch>\n"
+      + "         </size>\n"
+      + "         <size description=\"Extra Large\">\n"
+      + "            <color_swatch image=\"burgundy_cardigan.jpg\">Burgundy</color_swatch>\n"
+      + "            <color_swatch image=\"black_cardigan.jpg\">Black</color_swatch>\n"
+      + "         </size>\n"
+      + "      </catalog_item>\n"
+      + "   </product>\n"
+      + "</catalog>";
 }

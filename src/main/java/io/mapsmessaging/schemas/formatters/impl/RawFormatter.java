@@ -47,12 +47,12 @@ public class RawFormatter extends MessageFormatter {
     return new ParsedObject() {
       @Override
       public Object getReferenced() {
-        return null;
+        return payload;
       }
 
       @Override
       public Object get(String s) {
-        return payload;
+        return null;
       }
     };
   }

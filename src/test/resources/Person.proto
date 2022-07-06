@@ -24,7 +24,5 @@ message Person {
   required int32 intId = 3;
   required float floatId = 4;
   required double doubleId = 5;
-
-
 }
 // [END messages]

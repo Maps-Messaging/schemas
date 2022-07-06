@@ -6,19 +6,25 @@ import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig.TYPE;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import org.json.JSONObject;
 
 public class NativeFormatter extends MessageFormatter {
 
   private final NativeEncoderDecoder encoderDecoder;
+  private final TYPE type;
 
   public NativeFormatter() {
     encoderDecoder = null;
+    type = null;
   }
 
-  public NativeFormatter(TYPE type) {
+  public NativeFormatter(TYPE type) throws IOException {
+    this.type = type;
+    if (type == null) {
+      throw new IOException("Invalid type specified");
+    }
     switch (type) {
+      default:
       case STRING:
         encoderDecoder = new StringEncoderDecoder();
         break;
@@ -50,9 +56,6 @@ public class NativeFormatter extends MessageFormatter {
       case DOUBLE:
         encoderDecoder = new DoubleEncoderDecoder();
         break;
-      default:
-        encoderDecoder = null;
-        break;
     }
   }
 
@@ -60,20 +63,12 @@ public class NativeFormatter extends MessageFormatter {
     long val = 0;
     int x = 0;
     while (x < payload.length && x < size) {
-      val = val << 8;
-      val = val | payload[x];
+      long t = (payload[x] & 0xff);
+      t = t << (x * 8);
+      val = val | t;
       x++;
     }
     return val;
-  }
-
-  private static void writeToByteArray(long val, byte[] payload, int size) {
-    int x = 0;
-    while (x < payload.length && x < size) {
-      payload[x] = (byte) (val & 0xff);
-      val = val >> 8;
-      x++;
-    }
   }
 
   @Override
@@ -81,19 +76,23 @@ public class NativeFormatter extends MessageFormatter {
     return new ParsedObject() {
       @Override
       public Object getReferenced() {
-        return encoderDecoder != null ? encoderDecoder.decode(payload) : null;
+        return payload;
       }
 
       @Override
       public Object get(String s) {
-        return payload;
+        return encoderDecoder != null ? encoderDecoder.decode(payload) : null;
       }
+
     };
   }
 
   @Override
   public JSONObject parseToJson(byte[] payload) throws IOException {
-    return (JSONObject) parse(payload);
+    JSONObject jsonObject = new JSONObject();
+    jsonObject.put("value", parse(payload).get("value"));
+    jsonObject.put("type", type);
+    return jsonObject;
   }
 
   @Override
@@ -110,8 +109,6 @@ public class NativeFormatter extends MessageFormatter {
   interface NativeEncoderDecoder {
 
     Object decode(byte[] payload);
-
-    byte[] encode(Object obj);
   }
 
   static class StringEncoderDecoder implements NativeEncoderDecoder {
@@ -121,10 +118,6 @@ public class NativeFormatter extends MessageFormatter {
       return new String(payload);
     }
 
-    @Override
-    public byte[] encode(Object obj) {
-      return ((String) obj).getBytes(StandardCharsets.UTF_8);
-    }
   }
 
   static class StringNumericEncoderDecoder implements NativeEncoderDecoder {
@@ -132,15 +125,13 @@ public class NativeFormatter extends MessageFormatter {
     @Override
     public Object decode(byte[] payload) {
       String val = new String(payload).trim();
+      if (val.equals("NaN")) {
+        return Double.NaN;
+      }
       if (val.contains(".")) {
         return Double.parseDouble(val);
       }
       return Long.parseLong(val);
-    }
-
-    @Override
-    public byte[] encode(Object obj) {
-      return ((String) obj).getBytes(StandardCharsets.UTF_8);
     }
   }
 
@@ -154,14 +145,22 @@ public class NativeFormatter extends MessageFormatter {
 
     @Override
     public Object decode(byte[] payload) {
-      return readFromByteArray(payload, size);
-    }
+      long result = readFromByteArray(payload, size);
+      switch (size) {
+        case 8:
+          return result;
+        case 4:
+          return (int) result;
 
-    @Override
-    public byte[] encode(Object obj) {
-      byte[] tmp = new byte[size];
-      writeToByteArray((Long) obj, tmp, size);
-      return tmp;
+        case 2:
+          return (short) result;
+
+        case 1:
+          return (byte) result;
+
+        default:
+          return result;
+      }
     }
   }
 
@@ -172,14 +171,6 @@ public class NativeFormatter extends MessageFormatter {
       long val = readFromByteArray(payload, 4);
       return Float.intBitsToFloat((int) val);
     }
-
-    @Override
-    public byte[] encode(Object obj) {
-      byte[] tmp = new byte[4];
-      long val = Float.floatToIntBits((Float) obj);
-      writeToByteArray(val, tmp, 4);
-      return tmp;
-    }
   }
 
   static class DoubleEncoderDecoder implements NativeEncoderDecoder {
@@ -189,15 +180,5 @@ public class NativeFormatter extends MessageFormatter {
       long val = readFromByteArray(payload, 8);
       return Double.longBitsToDouble(val);
     }
-
-    @Override
-    public byte[] encode(Object obj) {
-      byte[] tmp = new byte[8];
-      long val = Double.doubleToLongBits((Double) obj);
-      writeToByteArray(val, tmp, 8);
-      return tmp;
-    }
   }
-
-
 }

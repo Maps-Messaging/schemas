@@ -19,6 +19,5 @@ io.mapsmessaging.schemas.config.impl.CsvSchemaConfig
 io.mapsmessaging.schemas.config.impl.JsonSchemaConfig
 io.mapsmessaging.schemas.config.impl.NativeSchemaConfig
 io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig
-io.mapsmessaging.schemas.config.impl.QpidJmsSchemaConfig
 io.mapsmessaging.schemas.config.impl.RawSchemaConfig
 io.mapsmessaging.schemas.config.impl.XmlSchemaConfig

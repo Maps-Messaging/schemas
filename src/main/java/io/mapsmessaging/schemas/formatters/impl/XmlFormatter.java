@@ -88,7 +88,17 @@ public class XmlFormatter extends MessageFormatter {
     } catch (IOException | SAXException e) {
       logger.log(XML_PARSE_EXCEPTION, getName(), e);
     }
-    return null;
+    return new ParsedObject() {
+      @Override
+      public Object getReferenced() {
+        return payload;
+      }
+
+      @Override
+      public Object get(String s) {
+        return null;
+      }
+    };
   }
 
   @Override

@@ -63,6 +63,14 @@ class TestXMLFormatter extends BaseTest {
     return xmlSchemaConfig;
   }
 
+  @Test
+  void testBadDocument() throws IOException {
+    XmlSchemaConfig config = new XmlSchemaConfig();
+    config.setRootEntry("catalog");
+    XmlFormatter xmlFormatter = (XmlFormatter) MessageFormatterFactory.getInstance().getFormatter(config);
+    Assertions.assertNotNull(xmlFormatter.parse("This is not a XML document".getBytes()));
+    Assertions.assertNull(xmlFormatter.parse("This is not a XML document".getBytes()).get("Whatever"));
+  }
 
   @Test
   void testComplexDocument() throws IOException {
@@ -71,7 +79,6 @@ class TestXMLFormatter extends BaseTest {
     XmlFormatter xmlFormatter = (XmlFormatter) MessageFormatterFactory.getInstance().getFormatter(config);
     Assertions.assertEquals("Cardigan Sweater", xmlFormatter.parse(XMLString.getBytes()).get("product.description"));
     Assertions.assertEquals(39.95, xmlFormatter.parse(XMLString.getBytes()).get("product.catalog_item[0].price"));
-
   }
 
   private static final String XMLString = "<?xml version=\"1.0\"?>\n"

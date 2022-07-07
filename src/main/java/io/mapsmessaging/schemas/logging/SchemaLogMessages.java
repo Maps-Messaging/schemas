@@ -36,7 +36,7 @@ public enum SchemaLogMessages implements LogMessage {
 
   //<editor-fold desc="Formatter specific log messages">
   AVRO_PARSE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "Avro format raised exception during parsing, {}"),
-  FORMATTER_UNEXPECTED_OBJECT(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "{} formatter unable to pack object, unexpected type {}"),
+  FORMATTER_UNEXPECTED_OBJECT(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "{} formatter unable to parse object, unexpected data {}"),
   PROTOBUF_PARSE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "Protobuf format raised exception during parsing {}"),
   XML_CONFIGURATION_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "XML formatter raised exception during construction {}"),
   XML_PARSE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "XML formatter raised exception during parsing {}"),

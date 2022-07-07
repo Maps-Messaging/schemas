@@ -17,7 +17,7 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.AVRO_PARSE_EXCEPTION;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
@@ -65,9 +65,9 @@ public class AvroFormatter extends MessageFormatter {
       GenericRecord genericRecord = datumReader.read(null, decoder);
       return new AvroResolver(genericRecord);
     } catch (IOException e) {
-      logger.log(AVRO_PARSE_EXCEPTION, e);
+      logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
+      return new DefaultParser(payload);
     }
-    return null;
   }
 
   @Override

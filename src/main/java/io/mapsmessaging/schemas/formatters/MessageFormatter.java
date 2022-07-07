@@ -39,4 +39,23 @@ public abstract class MessageFormatter {
 
   public abstract ParsedObject parse(byte[] payload);
 
+  protected static class DefaultParser implements ParsedObject {
+
+    private final byte[] payload;
+
+    public DefaultParser(byte[] payload) {
+      this.payload = payload;
+    }
+
+    @Override
+    public Object getReferenced() {
+      return payload;
+    }
+
+    @Override
+    public Object get(String s) {
+      return null;
+    }
+  }
+
 }

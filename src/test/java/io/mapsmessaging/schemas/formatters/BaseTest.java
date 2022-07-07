@@ -81,6 +81,19 @@ public abstract class BaseTest {
 
   abstract SchemaConfig getSchema() throws IOException;
 
+  @Test
+  void testInvalidData() throws IOException {
+    SchemaConfig schemaConfig = getSchema();
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
+    Assertions.assertNotNull(formatter.parse("This should not be parsable".getBytes()));
+    Assertions.assertNull(formatter.parse("This should not be parsable".getBytes()).get("value"));
+    byte[] binary = new byte[1024];
+    for (int x = 0; x < binary.length; x++) {
+      binary[x] = (byte) (x % 0xf);
+    }
+    Assertions.assertNotNull(formatter.parse(binary));
+    Assertions.assertNull(formatter.parse(binary).get("value"));
+  }
 
   @Test
   void testFormatterToJSON() throws IOException {

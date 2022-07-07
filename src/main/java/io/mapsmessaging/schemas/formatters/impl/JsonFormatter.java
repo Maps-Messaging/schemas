@@ -17,12 +17,15 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
+
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 import java.io.IOException;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class JsonFormatter extends MessageFormatter {
@@ -33,8 +36,14 @@ public class JsonFormatter extends MessageFormatter {
 
   @Override
   public ParsedObject parse(byte[] payload) {
-    JSONObject json = new JSONObject(new String(payload));
-    return new StructuredResolver(new MapResolver(json.toMap()), json);
+    JSONObject json = null;
+    try {
+      json = new JSONObject(new String(payload));
+      return new StructuredResolver(new MapResolver(json.toMap()), json);
+    } catch (JSONException e) {
+      logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
+      return new DefaultParser(payload);
+    }
   }
 
   @Override

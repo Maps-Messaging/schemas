@@ -17,7 +17,7 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.PROTOBUF_PARSE_EXCEPTION;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
 
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
@@ -74,9 +74,9 @@ public class ProtoBufFormatter extends MessageFormatter {
       ParsedObject parsed = new MapResolver(convertToMap(message));
       return new StructuredResolver(parsed, message);
     } catch (InvalidProtocolBufferException e) {
-      logger.log(PROTOBUF_PARSE_EXCEPTION, e);
+      logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
+      return new DefaultParser(payload);
     }
-    return null;
   }
 
   @Override

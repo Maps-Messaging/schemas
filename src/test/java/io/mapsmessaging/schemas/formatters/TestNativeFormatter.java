@@ -41,6 +41,7 @@ class TestNativeFormatter {
       long nextRandom = faker.random().nextLong();
       Assertions.assertEquals(nextRandom, formatter.parse(("" + nextRandom).getBytes()).get("val"));
     }
+    Assertions.assertNull(formatter.parse(("This isn't a number").getBytes()).get("val"));
   }
 
   @Test
@@ -55,6 +56,7 @@ class TestNativeFormatter {
       double nextRandom = faker.random().nextDouble();
       Assertions.assertEquals(nextRandom, formatter.parse(("" + nextRandom).getBytes()).get("val"));
     }
+    Assertions.assertNull(formatter.parse(("This isn't a number").getBytes()).get("val"));
   }
 
   @Test
@@ -93,6 +95,7 @@ class TestNativeFormatter {
       long nextRandom = faker.random().nextLong();
       Assertions.assertEquals(nextRandom, formatter.parse(packLong(nextRandom, 8)).get("val"));
     }
+
     formatter = getFormatter(TYPE.INT32);
     Assertions.assertEquals(0, formatter.parse(packLong(0, 4)).get("val"));
     Assertions.assertEquals(Integer.MAX_VALUE, formatter.parse(packLong(Integer.MAX_VALUE, 4)).get("val"));
@@ -119,7 +122,6 @@ class TestNativeFormatter {
       byte nextRandom = (byte) faker.random().nextLong();
       Assertions.assertEquals(nextRandom, formatter.parse(packLong(nextRandom, 1)).get("val"));
     }
-
   }
 
   @Test

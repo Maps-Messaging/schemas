@@ -1,5 +1,7 @@
 package io.mapsmessaging.schemas.formatters.impl;
 
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
+
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig.TYPE;
@@ -81,7 +83,12 @@ public class NativeFormatter extends MessageFormatter {
 
       @Override
       public Object get(String s) {
-        return encoderDecoder != null ? encoderDecoder.decode(payload) : null;
+        try {
+          return encoderDecoder != null ? encoderDecoder.decode(payload) : null;
+        } catch (Exception e) {
+          logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
+          return null;
+        }
       }
 
     };

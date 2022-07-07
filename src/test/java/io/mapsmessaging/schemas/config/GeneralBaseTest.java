@@ -37,6 +37,8 @@ public abstract class GeneralBaseTest {
     validate(schemaConfig);
     Assertions.assertTrue(schemaConfig.getExpiresAfter().isAfter(LocalDateTime.now()));
     Assertions.assertTrue(schemaConfig.getNotBefore().isBefore(LocalDateTime.now()));
+    Assertions.assertEquals("tcp://localhost:1883/topic2", schemaConfig.getSource());
+    Assertions.assertEquals("Unit Tests", schemaConfig.getComments());
     Assertions.assertNotNull(schemaConfig.getUniqueId());
   }
 
@@ -47,6 +49,7 @@ public abstract class GeneralBaseTest {
     props.put("notBefore", LocalDateTime.now().minusDays(10));
     props.put("expiresAfter", LocalDateTime.now().plusDays(10));
     props.put("comments", "Unit Tests");
+    props.put("source", "tcp://localhost:1883/topic2");
     schema.put("schema", props);
     return schema;
   }

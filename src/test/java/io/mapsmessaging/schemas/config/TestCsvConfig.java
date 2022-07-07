@@ -42,6 +42,8 @@ class TestCsvConfig extends GeneralBaseTest {
     config.setUniqueId(UUID.randomUUID());
     config.setExpiresAfter(LocalDateTime.now().plusDays(10));
     config.setNotBefore(LocalDateTime.now().minusDays(10));
+    config.setComments("Unit Tests");
+    config.setSource("tcp://localhost:1883/topic2");
     return config;
   }
 

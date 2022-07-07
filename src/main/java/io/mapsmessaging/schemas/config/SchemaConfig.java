@@ -22,6 +22,7 @@ import static io.mapsmessaging.schemas.config.Constants.EXPIRES_AFTER;
 import static io.mapsmessaging.schemas.config.Constants.FORMAT;
 import static io.mapsmessaging.schemas.config.Constants.NOT_BEFORE;
 import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
+import static io.mapsmessaging.schemas.config.Constants.SOURCE;
 
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
@@ -40,7 +41,7 @@ public abstract class SchemaConfig {
   protected Logger logger;
 
   @Getter
-  protected UUID uniqueId;
+  protected String uniqueId;
 
   @Getter
   private LocalDateTime creation;
@@ -57,6 +58,10 @@ public abstract class SchemaConfig {
   @Getter
   private String comments;
 
+  @Setter
+  @Getter
+  private String source;
+
   protected SchemaConfig(String format) {
     this.format = format;
     logger = LoggerFactory.getLogger(SchemaConfig.class);
@@ -64,7 +69,7 @@ public abstract class SchemaConfig {
 
   protected SchemaConfig(String format, Map<String, Object> config) {
     this(format);
-    uniqueId = UUID.fromString(config.get(io.mapsmessaging.schemas.config.Constants.UUID).toString());
+    uniqueId = config.get(io.mapsmessaging.schemas.config.Constants.UUID).toString();
     if (config.containsKey(EXPIRES_AFTER)) {
       expiresAfter = LocalDateTime.parse(config.get(EXPIRES_AFTER).toString());
     }
@@ -77,6 +82,9 @@ public abstract class SchemaConfig {
     if (config.containsKey(COMMENTS)) {
       comments = config.get(COMMENTS).toString();
     }
+    if (config.containsKey(SOURCE)) {
+      source = config.get(SOURCE).toString();
+    }
   }
 
   public String pack() throws IOException {
@@ -87,10 +95,16 @@ public abstract class SchemaConfig {
     return packtoJSON().toMap();
   }
 
-  public void setUniqueId(UUID uniqueId){
+  public void setUniqueId(UUID uniqueId) {
+    this.uniqueId = uniqueId.toString();
+    creation = LocalDateTime.now();
+  }
+
+  public void setUniqueId(String uniqueId) {
     this.uniqueId = uniqueId;
     creation = LocalDateTime.now();
   }
+
   private JSONObject packtoJSON() throws IOException {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put(SCHEMA, packData());
@@ -108,12 +122,17 @@ public abstract class SchemaConfig {
     if (notBefore != null) {
       jsonObject.put(NOT_BEFORE, notBefore.toString());
     }
-    jsonObject.put(io.mapsmessaging.schemas.config.Constants.UUID, uniqueId.toString());
+    jsonObject.put(io.mapsmessaging.schemas.config.Constants.UUID, uniqueId);
     if(creation == null){
       creation = LocalDateTime.now();
     }
     jsonObject.put(CREATION, creation.toString());
-    if(comments != null) jsonObject.put(COMMENTS, comments);
+    if (comments != null) {
+      jsonObject.put(COMMENTS, comments);
+    }
+    if (source != null) {
+      jsonObject.put(SOURCE, source);
+    }
 
   }
 

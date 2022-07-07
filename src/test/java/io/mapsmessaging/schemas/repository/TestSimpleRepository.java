@@ -36,8 +36,8 @@ class TestSimpleRepository {
     Assertions.assertNotNull(repository.getSchema(xml.getUniqueId()));
     Assertions.assertEquals(xml, repository.getSchema(xml.getUniqueId()));
 
-    Assertions.assertNotNull(repository.getSchema("/root"));
-    Assertions.assertEquals(xml, repository.getSchema("/root").get(0));
+    Assertions.assertNotNull(repository.getSchemaByContext("/root"));
+    Assertions.assertEquals(xml, repository.getSchemaByContext("/root").get(0));
 
     repository.removeAllSchemas();
     Assertions.assertNull(repository.getSchema("/root"));
@@ -50,22 +50,22 @@ class TestSimpleRepository {
     for(int x=0;x<10;x++) {
       XmlSchemaConfig xml = new XmlSchemaConfig();
       xml.setUniqueId(UUID.randomUUID());
-      repository.addSchema("/root/xml/"+x, xml);
+      repository.addSchema("/root/xml/" + x, xml);
       Assertions.assertNotNull(repository.getSchema(xml.getUniqueId()));
       Assertions.assertEquals(xml, repository.getSchema(xml.getUniqueId()));
 
-      Assertions.assertNotNull(repository.getSchema("/root/xml/"+x));
-      Assertions.assertEquals(xml, repository.getSchema("/root/xml/"+x).get(0));
+      Assertions.assertNotNull(repository.getSchemaByContext("/root/xml/" + x));
+      Assertions.assertEquals(xml, repository.getSchemaByContext("/root/xml/" + x).get(0));
     }
     for(int x=0;x<10;x++) {
       JsonSchemaConfig json = new JsonSchemaConfig();
       json.setUniqueId(UUID.randomUUID());
-      repository.addSchema("/root/json/"+x, json);
+      repository.addSchema("/root/json/" + x, json);
       Assertions.assertNotNull(repository.getSchema(json.getUniqueId()));
       Assertions.assertEquals(json, repository.getSchema(json.getUniqueId()));
 
-      Assertions.assertNotNull(repository.getSchema("/root/json/"+x));
-      Assertions.assertEquals(json, repository.getSchema("/root/json/"+x).get(0));
+      Assertions.assertNotNull(repository.getSchemaByContext("/root/json/" + x));
+      Assertions.assertEquals(json, repository.getSchemaByContext("/root/json/" + x).get(0));
     }
     Assertions.assertEquals(10, repository.getSchemas("json").size());
     Assertions.assertEquals(10, repository.getSchemas("xml").size());
@@ -94,7 +94,7 @@ class TestSimpleRepository {
     Assertions.assertEquals(xml, repository.getSchema(xml.getUniqueId()));
 
     repository.removeSchema(xml.getUniqueId());
-    Assertions.assertEquals(0, repository.getSchema("/root").size());
+    Assertions.assertEquals(0, repository.getSchemaByContext("/root").size());
     Assertions.assertNull(repository.getSchema(xml.getUniqueId()));
   }
 
@@ -108,7 +108,7 @@ class TestSimpleRepository {
     Assertions.assertEquals(xml, repository.getSchema(xml.getUniqueId()));
 
     repository.removeAllSchemas();
-    Assertions.assertNull(repository.getSchema("/root"));
+    Assertions.assertNull(repository.getSchemaByContext("/root"));
     Assertions.assertNull(repository.getSchema(xml.getUniqueId()));
   }
 

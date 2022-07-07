@@ -30,7 +30,7 @@ class TestFormatConstructors {
 
     protected BadSchema() {
       super("BAD");
-      uniqueId = UUID.randomUUID();
+      uniqueId = UUID.randomUUID().toString();
     }
 
     protected BadSchema(String format, Map<String, Object> config) {
@@ -38,7 +38,7 @@ class TestFormatConstructors {
     }
 
     @Override
-    protected JSONObject packData() throws IOException {
+    protected JSONObject packData() {
       JSONObject data = new JSONObject();
       packData(data);
       return data;

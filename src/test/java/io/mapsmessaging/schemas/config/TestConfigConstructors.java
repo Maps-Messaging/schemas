@@ -62,7 +62,7 @@ class TestConfigConstructors {
 
     protected BadSchema() {
       super("BAD");
-      uniqueId = UUID.randomUUID();
+      uniqueId = UUID.randomUUID().toString();
     }
 
     protected BadSchema(String format, Map<String, Object> config) {

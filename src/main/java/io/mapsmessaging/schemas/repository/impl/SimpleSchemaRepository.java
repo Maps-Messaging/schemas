@@ -6,13 +6,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 public class SimpleSchemaRepository implements SchemaRepository {
 
   private final Map<String, List<SchemaConfig>> mapByContext;
-  private final Map<UUID, SchemaConfig> mapByUUID;
+  private final Map<String, SchemaConfig> mapByUUID;
 
 
   public SimpleSchemaRepository() {
@@ -34,12 +33,12 @@ public class SimpleSchemaRepository implements SchemaRepository {
   }
 
   @Override
-  public SchemaConfig getSchema(UUID uuid) {
+  public SchemaConfig getSchema(String uuid) {
     return mapByUUID.get(uuid);
   }
 
   @Override
-  public List<SchemaConfig> getSchema(String context) {
+  public List<SchemaConfig> getSchemaByContext(String context) {
     return mapByContext.get(context);
   }
 
@@ -57,7 +56,7 @@ public class SimpleSchemaRepository implements SchemaRepository {
   }
 
   @Override
-  public void removeSchema(UUID uuid) {
+  public void removeSchema(String uuid) {
     SchemaConfig config = mapByUUID.remove(uuid);
     if (config != null) {
       for (List<SchemaConfig> list : mapByContext.values()) {

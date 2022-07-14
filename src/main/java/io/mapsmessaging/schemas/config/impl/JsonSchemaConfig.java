@@ -25,6 +25,7 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
 
   public JsonSchemaConfig() {
     super(NAME);
+    setMimeType("application/json");
   }
 
   private JsonSchemaConfig(Map<String, Object> config) {

@@ -20,6 +20,7 @@ import static io.mapsmessaging.schemas.config.Constants.COMMENTS;
 import static io.mapsmessaging.schemas.config.Constants.CREATION;
 import static io.mapsmessaging.schemas.config.Constants.EXPIRES_AFTER;
 import static io.mapsmessaging.schemas.config.Constants.FORMAT;
+import static io.mapsmessaging.schemas.config.Constants.MIME_TYPE;
 import static io.mapsmessaging.schemas.config.Constants.NOT_BEFORE;
 import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
 import static io.mapsmessaging.schemas.config.Constants.SOURCE;
@@ -62,6 +63,10 @@ public abstract class SchemaConfig {
   @Getter
   private String source;
 
+  @Setter
+  @Getter
+  private String mimeType;
+
   protected SchemaConfig(String format) {
     this.format = format;
     logger = LoggerFactory.getLogger(SchemaConfig.class);
@@ -84,6 +89,9 @@ public abstract class SchemaConfig {
     }
     if (config.containsKey(SOURCE)) {
       source = config.get(SOURCE).toString();
+    }
+    if (config.containsKey(MIME_TYPE)) {
+      mimeType = config.get(MIME_TYPE).toString();
     }
   }
 
@@ -123,15 +131,19 @@ public abstract class SchemaConfig {
       jsonObject.put(NOT_BEFORE, notBefore.toString());
     }
     jsonObject.put(io.mapsmessaging.schemas.config.Constants.UUID, uniqueId);
-    if(creation == null){
+    if (creation == null) {
       creation = LocalDateTime.now();
     }
     jsonObject.put(CREATION, creation.toString());
-    if (comments != null) {
+
+    if (comments != null && comments.length() > 0) {
       jsonObject.put(COMMENTS, comments);
     }
-    if (source != null) {
+    if (source != null && source.length() > 0) {
       jsonObject.put(SOURCE, source);
+    }
+    if (mimeType != null && mimeType.length() > 0) {
+      jsonObject.put(MIME_TYPE, mimeType);
     }
 
   }

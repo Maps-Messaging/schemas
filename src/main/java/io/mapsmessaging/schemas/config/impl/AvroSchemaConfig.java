@@ -38,11 +38,13 @@ public class AvroSchemaConfig extends SchemaConfig {
 
   public AvroSchemaConfig() {
     super(NAME);
+    setMimeType("application/octet-stream");
   }
 
   protected AvroSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
     this.schema = new String(Base64.getDecoder().decode(config.get(SCHEMA).toString()));
+    setMimeType("application/octet-stream");
   }
 
 

@@ -43,12 +43,14 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
 
   public ProtoBufSchemaConfig() {
     super(NAME);
+    setMimeType("application/octet-stream");
   }
 
   protected ProtoBufSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
     messageName = config.getOrDefault(MESSAGE_NAME, "").toString();
     descriptorValue = Base64.getDecoder().decode(config.getOrDefault(DESCRIPTOR, "").toString());
+    setMimeType("application/octet-stream");
   }
 
 

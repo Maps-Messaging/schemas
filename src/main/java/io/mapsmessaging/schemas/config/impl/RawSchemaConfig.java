@@ -29,6 +29,7 @@ public class RawSchemaConfig extends SimpleSchemaConfig {
 
   protected RawSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
+    setMimeType("application/octet-stream");
   }
 
   protected SchemaConfig getInstance(Map<String, Object> config) {

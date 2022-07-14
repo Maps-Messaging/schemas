@@ -48,6 +48,7 @@ public class XmlSchemaConfig extends SimpleSchemaConfig {
 
   public XmlSchemaConfig() {
     super(NAME);
+    setMimeType("application/xml");
   }
 
   private XmlSchemaConfig(Map<String, Object> config) {

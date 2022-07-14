@@ -43,12 +43,14 @@ public class CsvSchemaConfig extends SchemaConfig {
 
   public CsvSchemaConfig() {
     super(NAME);
+    setMimeType("text/plain");
   }
 
   public CsvSchemaConfig(String header, boolean interpretNumericStrings) {
     super(NAME);
     this.headerValues = header;
     this.interpretNumericStrings = interpretNumericStrings;
+    setMimeType("text/plain");
   }
 
   protected CsvSchemaConfig(Map<String, Object> config) {

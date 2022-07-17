@@ -31,6 +31,8 @@ public class Constants {
   public static final String COMMENTS = "comments";
   public static final String SOURCE = "source";
   public static final String MIME_TYPE = "mime-type";
+  public static final String RESOURCE_TYPE = "resource-type";
+  public static final String INTERFACE_DESCRIPTION = "interface-description";
 
   private Constants() {
   }

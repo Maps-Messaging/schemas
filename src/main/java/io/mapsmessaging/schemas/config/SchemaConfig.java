@@ -20,8 +20,10 @@ import static io.mapsmessaging.schemas.config.Constants.COMMENTS;
 import static io.mapsmessaging.schemas.config.Constants.CREATION;
 import static io.mapsmessaging.schemas.config.Constants.EXPIRES_AFTER;
 import static io.mapsmessaging.schemas.config.Constants.FORMAT;
+import static io.mapsmessaging.schemas.config.Constants.INTERFACE_DESCRIPTION;
 import static io.mapsmessaging.schemas.config.Constants.MIME_TYPE;
 import static io.mapsmessaging.schemas.config.Constants.NOT_BEFORE;
+import static io.mapsmessaging.schemas.config.Constants.RESOURCE_TYPE;
 import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
 import static io.mapsmessaging.schemas.config.Constants.SOURCE;
 
@@ -67,6 +69,14 @@ public abstract class SchemaConfig {
   @Getter
   private String mimeType;
 
+  @Setter
+  @Getter
+  private String resourceType;
+
+  @Setter
+  @Getter
+  private String interfaceDescription;
+
   protected SchemaConfig(String format) {
     this.format = format;
     logger = LoggerFactory.getLogger(SchemaConfig.class);
@@ -93,6 +103,13 @@ public abstract class SchemaConfig {
     if (config.containsKey(MIME_TYPE)) {
       mimeType = config.get(MIME_TYPE).toString();
     }
+    if (config.containsKey(RESOURCE_TYPE)) {
+      resourceType = config.get(RESOURCE_TYPE).toString();
+    }
+    if (config.containsKey(INTERFACE_DESCRIPTION)) {
+      interfaceDescription = config.get(INTERFACE_DESCRIPTION).toString();
+    }
+
   }
 
   public String pack() throws IOException {
@@ -145,7 +162,12 @@ public abstract class SchemaConfig {
     if (mimeType != null && mimeType.length() > 0) {
       jsonObject.put(MIME_TYPE, mimeType);
     }
-
+    if(resourceType != null && resourceType.length() > 0){
+      jsonObject.put(RESOURCE_TYPE, resourceType);
+    }
+    if(interfaceDescription != null && interfaceDescription.length() > 0){
+      jsonObject.put(INTERFACE_DESCRIPTION, interfaceDescription);
+    }
   }
 
   protected abstract JSONObject packData() throws IOException;

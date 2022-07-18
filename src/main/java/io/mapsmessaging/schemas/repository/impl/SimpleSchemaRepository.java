@@ -62,6 +62,11 @@ public class SimpleSchemaRepository implements SchemaRepository {
   }
 
   @Override
+  public Map<String, List<SchemaConfig>> getMappedSchemas() {
+    return new LinkedHashMap<>(mapByContext);
+  }
+
+  @Override
   public void removeSchema(String uuid) {
     SchemaConfig config = mapByUUID.remove(uuid);
     if (config != null) {
@@ -70,6 +75,7 @@ public class SimpleSchemaRepository implements SchemaRepository {
       }
     }
   }
+
 
   @Override
   public void removeAllSchemas() {

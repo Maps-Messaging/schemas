@@ -2,6 +2,7 @@ package io.mapsmessaging.schemas.repository;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The interface Schema repository.
@@ -47,6 +48,13 @@ public interface SchemaRepository {
    * @return the all
    */
   List<SchemaConfig> getAll();
+
+  /**
+   * get mapped schemas
+   *
+   * @return a map of schema configurations keyed on a context, could be path name for example
+   */
+  Map<String, List<SchemaConfig>> getMappedSchemas();
 
   /**
    * Remove schema.

@@ -33,12 +33,25 @@ public abstract class GeneralBaseTest {
 
   abstract void validate(SchemaConfig schemaConfig) throws IOException;
 
+  void setBaseConfig(SchemaConfig config) {
+    config.setUniqueId(UUID.randomUUID());
+    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
+    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    config.setComments("Unit Tests");
+    config.setSource("tcp://localhost:1883/topic2");
+    config.setResourceType("sensor");
+    config.setInterfaceDescription("Temperature C");
+  }
+
   void validateSchema(SchemaConfig schemaConfig) throws IOException {
     validate(schemaConfig);
     Assertions.assertTrue(schemaConfig.getExpiresAfter().isAfter(LocalDateTime.now()));
     Assertions.assertTrue(schemaConfig.getNotBefore().isBefore(LocalDateTime.now()));
     Assertions.assertEquals("tcp://localhost:1883/topic2", schemaConfig.getSource());
     Assertions.assertEquals("Unit Tests", schemaConfig.getComments());
+    Assertions.assertEquals("Temperature C", schemaConfig.getInterfaceDescription());
+    Assertions.assertEquals("sensor", schemaConfig.getResourceType());
+
     Assertions.assertNotNull(schemaConfig.getUniqueId());
   }
 
@@ -50,6 +63,9 @@ public abstract class GeneralBaseTest {
     props.put("expiresAfter", LocalDateTime.now().plusDays(10));
     props.put("comments", "Unit Tests");
     props.put("source", "tcp://localhost:1883/topic2");
+    props.put("interface-description", "Temperature C");
+    props.put("resource-type", "sensor");
+
     schema.put("schema", props);
     return schema;
   }

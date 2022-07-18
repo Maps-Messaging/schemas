@@ -52,11 +52,7 @@ public class TestAvroConfig extends GeneralBaseTest {
   SchemaConfig buildConfig() throws IOException {
     AvroSchemaConfig config = new AvroSchemaConfig();
     config.setSchema(getSchema());
-    config.setUniqueId(UUID.randomUUID());
-    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
-    config.setNotBefore(LocalDateTime.now().minusDays(10));
-    config.setComments("Unit Tests");
-    config.setSource("tcp://localhost:1883/topic2");
+    setBaseConfig(config);
     return config;
   }
 

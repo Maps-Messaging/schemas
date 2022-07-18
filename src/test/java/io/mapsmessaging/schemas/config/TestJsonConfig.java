@@ -18,10 +18,8 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
-import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 
 class TestJsonConfig extends GeneralBaseTest {
@@ -35,11 +33,7 @@ class TestJsonConfig extends GeneralBaseTest {
   @Override
   SchemaConfig buildConfig() {
     JsonSchemaConfig config = new JsonSchemaConfig();
-    config.setUniqueId(UUID.randomUUID());
-    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
-    config.setNotBefore(LocalDateTime.now().minusDays(10));
-    config.setComments("Unit Tests");
-    config.setSource("tcp://localhost:1883/topic2");
+    setBaseConfig(config);
     return config;
   }
 

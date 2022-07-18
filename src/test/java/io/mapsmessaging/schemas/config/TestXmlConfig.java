@@ -17,10 +17,8 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
-import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 
 class TestXmlConfig extends GeneralBaseTest {
@@ -40,11 +38,7 @@ class TestXmlConfig extends GeneralBaseTest {
     config.setValidating(true);
     config.setCoalescing(true);
     config.setNamespaceAware(true);
-    config.setUniqueId(UUID.randomUUID());
-    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
-    config.setNotBefore(LocalDateTime.now().minusDays(10));
-    config.setComments("Unit Tests");
-    config.setSource("tcp://localhost:1883/topic2");
+    setBaseConfig(config);
     return config;
   }
 

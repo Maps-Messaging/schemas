@@ -24,11 +24,7 @@ class TestNativeConfig extends GeneralBaseTest {
   SchemaConfig buildConfig() {
     NativeSchemaConfig config = new NativeSchemaConfig();
     config.setType(TYPE.DOUBLE);
-    config.setUniqueId(UUID.randomUUID());
-    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
-    config.setNotBefore(LocalDateTime.now().minusDays(10));
-    config.setComments("Unit Tests");
-    config.setSource("tcp://localhost:1883/topic2");
+    setBaseConfig(config);
     return config;
   }
 

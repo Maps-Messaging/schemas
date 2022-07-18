@@ -183,6 +183,11 @@
           <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
           <reportOutputDirectory>${project.build.directory}/site/docs</reportOutputDirectory>
           <show>public</show>
+          <sourceFileExcludes>
+            <sourceFileExclude>**/*Test.java</sourceFileExclude>
+            <sourceFileExclude>**/Test*.java</sourceFileExclude>
+            <sourceFileExclude>**/*IT.java</sourceFileExclude>
+          </sourceFileExcludes>
         </configuration>
         <executions>
           <execution>

@@ -43,7 +43,7 @@ import org.json.JSONObject;
 public abstract class SchemaConfig {
 
   /**
-   * The name of the Formatter that the configuration represents. Typically set by the class that extends this
+   * The name of the Formatter that the configuration represents. Typically, set by the class that extends this
    */
   @Getter
   protected final String format;
@@ -81,10 +81,17 @@ public abstract class SchemaConfig {
   @Getter
   private String mimeType;
 
+  /**
+   * This represents the "rt" in the Link-Format
+   */
   @Setter
   @Getter
   private String resourceType;
 
+
+  /**
+   * This represents the "if" in the Link-Format
+   */
   @Setter
   @Getter
   private String interfaceDescription;

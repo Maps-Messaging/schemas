@@ -19,14 +19,25 @@ package io.mapsmessaging.schemas.config.impl;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.util.Map;
 
+/**
+ * The type Raw schema config.
+ */
 public class RawSchemaConfig extends SimpleSchemaConfig {
 
   private static final String NAME = "RAW";
 
+  /**
+   * Instantiates a new Raw schema config.
+   */
   public RawSchemaConfig() {
     super(NAME);
   }
 
+  /**
+   * Instantiates a new Raw schema config.
+   *
+   * @param config the config
+   */
   protected RawSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
     setMimeType("application/octet-stream");

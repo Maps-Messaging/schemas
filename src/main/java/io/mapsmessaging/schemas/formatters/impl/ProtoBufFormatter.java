@@ -44,16 +44,29 @@ import java.util.Map.Entry;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+/**
+ * The type Proto buf formatter.
+ */
 public class ProtoBufFormatter extends MessageFormatter {
 
   private final String messageName;
   private final FileDescriptor descriptor;
 
+  /**
+   * Instantiates a new Proto buf formatter.
+   */
   public ProtoBufFormatter() {
     messageName = "";
     descriptor = null;
   }
 
+  /**
+   * Instantiates a new Proto buf formatter.
+   *
+   * @param messageName the message name
+   * @param descriptorImage the descriptor image
+   * @throws IOException the io exception
+   */
   ProtoBufFormatter(String messageName, byte[] descriptorImage) throws IOException {
     try {
       this.descriptor = loadDescFile(descriptorImage);

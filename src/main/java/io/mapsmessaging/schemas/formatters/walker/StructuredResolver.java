@@ -22,11 +22,20 @@ import io.mapsmessaging.selector.IdentifierResolver;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The type Structured resolver.
+ */
 public class StructuredResolver implements ParsedObject {
 
   private final IdentifierResolver resolver;
   private final Object reference;
 
+  /**
+   * Instantiates a new Structured resolver.
+   *
+   * @param resolver the resolver
+   * @param reference the reference
+   */
   public StructuredResolver(IdentifierResolver resolver, Object reference) {
     this.resolver = resolver;
     this.reference = reference;

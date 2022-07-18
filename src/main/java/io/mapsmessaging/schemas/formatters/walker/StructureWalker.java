@@ -21,12 +21,22 @@ import io.mapsmessaging.selector.IdentifierResolver;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * The type Structure walker.
+ */
 public class StructureWalker {
 
 
   private StructureWalker() {
   }
 
+  /**
+   * Locate object object.
+   *
+   * @param resolver the resolver
+   * @param searchPath the search path
+   * @return the object
+   */
   public static Object locateObject(IdentifierResolver resolver, List<String> searchPath) {
     Object context = null;
     while (!searchPath.isEmpty()) {

@@ -22,6 +22,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
 
+/**
+ * The type Xml schema config.
+ */
 public class XmlSchemaConfig extends SimpleSchemaConfig {
 
   private static final String NAME = "XML";
@@ -46,6 +49,9 @@ public class XmlSchemaConfig extends SimpleSchemaConfig {
   @Setter
   private boolean coalescing = false;
 
+  /**
+   * Instantiates a new Xml schema config.
+   */
   public XmlSchemaConfig() {
     super(NAME);
     setMimeType("application/xml");

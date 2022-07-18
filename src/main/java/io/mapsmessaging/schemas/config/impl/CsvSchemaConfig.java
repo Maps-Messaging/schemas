@@ -26,6 +26,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
 
+/**
+ * The type Csv schema config.
+ */
 public class CsvSchemaConfig extends SchemaConfig {
 
   private static final String NAME = "CSV";
@@ -41,11 +44,20 @@ public class CsvSchemaConfig extends SchemaConfig {
   private boolean interpretNumericStrings;
 
 
+  /**
+   * Instantiates a new Csv schema config.
+   */
   public CsvSchemaConfig() {
     super(NAME);
     setMimeType("text/plain");
   }
 
+  /**
+   * Instantiates a new Csv schema config.
+   *
+   * @param header the header
+   * @param interpretNumericStrings the interpret numeric strings
+   */
   public CsvSchemaConfig(String header, boolean interpretNumericStrings) {
     super(NAME);
     this.headerValues = header;
@@ -53,6 +65,11 @@ public class CsvSchemaConfig extends SchemaConfig {
     setMimeType("text/plain");
   }
 
+  /**
+   * Instantiates a new Csv schema config.
+   *
+   * @param config the config
+   */
   protected CsvSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
     this.headerValues = config.getOrDefault(HEADER, "").toString();

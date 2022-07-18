@@ -21,12 +21,26 @@ import java.io.IOException;
 import java.util.Map;
 import org.json.JSONObject;
 
+/**
+ * The type Simple schema config.
+ */
 abstract class SimpleSchemaConfig extends SchemaConfig {
 
+  /**
+   * Instantiates a new Simple schema config.
+   *
+   * @param format the format
+   */
   protected SimpleSchemaConfig(String format) {
     super(format);
   }
 
+  /**
+   * Instantiates a new Simple schema config.
+   *
+   * @param format the format
+   * @param config the config
+   */
   protected SimpleSchemaConfig(String format, Map<String, Object> config) {
     super(format, config);
   }

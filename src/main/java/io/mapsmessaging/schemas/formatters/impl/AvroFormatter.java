@@ -40,6 +40,9 @@ import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.util.Utf8;
 import org.json.JSONObject;
 
+/**
+ * The type Avro formatter.
+ */
 public class AvroFormatter extends MessageFormatter {
 
   private final DatumReader<GenericRecord> datumReader;
@@ -47,12 +50,20 @@ public class AvroFormatter extends MessageFormatter {
   private BinaryDecoder decoder;
 
 
+  /**
+   * Instantiates a new Avro formatter.
+   */
   public AvroFormatter() {
     datumReader = null;
     schema = null;
     decoder = null;
   }
 
+  /**
+   * Instantiates a new Avro formatter.
+   *
+   * @param schemaDefinition the schema definition
+   */
   AvroFormatter(String schemaDefinition) {
     schema = new Schema.Parser().parse(schemaDefinition);
     datumReader = new GenericDatumReader<>(schema);
@@ -93,10 +104,18 @@ public class AvroFormatter extends MessageFormatter {
   }
 
 
+  /**
+   * The type Avro resolver.
+   */
   public static class AvroResolver implements ParsedObject {
 
     private final GenericRecord genericRecord;
 
+    /**
+     * Instantiates a new Avro resolver.
+     *
+     * @param genericRecord the generic record
+     */
     public AvroResolver(GenericRecord genericRecord) {
       this.genericRecord = genericRecord;
     }

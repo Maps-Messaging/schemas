@@ -23,6 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 
+/**
+ * The type Message formatter factory.
+ */
 public class MessageFormatterFactory {
 
   private static final MessageFormatterFactory instance;
@@ -41,10 +44,22 @@ public class MessageFormatterFactory {
     }
   }
 
+  /**
+   * Gets instance.
+   *
+   * @return the instance
+   */
   public static MessageFormatterFactory getInstance() {
     return instance;
   }
 
+  /**
+   * Gets formatter.
+   *
+   * @param config the config
+   * @return the formatter
+   * @throws IOException the io exception
+   */
   public MessageFormatter getFormatter(SchemaConfig config) throws IOException {
     for (MessageFormatter formatter : messageFormatters) {
       if (formatter.getName().equalsIgnoreCase(config.getFormat())) {

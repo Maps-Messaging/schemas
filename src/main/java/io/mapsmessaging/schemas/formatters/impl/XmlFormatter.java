@@ -37,6 +37,9 @@ import org.json.XML;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
+/**
+ * The type Xml formatter.
+ */
 public class XmlFormatter extends MessageFormatter {
 
   private static final String NAME = "XML";
@@ -44,11 +47,20 @@ public class XmlFormatter extends MessageFormatter {
   private final DocumentBuilder parser;
   private final String root;
 
+  /**
+   * Instantiates a new Xml formatter.
+   */
   public XmlFormatter() {
     parser = null;
     root = "";
   }
 
+  /**
+   * Instantiates a new Xml formatter.
+   *
+   * @param config the config
+   * @throws IOException the io exception
+   */
   XmlFormatter(XmlSchemaConfig config) throws IOException {
     try {
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();

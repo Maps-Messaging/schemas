@@ -21,15 +21,29 @@ import io.mapsmessaging.schemas.formatters.ParsedObject;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * The type Map resolver.
+ */
 public class MapResolver implements ParsedObject {
 
   private final Map<String, Object> map;
   private final boolean parseStringNumerics;
 
+  /**
+   * Instantiates a new Map resolver.
+   *
+   * @param map the map
+   */
   public MapResolver(Map<String, Object> map) {
     this(map, false);
   }
 
+  /**
+   * Instantiates a new Map resolver.
+   *
+   * @param map the map
+   * @param parseStringNumerics the parse string numerics
+   */
   public MapResolver(Map<String, Object> map, boolean parseStringNumerics) {
     this.map = map;
     this.parseStringNumerics = parseStringNumerics;

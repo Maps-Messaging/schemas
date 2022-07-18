@@ -8,12 +8,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+/**
+ * The type Simple schema repository.
+ */
 public class SimpleSchemaRepository implements SchemaRepository {
 
   private final Map<String, List<SchemaConfig>> mapByContext;
   private final Map<String, SchemaConfig> mapByUUID;
 
 
+  /**
+   * Instantiates a new Simple schema repository.
+   */
   public SimpleSchemaRepository() {
     mapByContext = new LinkedHashMap<>();
     mapByUUID = new LinkedHashMap<>();

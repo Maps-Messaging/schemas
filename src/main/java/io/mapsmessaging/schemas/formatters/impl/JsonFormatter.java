@@ -28,8 +28,14 @@ import java.io.IOException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * The type Json formatter.
+ */
 public class JsonFormatter extends MessageFormatter {
 
+  /**
+   * Instantiates a new Json formatter.
+   */
   public JsonFormatter() {
     // Used by the service loader, there is nothing to do
   }

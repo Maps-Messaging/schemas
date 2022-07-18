@@ -32,6 +32,9 @@ import java.util.ServiceLoader;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * The type Schema config factory.
+ */
 public class SchemaConfigFactory {
 
   private static final String ERROR_MESSAGE = "Not a valid schema config";
@@ -55,10 +58,22 @@ public class SchemaConfigFactory {
     logger = LoggerFactory.getLogger(SchemaConfigFactory.class);
   }
 
+  /**
+   * Gets instance.
+   *
+   * @return the instance
+   */
   public static SchemaConfigFactory getInstance() {
     return instance;
   }
 
+  /**
+   * Construct config schema config.
+   *
+   * @param properties the properties
+   * @return the schema config
+   * @throws IOException the io exception
+   */
   public SchemaConfig constructConfig(Map<String, Object> properties) throws IOException {
     if (properties.containsKey(SCHEMA)) {
       Object val = properties.get(SCHEMA);
@@ -78,10 +93,24 @@ public class SchemaConfigFactory {
     throw new IOException(CONFIG_ERROR);
   }
 
+  /**
+   * Construct config schema config.
+   *
+   * @param rawPayload the raw payload
+   * @return the schema config
+   * @throws IOException the io exception
+   */
   public SchemaConfig constructConfig(byte[] rawPayload) throws IOException {
     return constructConfig(new String(rawPayload));
   }
 
+  /**
+   * Construct config schema config.
+   *
+   * @param payload the payload
+   * @return the schema config
+   * @throws IOException the io exception
+   */
   public SchemaConfig constructConfig(String payload) throws IOException {
     String formatName = null;
     try {

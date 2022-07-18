@@ -26,6 +26,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
 
+/**
+ * The type Native schema config.
+ */
 public class NativeSchemaConfig extends SimpleSchemaConfig {
 
   private static final String NAME = "Native";
@@ -33,10 +36,18 @@ public class NativeSchemaConfig extends SimpleSchemaConfig {
   @Setter
   private TYPE type;
 
+  /**
+   * Instantiates a new Native schema config.
+   */
   public NativeSchemaConfig() {
     super(NAME);
   }
 
+  /**
+   * Instantiates a new Native schema config.
+   *
+   * @param config the config
+   */
   protected NativeSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
     String typeName = config.get("type").toString();
@@ -88,6 +99,42 @@ public class NativeSchemaConfig extends SimpleSchemaConfig {
     return new NativeSchemaConfig(config);
   }
 
-  public enum TYPE {STRING, NUMERIC_STRING, INT8, INT16, INT32, INT64, FLOAT, DOUBLE}
+  /**
+   * The enum Type.
+   */
+  public enum TYPE {
+    /**
+     * String type.
+     */
+    STRING,
+    /**
+     * Numeric string type.
+     */
+    NUMERIC_STRING,
+    /**
+     * Int 8 type.
+     */
+    INT8,
+    /**
+     * Int 16 type.
+     */
+    INT16,
+    /**
+     * Int 32 type.
+     */
+    INT32,
+    /**
+     * Int 64 type.
+     */
+    INT64,
+    /**
+     * Float type.
+     */
+    FLOAT,
+    /**
+     * Double type.
+     */
+    DOUBLE
+  }
 }
 

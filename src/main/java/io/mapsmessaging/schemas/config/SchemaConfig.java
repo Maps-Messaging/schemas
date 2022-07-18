@@ -37,12 +37,24 @@ import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
 
+/**
+ * The type Schema config.
+ */
 public abstract class SchemaConfig {
 
+  /**
+   * The name of the Formatter that the configuration represents. Typically set by the class that extends this
+   */
   @Getter
   protected final String format;
+  /**
+   * The Logger to use for all messages
+   */
   protected Logger logger;
 
+  /**
+   * The Unique id.
+   */
   @Getter
   protected String uniqueId;
 
@@ -77,11 +89,22 @@ public abstract class SchemaConfig {
   @Getter
   private String interfaceDescription;
 
+  /**
+   * Instantiates a new Schema config.
+   *
+   * @param format the format
+   */
   protected SchemaConfig(String format) {
     this.format = format;
     logger = LoggerFactory.getLogger(SchemaConfig.class);
   }
 
+  /**
+   * Instantiates a new Schema config.
+   *
+   * @param format the formatter name
+   * @param config the config map with the defined fields
+   */
   protected SchemaConfig(String format, Map<String, Object> config) {
     this(format);
     uniqueId = config.get(io.mapsmessaging.schemas.config.Constants.UUID).toString();
@@ -109,33 +132,69 @@ public abstract class SchemaConfig {
     if (config.containsKey(INTERFACE_DESCRIPTION)) {
       interfaceDescription = config.get(INTERFACE_DESCRIPTION).toString();
     }
-
   }
 
+  /**
+   * Pack the schema into a JSON representation string.
+   *
+   * @return the string
+   * @throws IOException the io exception
+   */
   public String pack() throws IOException {
     return packtoJSON().toString(2);
   }
 
+  /**
+   * To builds a map of the configuration.
+   *
+   * @return the map
+   * @throws IOException the io exception
+   */
   public Map<String, Object> toMap() throws IOException {
     return packtoJSON().toMap();
   }
 
+  /**
+   * Sets unique id.
+   *
+   * @param uniqueId the unique id
+   */
   public void setUniqueId(UUID uniqueId) {
     this.uniqueId = uniqueId.toString();
     creation = LocalDateTime.now();
   }
 
+  /**
+   * Sets unique id.
+   *
+   * @param uniqueId the unique id
+   */
   public void setUniqueId(String uniqueId) {
     this.uniqueId = uniqueId;
     creation = LocalDateTime.now();
   }
 
-  private JSONObject packtoJSON() throws IOException {
-    JSONObject jsonObject = new JSONObject();
-    jsonObject.put(SCHEMA, packData());
-    return jsonObject;
-  }
+  /**
+   * Pack data to a json object.
+   *
+   * @return the json object
+   * @throws IOException the io exception
+   */
+  protected abstract JSONObject packData() throws IOException;
 
+  /**
+   * Gets instance from the supplied config map
+   *
+   * @param config the config
+   * @return the instance
+   */
+  protected abstract SchemaConfig getInstance(Map<String, Object> config);
+
+  /**
+   * Pack data.
+   *
+   * @param jsonObject the json object
+   */
   protected void packData(JSONObject jsonObject) {
     jsonObject.put(FORMAT, format);
     if (expiresAfter != null) {
@@ -162,16 +221,18 @@ public abstract class SchemaConfig {
     if (mimeType != null && mimeType.length() > 0) {
       jsonObject.put(MIME_TYPE, mimeType);
     }
-    if(resourceType != null && resourceType.length() > 0){
+    if (resourceType != null && resourceType.length() > 0) {
       jsonObject.put(RESOURCE_TYPE, resourceType);
     }
-    if(interfaceDescription != null && interfaceDescription.length() > 0){
+    if (interfaceDescription != null && interfaceDescription.length() > 0) {
       jsonObject.put(INTERFACE_DESCRIPTION, interfaceDescription);
     }
   }
 
-  protected abstract JSONObject packData() throws IOException;
-
-  protected abstract SchemaConfig getInstance(Map<String, Object> config);
+  private JSONObject packtoJSON() throws IOException {
+    JSONObject jsonObject = new JSONObject();
+    jsonObject.put(SCHEMA, packData());
+    return jsonObject;
+  }
 
 }

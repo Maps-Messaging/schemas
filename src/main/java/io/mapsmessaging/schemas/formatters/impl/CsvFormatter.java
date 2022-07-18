@@ -32,18 +32,30 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import org.json.JSONObject;
 
+/**
+ * The type Csv formatter.
+ */
 public class CsvFormatter extends MessageFormatter {
 
   private final String[] keys;
   private final boolean interpretNumericStrings;
   private final CsvParser parser;
 
+  /**
+   * Instantiates a new Csv formatter.
+   */
   public CsvFormatter() {
     keys = new String[0];
     parser = null;
     interpretNumericStrings = false;
   }
 
+  /**
+   * Instantiates a new Csv formatter.
+   *
+   * @param keyList the key list
+   * @param interpretNumericStrings the interpret numeric strings
+   */
   public CsvFormatter(String keyList, boolean interpretNumericStrings) {
     StringTokenizer tokenizer = new StringTokenizer(keyList, ",");
     List<String> header = new ArrayList<>();

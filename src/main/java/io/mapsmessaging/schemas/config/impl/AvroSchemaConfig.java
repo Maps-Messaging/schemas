@@ -28,6 +28,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
 
+/**
+ * The type Avro schema config.
+ */
 public class AvroSchemaConfig extends SchemaConfig {
 
   private static final String NAME = "AVRO";
@@ -36,11 +39,19 @@ public class AvroSchemaConfig extends SchemaConfig {
   @Setter
   private String schema;
 
+  /**
+   * Instantiates a new Avro schema config.
+   */
   public AvroSchemaConfig() {
     super(NAME);
     setMimeType("application/octet-stream");
   }
 
+  /**
+   * Instantiates a new Avro schema config.
+   *
+   * @param config the config
+   */
   protected AvroSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
     this.schema = new String(Base64.getDecoder().decode(config.get(SCHEMA).toString()));

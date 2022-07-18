@@ -24,8 +24,14 @@ import java.io.IOException;
 import java.util.Base64;
 import org.json.JSONObject;
 
+/**
+ * The type Raw formatter.
+ */
 public class RawFormatter extends MessageFormatter {
 
+  /**
+   * Instantiates a new Raw formatter.
+   */
   public RawFormatter() {
     // Used by the service loader, there is nothing to do
   }

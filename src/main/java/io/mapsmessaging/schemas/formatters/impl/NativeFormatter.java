@@ -10,16 +10,28 @@ import io.mapsmessaging.schemas.formatters.ParsedObject;
 import java.io.IOException;
 import org.json.JSONObject;
 
+/**
+ * The type Native formatter.
+ */
 public class NativeFormatter extends MessageFormatter {
 
   private final NativeEncoderDecoder encoderDecoder;
   private final TYPE type;
 
+  /**
+   * Instantiates a new Native formatter.
+   */
   public NativeFormatter() {
     encoderDecoder = null;
     type = null;
   }
 
+  /**
+   * Instantiates a new Native formatter.
+   *
+   * @param type the type
+   * @throws IOException the io exception
+   */
   public NativeFormatter(TYPE type) throws IOException {
     this.type = type;
     if (type == null) {
@@ -113,11 +125,23 @@ public class NativeFormatter extends MessageFormatter {
     return "Native";
   }
 
+  /**
+   * The interface Native encoder decoder.
+   */
   interface NativeEncoderDecoder {
 
+    /**
+     * Decode object.
+     *
+     * @param payload the payload
+     * @return the object
+     */
     Object decode(byte[] payload);
   }
 
+  /**
+   * The type String encoder decoder.
+   */
   static class StringEncoderDecoder implements NativeEncoderDecoder {
 
     @Override
@@ -127,6 +151,9 @@ public class NativeFormatter extends MessageFormatter {
 
   }
 
+  /**
+   * The type String numeric encoder decoder.
+   */
   static class StringNumericEncoderDecoder implements NativeEncoderDecoder {
 
     @Override
@@ -142,10 +169,18 @@ public class NativeFormatter extends MessageFormatter {
     }
   }
 
+  /**
+   * The type Int encoder decoder.
+   */
   static class IntEncoderDecoder implements NativeEncoderDecoder {
 
     private final int size;
 
+    /**
+     * Instantiates a new Int encoder decoder.
+     *
+     * @param size the size
+     */
     public IntEncoderDecoder(int size) {
       this.size = size;
     }
@@ -171,6 +206,9 @@ public class NativeFormatter extends MessageFormatter {
     }
   }
 
+  /**
+   * The type Float encoder decoder.
+   */
   static class FloatEncoderDecoder implements NativeEncoderDecoder {
 
     @Override
@@ -180,6 +218,9 @@ public class NativeFormatter extends MessageFormatter {
     }
   }
 
+  /**
+   * The type Double encoder decoder.
+   */
   static class DoubleEncoderDecoder implements NativeEncoderDecoder {
 
     @Override

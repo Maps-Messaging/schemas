@@ -27,6 +27,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
 
+/**
+ * The type Proto buf schema config.
+ */
 public class ProtoBufSchemaConfig extends SchemaConfig {
 
   private static final String NAME = "ProtoBuf";
@@ -41,11 +44,19 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
   @Setter
   private String messageName;
 
+  /**
+   * Instantiates a new Proto buf schema config.
+   */
   public ProtoBufSchemaConfig() {
     super(NAME);
     setMimeType("application/octet-stream");
   }
 
+  /**
+   * Instantiates a new Proto buf schema config.
+   *
+   * @param config the config
+   */
   protected ProtoBufSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
     messageName = config.getOrDefault(MESSAGE_NAME, "").toString();

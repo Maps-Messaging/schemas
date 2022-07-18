@@ -19,10 +19,16 @@ package io.mapsmessaging.schemas.config.impl;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import java.util.Map;
 
+/**
+ * The type Json schema config.
+ */
 public class JsonSchemaConfig extends SimpleSchemaConfig {
 
   private static final String NAME = "JSON";
 
+  /**
+   * Instantiates a new Json schema config.
+   */
   public JsonSchemaConfig() {
     super(NAME);
     setMimeType("application/json");

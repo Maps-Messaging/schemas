@@ -198,7 +198,7 @@
           </execution>
         </executions>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>3.4.0</version>
+        <version>3.4.1</version>
       </plugin>
 
       <plugin>
@@ -254,7 +254,7 @@
       <plugin>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-maven-plugin</artifactId>
-        <version>1.11.0</version>
+        <version>1.11.1</version>
         <executions>
           <execution>
             <phase>generate-sources</phase>
@@ -306,7 +306,7 @@
     <dependency>
       <groupId>io.mapsmessaging</groupId>
       <artifactId>Extensible_JMS_Selector_Parser</artifactId>
-      <version>1.1.6</version>
+      <version>1.1.7</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.json/json -->
@@ -320,14 +320,14 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>3.21.2</version>
+      <version>3.21.5</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.avro/avro -->
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
-      <version>1.11.0</version>
+      <version>1.11.1</version>
     </dependency>
 
 
@@ -363,7 +363,7 @@
       <artifactId>junit-jupiter-engine</artifactId>
       <groupId>org.junit.jupiter</groupId>
       <scope>test</scope>
-      <version>5.8.2</version>
+      <version>5.9.0</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/com.github.javafaker/javafaker -->
     <dependency>

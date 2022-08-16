@@ -42,7 +42,7 @@ public class JsonFormatter extends MessageFormatter {
 
   @Override
   public ParsedObject parse(byte[] payload) {
-    JSONObject json = null;
+    JSONObject json;
     try {
       json = new JSONObject(new String(payload));
       return new StructuredResolver(new MapResolver(json.toMap()), json);

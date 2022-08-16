@@ -26,6 +26,7 @@ import static io.mapsmessaging.schemas.config.Constants.NOT_BEFORE;
 import static io.mapsmessaging.schemas.config.Constants.RESOURCE_TYPE;
 import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
 import static io.mapsmessaging.schemas.config.Constants.SOURCE;
+import static io.mapsmessaging.schemas.config.Constants.VERSION;
 
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
@@ -72,6 +73,11 @@ public abstract class SchemaConfig {
   @Setter
   @Getter
   private String comments;
+
+
+  @Setter
+  @Getter
+  private String version;
 
   @Setter
   @Getter
@@ -126,6 +132,9 @@ public abstract class SchemaConfig {
     }
     if (config.containsKey(COMMENTS)) {
       comments = config.get(COMMENTS).toString();
+    }
+    if (config.containsKey(VERSION)) {
+      version = config.get(VERSION).toString();
     }
     if (config.containsKey(SOURCE)) {
       source = config.get(SOURCE).toString();
@@ -218,24 +227,19 @@ public abstract class SchemaConfig {
       creation = LocalDateTime.now();
     }
     jsonObject.put(CREATION, creation.toString());
-
-    if (comments != null && comments.length() > 0) {
-      jsonObject.put(COMMENTS, comments);
-    }
-    if (source != null && source.length() > 0) {
-      jsonObject.put(SOURCE, source);
-    }
-    if (mimeType != null && mimeType.length() > 0) {
-      jsonObject.put(MIME_TYPE, mimeType);
-    }
-    if (resourceType != null && resourceType.length() > 0) {
-      jsonObject.put(RESOURCE_TYPE, resourceType);
-    }
-    if (interfaceDescription != null && interfaceDescription.length() > 0) {
-      jsonObject.put(INTERFACE_DESCRIPTION, interfaceDescription);
-    }
+    pack(jsonObject, comments, COMMENTS);
+    pack(jsonObject, version, VERSION);
+    pack(jsonObject, source, SOURCE);
+    pack(jsonObject, mimeType, MIME_TYPE);
+    pack(jsonObject, resourceType, RESOURCE_TYPE);
+    pack(jsonObject, interfaceDescription, INTERFACE_DESCRIPTION);
   }
 
+  private void pack(JSONObject jsonObject, String val, String key){
+    if (val != null && val.length() > 0) {
+      jsonObject.put(key, val);
+    }
+  }
   private JSONObject packtoJSON() throws IOException {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put(SCHEMA, packData());

@@ -34,6 +34,16 @@ public class MessageFormatterFactory {
     instance = new MessageFormatterFactory();
   }
 
+  /**
+   * Gets instance.
+   *
+   * @return the instance
+   */
+  public static MessageFormatterFactory getInstance() {
+    return instance;
+  }
+
+
   private final List<MessageFormatter> messageFormatters;
 
   private MessageFormatterFactory() {
@@ -44,14 +54,14 @@ public class MessageFormatterFactory {
     }
   }
 
-  /**
-   * Gets instance.
-   *
-   * @return the instance
-   */
-  public static MessageFormatterFactory getInstance() {
-    return instance;
+  public List<String> getFormatters() {
+    List<String> formatList = new ArrayList<>();
+    for (MessageFormatter messageFormatter : messageFormatters) {
+      formatList.add(messageFormatter.getName());
+    }
+    return formatList;
   }
+
 
   /**
    * Gets formatter.

@@ -17,6 +17,13 @@
 
 package io.mapsmessaging.schemas.repository.impl;
 
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FILE_REPO_ROOT_CREATION_EXCEPTION;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FILE_REPO_ROOT_NOT_DIRECTORY_EXCEPTION;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FILE_REPO_UNABLE_TO_DELETE_EXCEPTION;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FILE_REPO_UNABLE_TO_SAVE_EXCEPTION;
+
+import io.mapsmessaging.logging.Logger;
+import io.mapsmessaging.logging.LoggerFactory;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
 import java.io.File;
@@ -29,14 +36,18 @@ import java.util.List;
 
 public class FileSchemaRepository extends SimpleSchemaRepository{
 
+  private final Logger logger = LoggerFactory.getLogger(FileSchemaRepository.class);
+
   private final File rootDirectory;
 
   public FileSchemaRepository(File rootDirectory) throws IOException {
     this.rootDirectory = rootDirectory;
     if(!rootDirectory.exists() && !rootDirectory.mkdirs()){
+      logger.log(FILE_REPO_ROOT_CREATION_EXCEPTION, rootDirectory.getPath());
       throw new IOException("Unable to create root directory "+rootDirectory.getPath());
     }
     if(!rootDirectory.isDirectory()){
+      logger.log(FILE_REPO_ROOT_NOT_DIRECTORY_EXCEPTION, rootDirectory.getPath());
       throw new IOException("Root directory must be a directory");
     }
     loadData();
@@ -75,7 +86,7 @@ public class FileSchemaRepository extends SimpleSchemaRepository{
       fileOutputStream.flush();
     }
     catch (IOException ex){
-
+      logger.log(FILE_REPO_UNABLE_TO_SAVE_EXCEPTION, ex);
     }
     return super.addSchema(context, config);
   }
@@ -86,7 +97,7 @@ public class FileSchemaRepository extends SimpleSchemaRepository{
     try {
       Files.delete(new File(rootDirectory, uuid).toPath());
     } catch (IOException e) {
-
+      logger.log(FILE_REPO_UNABLE_TO_DELETE_EXCEPTION, e);
     }
   }
 

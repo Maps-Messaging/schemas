@@ -41,6 +41,15 @@ public enum SchemaLogMessages implements LogMessage {
   XML_CONFIGURATION_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "XML formatter raised exception during construction {}"),
   XML_PARSE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "XML formatter raised exception during parsing {}"),
   //</editor-fold>
+
+  //<editor-fold desc="Repository log messages">
+  FILE_REPO_ROOT_CREATION_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.REPOSITORY, "Unable to create root directory {}"),
+  FILE_REPO_ROOT_NOT_DIRECTORY_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.REPOSITORY, "Root directory must be a directory {}"),
+  FILE_REPO_UNABLE_TO_SAVE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.REPOSITORY, "Exception raised during schema save {}"),
+  FILE_REPO_UNABLE_TO_DELETE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.REPOSITORY, "Exception raised during schema deletion {}"),
+  //</editor-fold>
+
+
   ;
 
 

@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 public class SimpleSchemaRepository implements SchemaRepository {
 
   private final Map<String, List<SchemaConfig>> mapByContext;
-  private final Map<String, SchemaConfig> mapByUUID;
+  protected final Map<String, SchemaConfig> mapByUUID;
 
 
   /**

@@ -24,6 +24,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FileSchemaRepository extends SimpleSchemaRepository{
 
@@ -91,15 +93,9 @@ public class FileSchemaRepository extends SimpleSchemaRepository{
   @Override
   public void removeAllSchemas() {
     super.removeAllSchemas();
-    File[] children = rootDirectory.listFiles();
-    if(children != null) {
-      for (File child : children) {
-        try {
-          Files.delete(child.toPath());
-        } catch (IOException e) {
-
-        }
-      }
+    List<String> uniqueIds = new ArrayList<>(super.mapByUUID.keySet());
+    for(String uniqueId:uniqueIds){
+      removeSchema(uniqueId);
     }
   }
 }

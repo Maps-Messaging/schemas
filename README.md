@@ -36,6 +36,46 @@ Current supported protocols are
 
 # Usage
 
+## Using Formatters
+
+There are 2 parts to using the formatters
+
+* Admin and Repository
+* Lookup and using
+
+
+### Admin and Repository
+
+The administration side of formatters covers the addition, update and deletion of configuration using a Schema Repository. 
+The Schema Repository is simply a central place to store and retrieve Schemas. This could be a RestAPI, a file backed repository or in the case of MapsMessaging the messaging server itself.
+
+Each Schema is defined by a unique id that is used to bind the format to an application 'Context'. For example, in MapsMessaging a Schema is bound to a topic or queue. The topic or queue name is used as the context when binding the schema to the topic or queue.
+
+### Lookup and Using
+
+The schema is retrieved from the Repository as the example below
+
+```java
+repository.getSchemaByContext("/root");
+```
+This would return a list of any schemas bound to '/root'. The list provides the ability to return multiple schemas that could support versions or slightly different configurations that could be received.
+
+or
+```java
+repository.getSchema(unique_id);
+```
+
+This returns the single unique schema defined by the supplied unique_id.
+
+To then parse the data from the byte[] using the schema 
+
+```java
+      byte[] data = getData();
+      ParsedObject parsedObject = formatter.parse(data);
+      parsedObject.get("stringId");
+```
+This would return the field called "stringId" from the data byte[] 
+
 ## Extending Formatters
 
 To add a new, potentially company internal format, simply extend MessageFormatter, below is the JSON implementation.

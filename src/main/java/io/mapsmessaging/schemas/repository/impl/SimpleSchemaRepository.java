@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import lombok.NonNull;
 
 /**
  * The type Simple schema repository.
@@ -43,7 +44,7 @@ public class SimpleSchemaRepository implements SchemaRepository {
   }
 
   @Override
-  public SchemaConfig addSchema(String context, SchemaConfig config) {
+  public SchemaConfig addSchema(@NonNull String context, @NonNull SchemaConfig config) {
     SchemaConfig existing = mapByUUID.get(config.getUniqueId());
     if (existing != null) {
       config = existing;
@@ -56,17 +57,21 @@ public class SimpleSchemaRepository implements SchemaRepository {
   }
 
   @Override
-  public SchemaConfig getSchema(String uuid) {
+  public SchemaConfig getSchema(@NonNull String uuid) {
     return mapByUUID.get(uuid);
   }
 
   @Override
-  public List<SchemaConfig> getSchemaByContext(String context) {
-    return mapByContext.get(context);
+  public @NonNull List<SchemaConfig> getSchemaByContext(@NonNull String context) {
+    List<SchemaConfig> response = mapByContext.get(context);
+    if (response == null) {
+      response = new ArrayList<>();
+    }
+    return response;
   }
 
   @Override
-  public List<SchemaConfig> getSchemas(String type) {
+  public List<SchemaConfig> getSchemas(@NonNull String type) {
     List<SchemaConfig> matching = new ArrayList<>();
     Stream<SchemaConfig> filteredStream = mapByUUID.values().stream().filter(schemaConfig -> schemaConfig.getFormat().equalsIgnoreCase(type));
     filteredStream.forEach(matching::add);
@@ -74,17 +79,17 @@ public class SimpleSchemaRepository implements SchemaRepository {
   }
 
   @Override
-  public List<SchemaConfig> getAll() {
+  public @NonNull List<SchemaConfig> getAll() {
     return new ArrayList<>(mapByUUID.values());
   }
 
   @Override
-  public Map<String, List<SchemaConfig>> getMappedSchemas() {
+  public @NonNull Map<String, List<SchemaConfig>> getMappedSchemas() {
     return new LinkedHashMap<>(mapByContext);
   }
 
   @Override
-  public void removeSchema(String uuid) {
+  public void removeSchema(@NonNull String uuid) {
     SchemaConfig config = mapByUUID.remove(uuid);
     if (config != null) {
       for (List<SchemaConfig> list : mapByContext.values()) {
@@ -92,7 +97,6 @@ public class SimpleSchemaRepository implements SchemaRepository {
       }
     }
   }
-
 
   @Override
   public void removeAllSchemas() {

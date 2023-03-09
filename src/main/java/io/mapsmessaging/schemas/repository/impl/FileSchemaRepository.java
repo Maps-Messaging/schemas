@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.NonNull;
 
 public class FileSchemaRepository extends SimpleSchemaRepository{
 
@@ -40,13 +41,13 @@ public class FileSchemaRepository extends SimpleSchemaRepository{
 
   private final File rootDirectory;
 
-  public FileSchemaRepository(File rootDirectory) throws IOException {
+  public FileSchemaRepository(@NonNull File rootDirectory) throws IOException {
     this.rootDirectory = rootDirectory;
-    if(!rootDirectory.exists() && !rootDirectory.mkdirs()){
+    if (!rootDirectory.exists() && !rootDirectory.mkdirs()) {
       logger.log(FILE_REPO_ROOT_CREATION_EXCEPTION, rootDirectory.getPath());
-      throw new IOException("Unable to create root directory "+rootDirectory.getPath());
+      throw new IOException("Unable to create root directory " + rootDirectory.getPath());
     }
-    if(!rootDirectory.isDirectory()){
+    if (!rootDirectory.isDirectory()) {
       logger.log(FILE_REPO_ROOT_NOT_DIRECTORY_EXCEPTION, rootDirectory.getPath());
       throw new IOException("Root directory must be a directory");
     }
@@ -59,7 +60,7 @@ public class FileSchemaRepository extends SimpleSchemaRepository{
       for (File child : children) {
         try (FileInputStream fileInputStream = new FileInputStream(child)){
           int len = fileInputStream.read() & 0xff;
-          len = len + (fileInputStream.read() & 0xff) << 8;
+          len = len | (fileInputStream.read() & 0xff) << 8;
           byte[] contextBytes = new byte[len];
           fileInputStream.read(contextBytes);
           String context = new String(contextBytes);
@@ -74,13 +75,13 @@ public class FileSchemaRepository extends SimpleSchemaRepository{
   }
 
   @Override
-  public SchemaConfig addSchema(String context, SchemaConfig config) {
+  public SchemaConfig addSchema(@NonNull String context, @NonNull SchemaConfig config) {
     File schemafile = new File(rootDirectory, config.getUniqueId());
-    try(FileOutputStream fileOutputStream = new FileOutputStream(schemafile)){
+    try (FileOutputStream fileOutputStream = new FileOutputStream(schemafile)) {
       byte[] contextBytes = context.getBytes();
       int len = contextBytes.length;
-      fileOutputStream.write( ((byte) len& 0xff));
-      fileOutputStream.write( ((byte) (len >> 8)& 0xff));
+      fileOutputStream.write(((byte) len & 0xff));
+      fileOutputStream.write(((byte) (len >> 8) & 0xff));
       fileOutputStream.write(contextBytes);
       fileOutputStream.write(config.pack().getBytes());
       fileOutputStream.flush();
@@ -92,7 +93,7 @@ public class FileSchemaRepository extends SimpleSchemaRepository{
   }
 
   @Override
-  public void removeSchema(String uuid) {
+  public void removeSchema(@NonNull String uuid) {
     super.removeSchema(uuid);
     try {
       Files.delete(new File(rootDirectory, uuid).toPath());
@@ -103,7 +104,6 @@ public class FileSchemaRepository extends SimpleSchemaRepository{
 
   @Override
   public void removeAllSchemas() {
-    super.removeAllSchemas();
     List<String> uniqueIds = new ArrayList<>(super.mapByUUID.keySet());
     for(String uniqueId:uniqueIds){
       removeSchema(uniqueId);

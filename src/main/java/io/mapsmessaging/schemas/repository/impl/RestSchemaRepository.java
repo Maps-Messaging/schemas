@@ -22,12 +22,15 @@ import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
+import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
+import java.util.UUID;
 import lombok.NonNull;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -75,12 +78,6 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
     return config;
   }
 
-
-  @Override
-  public SchemaConfig addSchema(@NonNull String context, @NonNull SchemaConfig config) {
-    return super.addSchema(context, config);
-  }
-
   @Override
   public void removeSchema(@NonNull String uuid) {
     try {
@@ -109,8 +106,38 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
     }
   }
 
+  @Override
+  public SchemaConfig addSchema(@NonNull String context, @NonNull SchemaConfig config) {
+    try {
+      JSONObject jsonObject = new JSONObject();
+      jsonObject.put("context", context);
+      jsonObject.put("schema", config.pack());
+      HttpRequest request = HttpRequest.newBuilder()
+          .uri(new URI(url+"/api/v1/server/schema"))
+          .header("Content-Type", "application/json")
+          .POST(BodyPublishers.ofString(jsonObject.toString(2)))
+          .build();
+      HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+      return super.addSchema(context, config);
+    } catch (URISyntaxException | IOException | InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
     SimpleSchemaRepository repository = new RestSchemaRepository("http://localhost:8080");
+    for(SchemaConfig config:repository.getAll()){
+      System.err.println(config.pack());
+    }
+    JsonSchemaConfig json = new JsonSchemaConfig();
+    json.setUniqueId(UUID.randomUUID());
+    repository.addSchema("/root", json);
+    for(SchemaConfig config:repository.getAll()){
+      if(config.getFormat().equalsIgnoreCase("json")){
+        repository.removeSchema(config.getUniqueId());
+      }
+    }
+
 
   }
 

@@ -50,7 +50,7 @@ public class NativeSchemaConfig extends SimpleSchemaConfig {
    */
   protected NativeSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
-    String typeName = config.get("type").toString();
+    String typeName = (String)config.get("type");
     switch (typeName.toUpperCase()) {
       case "STRING":
         type = TYPE.STRING;

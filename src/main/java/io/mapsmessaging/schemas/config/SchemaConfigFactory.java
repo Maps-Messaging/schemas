@@ -112,9 +112,12 @@ public class SchemaConfigFactory {
    * @throws IOException the io exception
    */
   public SchemaConfig constructConfig(String payload) throws IOException {
+    return constructConfig(new JSONObject(payload));
+  }
+
+  public SchemaConfig constructConfig(JSONObject schemaJson) throws IOException {
     String formatName = null;
     try {
-      JSONObject schemaJson = new JSONObject(payload);
       if (!schemaJson.has(SCHEMA)) {
         logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
         throw new IOException(ERROR_MESSAGE);
@@ -142,6 +145,6 @@ public class SchemaConfigFactory {
     }
     logger.log(SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND, formatName);
     throw new IOException(CONFIG_ERROR);
-  }
 
+  }
 }

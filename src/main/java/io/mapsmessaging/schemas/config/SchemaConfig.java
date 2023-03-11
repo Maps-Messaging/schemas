@@ -122,31 +122,40 @@ public abstract class SchemaConfig {
     this(format);
     uniqueId = config.get(io.mapsmessaging.schemas.config.Constants.UUID).toString();
     if (config.containsKey(EXPIRES_AFTER)) {
-      expiresAfter = LocalDateTime.parse(config.get(EXPIRES_AFTER).toString());
+      String val = (String) config.get(EXPIRES_AFTER);
+      if(val != null) {
+        expiresAfter = LocalDateTime.parse(val);
+      }
     }
     if (config.containsKey(NOT_BEFORE)) {
-      notBefore = LocalDateTime.parse(config.get(NOT_BEFORE).toString());
+      String val = (String) config.get(NOT_BEFORE);
+      if(val != null) {
+        notBefore = LocalDateTime.parse(val);
+      }
     }
     if (config.containsKey(CREATION)) {
-      creation = LocalDateTime.parse(config.get(CREATION).toString());
+      String val = (String) config.get(CREATION);
+      if(val != null) {
+        creation = LocalDateTime.parse(val);
+      }
     }
     if (config.containsKey(COMMENTS)) {
-      comments = config.get(COMMENTS).toString();
+      comments = (String) config.get(COMMENTS);
     }
     if (config.containsKey(VERSION)) {
-      version = config.get(VERSION).toString();
+      version = (String) config.get(VERSION);
     }
     if (config.containsKey(SOURCE)) {
-      source = config.get(SOURCE).toString();
+      source = (String)  config.get(SOURCE);
     }
     if (config.containsKey(MIME_TYPE)) {
-      mimeType = config.get(MIME_TYPE).toString();
+      mimeType = (String)config.get(MIME_TYPE);
     }
     if (config.containsKey(RESOURCE_TYPE)) {
-      resourceType = config.get(RESOURCE_TYPE).toString();
+      resourceType = (String) config.get(RESOURCE_TYPE);
     }
     if (config.containsKey(INTERFACE_DESCRIPTION)) {
-      interfaceDescription = config.get(INTERFACE_DESCRIPTION).toString();
+      interfaceDescription = (String)config.get(INTERFACE_DESCRIPTION);
     }
   }
 

@@ -17,7 +17,6 @@
 
 package io.mapsmessaging.schemas.repository.impl;
 
-
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
 import io.mapsmessaging.schemas.config.SchemaConfig;
@@ -37,8 +36,10 @@ import org.json.JSONObject;
 
 public class RestSchemaRepository extends SimpleSchemaRepository {
 
-  private final Logger logger = LoggerFactory.getLogger(RestSchemaRepository.class);
+  private static final String CONTENT_TYPE_HEADER = "Content-Type";
+  private static final String CONTENT_TYPE = "application/json";
 
+  private final Logger logger = LoggerFactory.getLogger(RestSchemaRepository.class);
   private final String url;
   private final HttpClient client;
 
@@ -51,7 +52,7 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
   private void loadData() throws IOException, URISyntaxException, InterruptedException {
     HttpRequest request = HttpRequest.newBuilder()
         .uri(new URI(url+"/api/v1/server/schema/map"))
-        .header("Content-Type", "application/json")
+        .header(CONTENT_TYPE_HEADER, CONTENT_TYPE)
         .GET()
         .build();
 
@@ -70,10 +71,27 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
     }
   }
 
+  @Override
   public SchemaConfig getSchema(@NonNull String uuid) {
     SchemaConfig config =  mapByUUID.get(uuid);
     if(config == null){
-      // lookup on server
+      try {
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(new URI(url+"/api/v1/server/schema/"+uuid))
+            .header(CONTENT_TYPE_HEADER, CONTENT_TYPE)
+            .GET()
+            .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        String body = response.body();
+        if(response.statusCode() >= 200 && response.statusCode() < 300) {
+          JSONObject jsonObject = new JSONObject(body);
+          config = SchemaConfigFactory.getInstance().constructConfig(jsonObject);
+          super.addSchema("/", config);
+        }
+      } catch (IOException | URISyntaxException | InterruptedException e) {
+        // to do
+        Thread.currentThread().interrupt();
+      }
     }
     return config;
   }
@@ -83,12 +101,15 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
     try {
       HttpRequest request = HttpRequest.newBuilder()
           .uri(new URI(url+"/api/v1/server/schema/"+uuid))
-          .header("Content-Type", "application/json")
+          .header(CONTENT_TYPE_HEADER, CONTENT_TYPE)
           .DELETE().build();
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-      super.removeSchema(uuid);
+      if(response.statusCode() >= 200 && response.statusCode() < 300) {
+        super.removeSchema(uuid);
+      }
     } catch (URISyntaxException | IOException | InterruptedException e) {
-      throw new RuntimeException(e);
+      // log it
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -97,12 +118,15 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
     try {
       HttpRequest request = HttpRequest.newBuilder()
           .uri(new URI(url+"/api/v1/server/schema"))
-          .header("Content-Type", "application/json")
+          .header(CONTENT_TYPE_HEADER, CONTENT_TYPE)
           .DELETE().build();
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-      super.removeAllSchemas();
+      if(response.statusCode() >= 200 && response.statusCode() < 300) {
+        super.removeAllSchemas();
+      }
     } catch (URISyntaxException | IOException | InterruptedException e) {
-      throw new RuntimeException(e);
+      // log it
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -114,14 +138,18 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
       jsonObject.put("schema", config.pack());
       HttpRequest request = HttpRequest.newBuilder()
           .uri(new URI(url+"/api/v1/server/schema"))
-          .header("Content-Type", "application/json")
+          .header(CONTENT_TYPE_HEADER, CONTENT_TYPE)
           .POST(BodyPublishers.ofString(jsonObject.toString(2)))
           .build();
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-      return super.addSchema(context, config);
+      if(response.statusCode() >= 200 && response.statusCode() < 300) {
+        return super.addSchema(context, config);
+      }
     } catch (URISyntaxException | IOException | InterruptedException e) {
-      throw new RuntimeException(e);
+      Thread.currentThread().interrupt();
+      // log it
     }
+    return null;
   }
 
   public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
@@ -137,8 +165,5 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
         repository.removeSchema(config.getUniqueId());
       }
     }
-
-
   }
-
 }

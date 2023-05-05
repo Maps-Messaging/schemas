@@ -16,42 +16,35 @@
  */
 package io.mapsmessaging.schemas.config;
 
-import static io.mapsmessaging.schemas.config.Constants.COMMENTS;
-import static io.mapsmessaging.schemas.config.Constants.CREATION;
-import static io.mapsmessaging.schemas.config.Constants.EXPIRES_AFTER;
-import static io.mapsmessaging.schemas.config.Constants.FORMAT;
-import static io.mapsmessaging.schemas.config.Constants.INTERFACE_DESCRIPTION;
-import static io.mapsmessaging.schemas.config.Constants.MIME_TYPE;
-import static io.mapsmessaging.schemas.config.Constants.NOT_BEFORE;
-import static io.mapsmessaging.schemas.config.Constants.RESOURCE_TYPE;
-import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
-import static io.mapsmessaging.schemas.config.Constants.SOURCE;
-import static io.mapsmessaging.schemas.config.Constants.VERSION;
-
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.UUID;
+
+import static io.mapsmessaging.schemas.config.Constants.*;
+
 /**
  * The type Schema config.
  */
-public abstract class SchemaConfig {
+public abstract class SchemaConfig implements Serializable {
+
+  /**
+   * The Logger to use for all messages
+   */
+  protected transient Logger logger;
 
   /**
    * The name of the Formatter that the configuration represents. Typically, set by the class that extends this
    */
   @Getter
   protected final String format;
-  /**
-   * The Logger to use for all messages
-   */
-  protected Logger logger;
 
   /**
    * The Unique id.
@@ -122,22 +115,13 @@ public abstract class SchemaConfig {
     this(format);
     uniqueId = config.get(io.mapsmessaging.schemas.config.Constants.UUID).toString();
     if (config.containsKey(EXPIRES_AFTER)) {
-      String val = (String) config.get(EXPIRES_AFTER);
-      if(val != null) {
-        expiresAfter = LocalDateTime.parse(val);
-      }
+      expiresAfter = loadDateTime(config, EXPIRES_AFTER);
     }
     if (config.containsKey(NOT_BEFORE)) {
-      String val = (String) config.get(NOT_BEFORE);
-      if(val != null) {
-        notBefore = LocalDateTime.parse(val);
-      }
+      notBefore = loadDateTime(config, NOT_BEFORE);
     }
     if (config.containsKey(CREATION)) {
-      String val = (String) config.get(CREATION);
-      if(val != null) {
-        creation = LocalDateTime.parse(val);
-      }
+      creation = loadDateTime(config, CREATION);
     }
     if (config.containsKey(COMMENTS)) {
       comments = (String) config.get(COMMENTS);
@@ -157,6 +141,17 @@ public abstract class SchemaConfig {
     if (config.containsKey(INTERFACE_DESCRIPTION)) {
       interfaceDescription = (String)config.get(INTERFACE_DESCRIPTION);
     }
+  }
+
+  private LocalDateTime loadDateTime(Map<String, Object> config, String key){
+    Object val = config.get(key);
+    if(val instanceof  String) {
+      return LocalDateTime.parse((String)val);
+    }
+    if(val instanceof LocalDateTime){
+      return (LocalDateTime)val;
+    }
+    return null;
   }
 
   /**
@@ -224,9 +219,6 @@ public abstract class SchemaConfig {
     jsonObject.put(FORMAT, format);
     if (expiresAfter != null) {
       jsonObject.put(EXPIRES_AFTER, expiresAfter.toString());
-    }
-    if (notBefore != null) {
-      jsonObject.put(NOT_BEFORE, notBefore.toString());
     }
     if (notBefore != null) {
       jsonObject.put(NOT_BEFORE, notBefore.toString());

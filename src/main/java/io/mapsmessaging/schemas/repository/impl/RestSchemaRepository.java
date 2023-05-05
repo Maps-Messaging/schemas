@@ -22,6 +22,10 @@ import io.mapsmessaging.logging.LoggerFactory;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
 import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
+import lombok.NonNull;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,9 +34,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.util.UUID;
-import lombok.NonNull;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 public class RestSchemaRepository extends SimpleSchemaRepository {
 
@@ -51,7 +52,7 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
 
   private void loadData() throws IOException, URISyntaxException, InterruptedException {
     HttpRequest request = HttpRequest.newBuilder()
-        .uri(new URI(url+"/api/v1/server/schema/map"))
+        .uri(new URI(url+"/api/v1/schema/map"))
         .header(CONTENT_TYPE_HEADER, CONTENT_TYPE)
         .GET()
         .build();
@@ -77,7 +78,7 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
     if(config == null){
       try {
         HttpRequest request = HttpRequest.newBuilder()
-            .uri(new URI(url+"/api/v1/server/schema/"+uuid))
+            .uri(new URI(url+"/api/v1/schema/"+uuid))
             .header(CONTENT_TYPE_HEADER, CONTENT_TYPE)
             .GET()
             .build();
@@ -100,7 +101,7 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
   public void removeSchema(@NonNull String uuid) {
     try {
       HttpRequest request = HttpRequest.newBuilder()
-          .uri(new URI(url+"/api/v1/server/schema/"+uuid))
+          .uri(new URI(url+"/api/v1/schema/"+uuid))
           .header(CONTENT_TYPE_HEADER, CONTENT_TYPE)
           .DELETE().build();
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -117,7 +118,7 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
   public void removeAllSchemas() {
     try {
       HttpRequest request = HttpRequest.newBuilder()
-          .uri(new URI(url+"/api/v1/server/schema"))
+          .uri(new URI(url+"/api/v1/schema"))
           .header(CONTENT_TYPE_HEADER, CONTENT_TYPE)
           .DELETE().build();
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -137,7 +138,7 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
       jsonObject.put("context", context);
       jsonObject.put("schema", config.pack());
       HttpRequest request = HttpRequest.newBuilder()
-          .uri(new URI(url+"/api/v1/server/schema"))
+          .uri(new URI(url+"/api/v1/schema"))
           .header(CONTENT_TYPE_HEADER, CONTENT_TYPE)
           .POST(BodyPublishers.ofString(jsonObject.toString(2)))
           .build();

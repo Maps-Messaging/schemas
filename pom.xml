@@ -226,7 +226,7 @@
           </includes>
         </configuration>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>3.1.0</version>
+        <version>3.1.2</version>
       </plugin>
 
       <!-- JavaDoc -->

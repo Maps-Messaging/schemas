@@ -17,6 +17,13 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.config.impl.meta.JsonSchema;
+import io.mapsmessaging.schemas.config.impl.meta.SchemaParser;
+import io.mapsmessaging.schemas.config.impl.meta.SchemaSerializer;
+import lombok.Getter;
+import org.json.JSONObject;
+
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -26,19 +33,35 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
 
   private static final String NAME = "JSON";
 
+  @Getter
+  private final JsonSchema metaMap;
+
   /**
    * Instantiates a new Json schema config.
    */
   public JsonSchemaConfig() {
     super(NAME);
+    metaMap = new JsonSchema(new LinkedHashMap<>());
     setMimeType("application/json");
   }
 
   private JsonSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
+    Object obj = config.get("jsonSchema");
+    if (obj instanceof Map) {
+      metaMap = SchemaParser.parseSchema((Map<String, Object>) obj);
+    } else {
+      metaMap = new JsonSchema(new LinkedHashMap<>());
+    }
   }
 
   protected SchemaConfig getInstance(Map<String, Object> config) {
     return new JsonSchemaConfig(config);
   }
+
+  protected void packData(JSONObject jsonObject) {
+    super.packData(jsonObject);
+    jsonObject.put("jsonSchema", SchemaSerializer.serializeSchema(metaMap));
+  }
+
 }

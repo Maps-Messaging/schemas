@@ -20,9 +20,13 @@ import io.mapsmessaging.schemas.config.SchemaConfig;
 import lombok.Getter;
 import org.everit.json.schema.ObjectSchema;
 import org.everit.json.schema.Schema;
+import org.everit.json.schema.internal.JSONPrinter;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONObject;
+import org.json.JSONWriter;
 
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Map;
 
 /**
@@ -33,7 +37,7 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
   private static final String NAME = "JSON";
 
   @Getter
-  private final Schema schema;
+  private final transient Schema schema;
 
   /**
    * Instantiates a new Json schema config.
@@ -61,7 +65,12 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
   @Override
   protected void packData(JSONObject jsonObject) {
     super.packData(jsonObject);
-    JSONObject schemaObject = new JSONObject(schema.toString());
+    Writer writer = new StringWriter();
+    JSONWriter jsonWriter = new JSONWriter(writer);
+    JSONPrinter printer = new JSONPrinter(jsonWriter);
+    schema.describeTo(printer);
+    String val = writer.toString();
+    JSONObject schemaObject = new JSONObject(val);
     jsonObject.put("jsonSchema", schemaObject.toMap());
   }
 

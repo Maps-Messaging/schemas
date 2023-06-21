@@ -17,27 +17,37 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
-
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
-import java.io.IOException;
+import org.everit.json.schema.Schema;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.IOException;
+
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
 
 /**
  * The type Json formatter.
  */
 public class JsonFormatter extends MessageFormatter {
 
+  private final Schema schema;
+
   /**
    * Instantiates a new Json formatter.
    */
   public JsonFormatter() {
-    // Used by the service loader, there is nothing to do
+    schema = null;
+  }
+
+
+  public JsonFormatter(Schema schema) {
+    this.schema = schema;
   }
 
   @Override
@@ -45,6 +55,9 @@ public class JsonFormatter extends MessageFormatter {
     JSONObject json;
     try {
       json = new JSONObject(new String(payload));
+      if (schema != null) {
+        schema.validate(json);
+      }
       return new StructuredResolver(new MapResolver(json.toMap()), json);
     } catch (JSONException e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
@@ -59,7 +72,8 @@ public class JsonFormatter extends MessageFormatter {
 
   @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {
-    return this;
+    JsonSchemaConfig jsonSchemaConfig = (JsonSchemaConfig) config;
+    return new JsonFormatter(jsonSchemaConfig.getSchema());
   }
 
   @Override

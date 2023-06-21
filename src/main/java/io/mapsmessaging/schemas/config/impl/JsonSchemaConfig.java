@@ -17,13 +17,11 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.config.impl.meta.JsonSchema;
-import io.mapsmessaging.schemas.config.impl.meta.SchemaParser;
-import io.mapsmessaging.schemas.config.impl.meta.SchemaSerializer;
 import lombok.Getter;
+import org.everit.json.schema.Schema;
+import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONObject;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -34,14 +32,14 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
   private static final String NAME = "JSON";
 
   @Getter
-  private final JsonSchema metaMap;
+  private final Schema schema;
 
   /**
    * Instantiates a new Json schema config.
    */
   public JsonSchemaConfig() {
     super(NAME);
-    metaMap = new JsonSchema(new LinkedHashMap<>());
+    schema = SchemaLoader.load(new JSONObject("{}"));
     setMimeType("application/json");
   }
 
@@ -49,9 +47,9 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
     super(NAME, config);
     Object obj = config.get("jsonSchema");
     if (obj instanceof Map) {
-      metaMap = SchemaParser.parseSchema((Map<String, Object>) obj);
+      schema = SchemaLoader.load(new JSONObject((Map<String, Object>) obj));
     } else {
-      metaMap = new JsonSchema(new LinkedHashMap<>());
+      schema = SchemaLoader.load(new JSONObject("{}"));
     }
   }
 
@@ -59,9 +57,11 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
     return new JsonSchemaConfig(config);
   }
 
+  @Override
   protected void packData(JSONObject jsonObject) {
     super.packData(jsonObject);
-    jsonObject.put("jsonSchema", SchemaSerializer.serializeSchema(metaMap));
+    JSONObject schemaObject = new JSONObject(schema.toString());
+    jsonObject.put("jsonSchema", schemaObject.toMap());
   }
 
 }

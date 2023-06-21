@@ -18,6 +18,7 @@ package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import lombok.Getter;
+import org.everit.json.schema.ObjectSchema;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONObject;
@@ -39,7 +40,7 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
    */
   public JsonSchemaConfig() {
     super(NAME);
-    schema = SchemaLoader.load(new JSONObject("{}"));
+    schema = buildEmptySchema();
     setMimeType("application/json");
   }
 
@@ -49,7 +50,7 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
     if (obj instanceof Map) {
       schema = SchemaLoader.load(new JSONObject((Map<String, Object>) obj));
     } else {
-      schema = SchemaLoader.load(new JSONObject("{}"));
+      schema = buildEmptySchema();
     }
   }
 
@@ -62,6 +63,13 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
     super.packData(jsonObject);
     JSONObject schemaObject = new JSONObject(schema.toString());
     jsonObject.put("jsonSchema", schemaObject.toMap());
+  }
+
+  private Schema buildEmptySchema() {
+    ObjectSchema.Builder schemaBuilder = ObjectSchema.builder();
+    schemaBuilder.description("JSON Schema");
+    schemaBuilder.title("empty schema");
+    return schemaBuilder.build();
   }
 
 }

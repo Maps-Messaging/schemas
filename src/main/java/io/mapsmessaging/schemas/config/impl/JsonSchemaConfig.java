@@ -48,6 +48,12 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
     setMimeType("application/json");
   }
 
+  public JsonSchemaConfig(Schema schema) {
+    super(NAME);
+    this.schema = schema;
+    setMimeType("application/json");
+  }
+
   private JsonSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
     Object obj = config.get("jsonSchema");

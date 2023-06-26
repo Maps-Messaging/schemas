@@ -20,18 +20,26 @@ package io.mapsmessaging.schemas.formatters;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import org.everit.json.schema.NumberSchema;
+import org.everit.json.schema.ObjectSchema;
+import org.everit.json.schema.StringSchema;
+import org.everit.json.schema.internal.JSONPrinter;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
 
 class TestJsonFormatter extends BaseTest {
 
 
-  byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws IOException {
+  byte[] pack(io.mapsmessaging.schemas.formatters.Person p) {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put("stringId", p.getStringId());
     jsonObject.put("longId", p.getLongId());
@@ -42,7 +50,7 @@ class TestJsonFormatter extends BaseTest {
   }
 
   @Override
-  List<byte[]> packList(List<io.mapsmessaging.schemas.formatters.Person> list) throws IOException {
+  List<byte[]> packList(List<io.mapsmessaging.schemas.formatters.Person> list) {
     List<byte[]> packed = new ArrayList<>();
     for (io.mapsmessaging.schemas.formatters.Person p : list) {
       packed.add(pack(p));
@@ -51,8 +59,19 @@ class TestJsonFormatter extends BaseTest {
   }
 
   @Override
-  SchemaConfig getSchema() throws IOException {
-    return new JsonSchemaConfig();
+  SchemaConfig getSchema()  {
+    ObjectSchema.Builder schemaBuilder = ObjectSchema.builder()
+        .addPropertySchema("stringId", StringSchema.builder().build())
+        .addPropertySchema("longId", NumberSchema.builder().build())
+        .addPropertySchema("intId", NumberSchema.builder().build())
+        .addPropertySchema("floatId", NumberSchema.builder().build())
+        .addPropertySchema("doubleId", NumberSchema.builder().build());
+    ObjectSchema schema = schemaBuilder.build();
+    Writer writer = new StringWriter();
+    JSONWriter jsonWriter = new JSONWriter(writer);
+    JSONPrinter printer = new JSONPrinter(jsonWriter);
+    schema.describeTo(printer);
+    return new JsonSchemaConfig(writer.toString());
   }
 
   @Test

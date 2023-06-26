@@ -24,6 +24,7 @@ import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 import org.everit.json.schema.Schema;
+import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -46,15 +47,19 @@ public class JsonFormatter extends MessageFormatter {
   }
 
 
-  public JsonFormatter(Schema schema) {
-    this.schema = schema;
+  public JsonFormatter(String schemaString) {
+    if(schemaString != null && schemaString.length() > 0) {
+      schema = SchemaLoader.load(new JSONObject(schemaString));
+    }
+    else{
+      schema = null;
+    }
   }
 
   @Override
   public ParsedObject parse(byte[] payload) {
-    JSONObject json;
     try {
-      json = new JSONObject(new String(payload));
+      JSONObject json = new JSONObject(new String(payload));
       if (schema != null) {
         schema.validate(json);
       }

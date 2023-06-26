@@ -18,15 +18,8 @@ package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import lombok.Getter;
-import org.everit.json.schema.ObjectSchema;
-import org.everit.json.schema.Schema;
-import org.everit.json.schema.internal.JSONPrinter;
-import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONObject;
-import org.json.JSONWriter;
 
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.Map;
 
 /**
@@ -37,7 +30,7 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
   private static final String NAME = "JSON";
 
   @Getter
-  private final transient Schema schema;
+  private final String schema;
 
   /**
    * Instantiates a new Json schema config.
@@ -48,7 +41,7 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
     setMimeType("application/json");
   }
 
-  public JsonSchemaConfig(Schema schema) {
+  public JsonSchemaConfig(String schema) {
     super(NAME);
     this.schema = schema;
     setMimeType("application/json");
@@ -58,7 +51,8 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
     super(NAME, config);
     Object obj = config.get("jsonSchema");
     if (obj instanceof Map) {
-      schema = SchemaLoader.load(new JSONObject((Map<String, Object>) obj));
+      JSONObject jsonSchema = new JSONObject(new JSONObject((Map<String, Object>) obj));
+      schema = jsonSchema.toString(2);
     } else {
       schema = buildEmptySchema();
     }
@@ -71,20 +65,12 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
   @Override
   protected void packData(JSONObject jsonObject) {
     super.packData(jsonObject);
-    Writer writer = new StringWriter();
-    JSONWriter jsonWriter = new JSONWriter(writer);
-    JSONPrinter printer = new JSONPrinter(jsonWriter);
-    schema.describeTo(printer);
-    String val = writer.toString();
-    JSONObject schemaObject = new JSONObject(val);
-    jsonObject.put("jsonSchema", schemaObject.toMap());
+    JSONObject schemaObject = new JSONObject(schema);
+    jsonObject.put("jsonSchema", schemaObject.toString(2));
   }
 
-  private Schema buildEmptySchema() {
-    ObjectSchema.Builder schemaBuilder = ObjectSchema.builder();
-    schemaBuilder.description("JSON Schema");
-    schemaBuilder.title("empty schema");
-    return schemaBuilder.build();
+  private String buildEmptySchema() {
+    return "{}";
   }
 
 }

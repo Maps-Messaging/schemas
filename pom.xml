@@ -353,7 +353,7 @@
     <dependency>
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>
-      <version>20230227</version>
+      <version>20230618</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/org.everit.json/org.everit.json.schema -->
     <dependency>
@@ -366,7 +366,7 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>3.23.2</version>
+      <version>3.23.3</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.avro/avro -->

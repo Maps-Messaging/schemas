@@ -177,7 +177,7 @@
   <distributionManagement>
     <snapshotRepository>
       <id>github</id>
-      <url>https://maven.pkg.github.com/Maps-Messaging/schema</url>
+      <url>https://maven.pkg.github.com/Maps-Messaging/schemas</url>
     </snapshotRepository>
     <repository>
       <id>ossrh</id>

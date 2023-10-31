@@ -97,6 +97,20 @@
     <profile>
       <!-- Default profile for regular releases -->
       <id>release</id>
+      <dependencies>
+        <dependency>
+          <groupId>io.mapsmessaging</groupId>
+          <artifactId>simple_logging</artifactId>
+          <version>2.0.9</version>
+        </dependency>
+
+        <!-- JMS Selector logic module -->
+        <dependency>
+          <groupId>io.mapsmessaging</groupId>
+          <artifactId>jms_selector_parser</artifactId>
+          <version>1.1.12</version>
+        </dependency>
+      </dependencies>
       <distributionManagement>
         <repository>
           <id>ossrh</id>
@@ -127,20 +141,28 @@
       <id>snapshot</id>
       <repositories>
         <repository>
-          <id>github2</id>
-          <url>https://maven.pkg.github.com/Maps-Messaging/simple_logging</url>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-        </repository>
-        <repository>
-          <id>github</id>
-          <url>https://maven.pkg.github.com/Maps-Messaging/jms_selector_parser</url>
+          <id>maps_snapshots</id>
+          <name>maps_snapshot_repository</name>
+          <url>https://repository.mapsmessaging.io:8081/repository/maps_snapshots/</url>
           <snapshots>
             <enabled>true</enabled>
           </snapshots>
         </repository>
       </repositories>
+      <dependencies>
+        <dependency>
+          <groupId>io.mapsmessaging</groupId>
+          <artifactId>simple_logging</artifactId>
+          <version>2.0.10-SNAPSHOT</version>
+        </dependency>
+
+        <!-- JMS Selector logic module -->
+        <dependency>
+          <groupId>io.mapsmessaging</groupId>
+          <artifactId>jms_selector_parser</artifactId>
+          <version>1.1.14-SNAPSHOT</version>
+        </dependency>
+      </dependencies>
     </profile>
   </profiles>
 
@@ -176,8 +198,9 @@
 
   <distributionManagement>
     <snapshotRepository>
-      <id>github</id>
-      <url>https://maven.pkg.github.com/Maps-Messaging/schemas</url>
+      <id>maps_snapshots</id>
+      <name>maps_snapshot_repository</name>
+      <url>https://repository.mapsmessaging.io:8081/repository/maps_snapshots/</url>
     </snapshotRepository>
     <repository>
       <id>ossrh</id>
@@ -373,19 +396,6 @@
   </build>
 
   <dependencies>
-    <dependency>
-      <groupId>io.mapsmessaging</groupId>
-      <artifactId>simple_logging</artifactId>
-      <version>2.0.10-SNAPSHOT</version>
-    </dependency>
-
-    <!-- JMS Selector logic module -->
-    <dependency>
-      <groupId>io.mapsmessaging</groupId>
-      <artifactId>jms_selector_parser</artifactId>
-      <version>1.1.14-SNAPSHOT</version>
-    </dependency>
-
     <!-- https://mvnrepository.com/artifact/org.json/json -->
     <dependency>
       <groupId>org.json</groupId>

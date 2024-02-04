@@ -1,6 +1,6 @@
 /*
  *
- *     Copyright [ 2020 - 2023 ] [Matthew Buckton]
+ *     Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 
 package io.mapsmessaging.schemas.repository.impl;
 
-import io.mapsmessaging.logging.Logger;
-import io.mapsmessaging.logging.LoggerFactory;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
 import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
@@ -40,7 +38,6 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
   private static final String CONTENT_TYPE_HEADER = "Content-Type";
   private static final String CONTENT_TYPE = "application/json";
 
-  private final Logger logger = LoggerFactory.getLogger(RestSchemaRepository.class);
   private final String url;
   private final HttpClient client;
 
@@ -148,16 +145,12 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
       }
     } catch (URISyntaxException | IOException | InterruptedException e) {
       Thread.currentThread().interrupt();
-      // log it
     }
     return null;
   }
 
   public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
     SimpleSchemaRepository repository = new RestSchemaRepository("http://localhost:8080");
-    for(SchemaConfig config:repository.getAll()){
-      System.err.println(config.pack());
-    }
     JsonSchemaConfig json = new JsonSchemaConfig();
     json.setUniqueId(UUID.randomUUID());
     repository.addSchema("/root", json);

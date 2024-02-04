@@ -1,6 +1,6 @@
 /*
  *
- *     Copyright [ 2020 - 2023 ] [Matthew Buckton]
+ *     Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import java.util.Map;
  */
 public class JsonSchemaConfig extends SimpleSchemaConfig {
 
+  private static final String EMPTY_SCHEMA = "{}";
   private static final String NAME = "JSON";
 
   @Getter
@@ -37,7 +38,7 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
    */
   public JsonSchemaConfig() {
     super(NAME);
-    schema = buildEmptySchema();
+    schema = EMPTY_SCHEMA;
     setMimeType("application/json");
   }
 
@@ -54,7 +55,7 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
       JSONObject jsonSchema = new JSONObject(new JSONObject((Map<String, Object>) obj));
       schema = jsonSchema.toString(2);
     } else {
-      schema = buildEmptySchema();
+      schema = EMPTY_SCHEMA;
     }
   }
 
@@ -68,9 +69,4 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
     JSONObject schemaObject = new JSONObject(schema);
     jsonObject.put("jsonSchema", schemaObject.toString(2));
   }
-
-  private String buildEmptySchema() {
-    return "{}";
-  }
-
 }

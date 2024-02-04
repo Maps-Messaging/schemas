@@ -1,6 +1,6 @@
 /*
  *
- *     Copyright [ 2020 - 2023 ] [Matthew Buckton]
+ *     Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 package io.mapsmessaging.schemas.formatters;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,23 +27,16 @@ import java.util.ServiceLoader;
 /**
  * The type Message formatter factory.
  */
+@SuppressWarnings("java:S6548") // yes it is a singleton
 public class MessageFormatterFactory {
 
-  private static final MessageFormatterFactory instance;
-
-  static {
-    instance = new MessageFormatterFactory();
+  private static class Holder {
+    static final MessageFormatterFactory INSTANCE = new MessageFormatterFactory();
   }
 
-  /**
-   * Gets instance.
-   *
-   * @return the instance
-   */
   public static MessageFormatterFactory getInstance() {
-    return instance;
+    return MessageFormatterFactory.Holder.INSTANCE;
   }
-
 
   private final List<MessageFormatter> messageFormatters;
 

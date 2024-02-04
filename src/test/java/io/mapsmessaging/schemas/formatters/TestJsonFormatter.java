@@ -1,6 +1,6 @@
 /*
  *
- *     Copyright [ 2020 - 2023 ] [Matthew Buckton]
+ *     Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -79,7 +79,8 @@ class TestJsonFormatter extends BaseTest {
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
     JSONObject jsonObject = new JSONObject();
     jsonObject.put("something_different", "hello");
-    formatter.parse(jsonObject.toString(2).getBytes());
+    Assertions.assertNotNull(formatter.parse(jsonObject.toString(2).getBytes()));
+
   }
 
   @Test

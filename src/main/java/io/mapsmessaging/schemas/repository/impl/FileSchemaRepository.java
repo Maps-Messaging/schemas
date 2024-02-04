@@ -1,6 +1,6 @@
 /*
  *
- *     Copyright [ 2020 - 2023 ] [Matthew Buckton]
+ *     Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -17,23 +17,18 @@
 
 package io.mapsmessaging.schemas.repository.impl;
 
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FILE_REPO_ROOT_CREATION_EXCEPTION;
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FILE_REPO_ROOT_NOT_DIRECTORY_EXCEPTION;
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FILE_REPO_UNABLE_TO_DELETE_EXCEPTION;
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FILE_REPO_UNABLE_TO_SAVE_EXCEPTION;
-
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import lombok.NonNull;
+
+import java.io.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.NonNull;
+
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.*;
 
 public class FileSchemaRepository extends SimpleSchemaRepository{
 
@@ -58,21 +53,47 @@ public class FileSchemaRepository extends SimpleSchemaRepository{
     File[] children = rootDirectory.listFiles();
     if(children != null) {
       for (File child : children) {
-        try (FileInputStream fileInputStream = new FileInputStream(child)){
-          int len = fileInputStream.read() & 0xff;
-          len = len | (fileInputStream.read() & 0xff) << 8;
-          byte[] contextBytes = new byte[len];
-          fileInputStream.read(contextBytes);
-          String context = new String(contextBytes);
-          int remaining = (int)(child.length() - len);
-          byte[] schemaBytes = new byte[remaining];
-          fileInputStream.read(schemaBytes);
-          SchemaConfig schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaBytes);
-          addSchema(context, schemaConfig);
-        }
+        loadFile(child);
       }
     }
   }
+
+  private void loadFile(File child) throws IOException {
+    try (FileInputStream fileInputStream = new FileInputStream(child)) {
+      int byte1 = fileInputStream.read();
+      int byte2 = fileInputStream.read();
+      if (byte1 == -1 || byte2 == -1) {
+        throw new EOFException("Unexpected end of file while reading length bytes.");
+      }
+
+      int len = byte1 & 0xff | (byte2 & 0xff) << 8;
+      byte[] contextBytes = new byte[len];
+      int read = 0;
+      while (read < len) {
+        int res = fileInputStream.read(contextBytes, read, len - read);
+        if (res < 0) {
+          throw new EOFException("End of file reached before reading expected context data.");
+        }
+        read += res;
+      }
+
+      String context = new String(contextBytes);
+      int remaining = (int) (child.length() - 2 - len); // Subtract 2 for the length bytes
+      byte[] schemaBytes = new byte[remaining];
+      int totalRead = 0;
+      while (totalRead < remaining) {
+        int res = fileInputStream.read(schemaBytes, totalRead, remaining - totalRead);
+        if (res < 0) {
+          throw new EOFException("End of file reached before reading expected schema data.");
+        }
+        totalRead += res;
+      }
+
+      SchemaConfig schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaBytes);
+      addSchema(context, schemaConfig);
+    }
+  }
+
 
   @Override
   public SchemaConfig addSchema(@NonNull String context, @NonNull SchemaConfig config) {

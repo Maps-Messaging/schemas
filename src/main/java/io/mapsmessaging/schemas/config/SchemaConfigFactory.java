@@ -1,6 +1,6 @@
 /*
  *
- *     Copyright [ 2020 - 2023 ] [Matthew Buckton]
+ *     Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -17,33 +17,38 @@
 
 package io.mapsmessaging.schemas.config;
 
-import static io.mapsmessaging.schemas.config.Constants.FORMAT;
-import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.SCHEMA_CONFIG_FACTORY_INVALID_CONFIG;
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND;
-
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
-import org.json.JSONException;
-import org.json.JSONObject;
+
+import static io.mapsmessaging.schemas.config.Constants.FORMAT;
+import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.SCHEMA_CONFIG_FACTORY_INVALID_CONFIG;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND;
 
 /**
  * The type Schema config factory.
  */
+
+@SuppressWarnings("java:S6548") // yes it is a singleton
 public class SchemaConfigFactory {
 
   private static final String ERROR_MESSAGE = "Not a valid schema config";
   private static final String CONFIG_ERROR = "Unknown schema config found";
 
-  private static final SchemaConfigFactory instance;
+  private static class Holder {
+    static final SchemaConfigFactory INSTANCE = new SchemaConfigFactory();
+  }
 
-  static {
-    instance = new SchemaConfigFactory();
+  public static SchemaConfigFactory getInstance() {
+    return SchemaConfigFactory.Holder.INSTANCE;
   }
 
   private final List<SchemaConfig> schemaConfigs;
@@ -56,15 +61,6 @@ public class SchemaConfigFactory {
       schemaConfigs.add(config);
     }
     logger = LoggerFactory.getLogger(SchemaConfigFactory.class);
-  }
-
-  /**
-   * Gets instance.
-   *
-   * @return the instance
-   */
-  public static SchemaConfigFactory getInstance() {
-    return instance;
   }
 
   /**

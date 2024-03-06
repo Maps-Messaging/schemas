@@ -17,54 +17,76 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.schema.JsonSchema;
+import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SpecVersion;
+import com.networknt.schema.ValidationMessage;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
-import org.everit.json.schema.Schema;
-import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.Set;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.JSON_PARSE_EXCEPTION;
 
 /**
  * The type Json formatter.
  */
 public class JsonFormatter extends MessageFormatter {
 
-  private final Schema schema;
+  private final JsonNode schemaNode;
+  private final JsonSchema schema;
+  private final JsonSchemaFactory schemaFactory;
 
   /**
    * Instantiates a new Json formatter.
    */
   public JsonFormatter() {
+    schemaNode = null;
     schema = null;
+    schemaFactory = null;
   }
 
 
-  public JsonFormatter(String schemaString) {
-    if(schemaString != null && schemaString.length() > 0) {
-      schema = SchemaLoader.load(new JSONObject(schemaString));
-    }
-    else{
-      schema = null;
-    }
+  public JsonFormatter(String schemaString) throws JsonProcessingException {
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    // Convert byte[] schema to JsonNode
+    schemaNode = objectMapper.readTree(schemaString);
+
+    // Create JsonSchema instance
+    schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7);
+    schema = schemaFactory.getSchema(schemaNode);
   }
 
   @Override
   public ParsedObject parse(byte[] payload) {
     try {
       JSONObject json = new JSONObject(new String(payload));
+
       if (schema != null) {
-        schema.validate(json);
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // Parse JSON string to JsonNode
+        JsonNode jsonNode = objectMapper.readTree(payload);
+        Set<ValidationMessage> validationResult = schema.validate(jsonNode);
+        if (!validationResult.isEmpty()) {
+          logger.log(JSON_PARSE_EXCEPTION, getName(), validationResult);
+          return new DefaultParser(payload);
+        }
       }
       return new StructuredResolver(new MapResolver(json.toMap()), json);
-    } catch (JSONException e) {
+    } catch (JSONException | IOException e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
       return new DefaultParser(payload);
     }

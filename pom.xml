@@ -23,7 +23,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.mapsmessaging</groupId>
   <artifactId>schemas</artifactId>
-  <version>2.1.3</version>
+  <version>2.1.4-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Schema Management</name>
@@ -101,14 +101,14 @@
         <dependency>
           <groupId>io.mapsmessaging</groupId>
           <artifactId>simple_logging</artifactId>
-          <version>2.0.11</version>
+          <version>2.0.12</version>
         </dependency>
 
         <!-- JMS Selector logic module -->
         <dependency>
           <groupId>io.mapsmessaging</groupId>
           <artifactId>jms_selector_parser</artifactId>
-          <version>1.1.14</version>
+          <version>1.1.15</version>
         </dependency>
       </dependencies>
       <distributionManagement>
@@ -153,14 +153,14 @@
         <dependency>
           <groupId>io.mapsmessaging</groupId>
           <artifactId>simple_logging</artifactId>
-          <version>2.0.12-SNAPSHOT</version>
+          <version>2.0.13-SNAPSHOT</version>
         </dependency>
 
         <!-- JMS Selector logic module -->
         <dependency>
           <groupId>io.mapsmessaging</groupId>
           <artifactId>jms_selector_parser</artifactId>
-          <version>1.1.15-SNAPSHOT</version>
+          <version>1.1.16-SNAPSHOT</version>
         </dependency>
       </dependencies>
     </profile>
@@ -286,7 +286,7 @@
           </includes>
         </configuration>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>3.2.2</version>
+        <version>3.2.5</version>
       </plugin>
 
       <!-- JavaDoc -->
@@ -313,7 +313,7 @@
           </execution>
         </executions>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>3.6.2</version>
+        <version>3.6.3</version>
       </plugin>
 
       <plugin>
@@ -350,7 +350,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.4.0</version>
+        <version>3.5.0</version>
         <executions>
           <execution>
             <id>add-test-sources</id>
@@ -386,7 +386,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.11.0</version>
+        <version>3.12.1</version>
         <configuration>
           <source>11</source>
           <target>11</target>
@@ -400,20 +400,35 @@
     <dependency>
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>
-      <version>20231013</version>
+      <version>20240303</version>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/org.everit.json/org.everit.json.schema -->
+
     <dependency>
-      <groupId>org.everit.json</groupId>
-      <artifactId>org.everit.json.schema</artifactId>
-      <version>1.5.1</version>
+      <groupId>com.networknt</groupId>
+      <artifactId>json-schema-validator</artifactId>
+      <version>1.3.3</version>
+
+      <!-- Only required for versions < 1.0.82. See README.md -->
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>commons-lang3</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>2.16.1</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>3.25.0</version>
+      <version>3.25.3</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.avro/avro -->
@@ -456,7 +471,7 @@
       <artifactId>junit-jupiter-engine</artifactId>
       <groupId>org.junit.jupiter</groupId>
       <scope>test</scope>
-      <version>5.10.1</version>
+      <version>5.10.2</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/com.github.javafaker/javafaker -->

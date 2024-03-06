@@ -40,6 +40,7 @@ public enum SchemaLogMessages implements LogMessage {
   PROTOBUF_PARSE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "Protobuf format raised exception during parsing {}"),
   XML_CONFIGURATION_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "XML formatter raised exception during construction {}"),
   XML_PARSE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "XML formatter raised exception during parsing {}"),
+  JSON_PARSE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "JSON formatter raised exception during parsing {} with the following error(s) {}"),
   //</editor-fold>
 
   //<editor-fold desc="Repository log messages">

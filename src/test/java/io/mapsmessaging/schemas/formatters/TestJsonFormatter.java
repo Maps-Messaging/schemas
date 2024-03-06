@@ -1,6 +1,6 @@
 /*
  *
- *     Copyright [ 2020 - 2023 ] [Matthew Buckton]
+ *     Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -20,21 +20,15 @@ package io.mapsmessaging.schemas.formatters;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
-import org.everit.json.schema.NumberSchema;
-import org.everit.json.schema.ObjectSchema;
-import org.everit.json.schema.StringSchema;
-import org.everit.json.schema.internal.JSONPrinter;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.json.JSONWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 class TestJsonFormatter extends BaseTest {
 
@@ -60,18 +54,33 @@ class TestJsonFormatter extends BaseTest {
 
   @Override
   SchemaConfig getSchema()  {
-    ObjectSchema.Builder schemaBuilder = ObjectSchema.builder()
-        .addPropertySchema("stringId", StringSchema.builder().build())
-        .addPropertySchema("longId", NumberSchema.builder().build())
-        .addPropertySchema("intId", NumberSchema.builder().build())
-        .addPropertySchema("floatId", NumberSchema.builder().build())
-        .addPropertySchema("doubleId", NumberSchema.builder().build());
-    ObjectSchema schema = schemaBuilder.build();
-    Writer writer = new StringWriter();
-    JSONWriter jsonWriter = new JSONWriter(writer);
-    JSONPrinter printer = new JSONPrinter(jsonWriter);
-    schema.describeTo(printer);
-    return new JsonSchemaConfig(writer.toString());
+    String jsonSchema = "{\n" +
+        "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n" +
+        "  \"type\": \"object\",\n" +
+        "  \"properties\": {\n" +
+        "    \"stringId\": { \"type\": \"string\" },\n" +
+        "    \"longId\": { \"type\": \"number\" },\n" +
+        "    \"intId\": { \"type\": \"number\" },\n" +
+        "    \"floatId\": { \"type\": \"number\" },\n" +
+        "    \"doubleId\": { \"type\": \"number\" }\n" +
+        "  },\n" +
+        " \"required\": [\"stringId\", \"longId\", \"intId\", \"floatId\", \"doubleId\"],\n" +
+        "  \"additionalProperties\": false\n" +
+        "}";
+    return new JsonSchemaConfig(jsonSchema);
+  }
+
+  @Test
+  void invalidJson() throws IOException {
+    SchemaConfig config = getSchema();
+    config.setUniqueId(UUID.randomUUID());
+    config.setSource("test");
+    config.setVersion("1.0");
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
+    JSONObject jsonObject = new JSONObject();
+    jsonObject.put("something_different", "hello");
+    Assertions.assertNotNull(formatter.parse(jsonObject.toString(2).getBytes()));
+
   }
 
   @Test

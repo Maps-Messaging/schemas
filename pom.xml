@@ -213,7 +213,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-gpg-plugin</artifactId>
-        <version>3.2.1</version>
+        <version>3.2.2</version>
         <executions>
           <execution>
             <id>sign-artifacts</id>
@@ -234,7 +234,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>3.3.0</version>
+        <version>3.3.1</version>
         <executions>
           <execution>
             <id>attach-sources</id>
@@ -271,7 +271,7 @@
           </execution>
         </executions>
         <groupId>org.jacoco</groupId>
-        <version>0.8.11</version>
+        <version>0.8.12</version>
       </plugin>
 
       <!-- Setup the JUnit tests runner -->
@@ -386,7 +386,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.12.1</version>
+        <version>3.13.0</version>
         <configuration>
           <source>11</source>
           <target>11</target>
@@ -428,7 +428,7 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>4.26.0</version>
+      <version>4.26.1</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.avro/avro -->
@@ -463,7 +463,7 @@
     <dependency>
       <artifactId>lombok</artifactId>
       <groupId>org.projectlombok</groupId>
-      <version>1.18.30</version>
+      <version>1.18.32</version>
     </dependency>
 
       <!-- https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations -->

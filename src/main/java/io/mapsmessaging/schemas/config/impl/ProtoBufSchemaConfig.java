@@ -16,20 +16,23 @@
  */
 package io.mapsmessaging.schemas.config.impl;
 
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.PROTOBUF_DESCRIPTOR_NOT_DEFINED;
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.PROTOBUF_MESSAGE_NAME_NOT_DEFINED;
-
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import java.io.IOException;
-import java.util.Base64;
-import java.util.Map;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.util.Base64;
+import java.util.Map;
+
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.PROTOBUF_DESCRIPTOR_NOT_DEFINED;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.PROTOBUF_MESSAGE_NAME_NOT_DEFINED;
+
 /**
  * The type Proto buf schema config.
  */
+@Schema(description = "Protobuf Schema Configuration")
 public class ProtoBufSchemaConfig extends SchemaConfig {
 
   private static final String NAME = "ProtoBuf";

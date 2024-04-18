@@ -17,18 +17,21 @@
 
 package io.mapsmessaging.schemas.config.impl;
 
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.NATIVE_TYPE_UNKNOWN;
-
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import java.io.IOException;
-import java.util.Map;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.util.Map;
+
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.NATIVE_TYPE_UNKNOWN;
+
 /**
  * The type Native schema config.
  */
+@Schema(description = "Native Schema Configuration")
 public class NativeSchemaConfig extends SimpleSchemaConfig {
 
   private static final String NAME = "Native";

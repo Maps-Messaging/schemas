@@ -17,11 +17,14 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.Map;
 
 /**
  * The type Raw schema config.
  */
+@Schema(description = "Raw Schema Configuration")
 public class RawSchemaConfig extends SimpleSchemaConfig {
 
   private static final String NAME = "RAW";

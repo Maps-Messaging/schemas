@@ -17,6 +17,7 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import org.json.JSONObject;
 
@@ -25,6 +26,7 @@ import java.util.Map;
 /**
  * The type Json schema config.
  */
+@Schema(description = "JSON Schema Configuration")
 public class JsonSchemaConfig extends SimpleSchemaConfig {
 
   private static final String EMPTY_SCHEMA = "{}";

@@ -17,14 +17,17 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import java.util.Map;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
 
+import java.util.Map;
+
 /**
  * The type Xml schema config.
  */
+@Schema(description = "XML Schema Configuration")
 public class XmlSchemaConfig extends SimpleSchemaConfig {
 
   private static final String NAME = "XML";

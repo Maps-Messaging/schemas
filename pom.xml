@@ -463,7 +463,7 @@
     <dependency>
       <artifactId>lombok</artifactId>
       <groupId>org.projectlombok</groupId>
-      <version>1.18.32</version>
+      <version>1.18.34</version>
     </dependency>
 
       <!-- https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations -->

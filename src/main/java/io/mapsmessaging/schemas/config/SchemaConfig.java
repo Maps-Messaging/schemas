@@ -16,8 +16,16 @@
  */
 package io.mapsmessaging.schemas.config;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
+import io.mapsmessaging.schemas.config.impl.*;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
@@ -29,6 +37,32 @@ import java.util.Map;
 import java.util.UUID;
 
 import static io.mapsmessaging.schemas.config.Constants.*;
+
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "type"
+)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = AvroSchemaConfig.class, name = "avro"),
+    @JsonSubTypes.Type(value = CsvSchemaConfig.class, name = "csv"),
+    @JsonSubTypes.Type(value = JsonSchemaConfig.class, name = "json"),
+    @JsonSubTypes.Type(value = NativeSchemaConfig.class, name = "native"),
+    @JsonSubTypes.Type(value = ProtoBufSchemaConfig.class, name = "protobuf"),
+    @JsonSubTypes.Type(value = RawSchemaConfig.class, name = "raw"),
+    @JsonSubTypes.Type(value = XmlSchemaConfig.class, name = "xml")
+})
+@Schema(description = "Abstract base class for all schema configurations",
+    discriminatorProperty = "type",
+    discriminatorMapping = {
+        @DiscriminatorMapping(value = "avro", schema = AvroSchemaConfig.class),
+        @DiscriminatorMapping(value = "csv", schema = CsvSchemaConfig.class),
+        @DiscriminatorMapping(value = "json", schema = JsonSchemaConfig.class),
+        @DiscriminatorMapping(value = "native", schema = NativeSchemaConfig.class),
+        @DiscriminatorMapping(value = "protobuf", schema = ProtoBufSchemaConfig.class),
+        @DiscriminatorMapping(value = "raw", schema = RawSchemaConfig.class),
+        @DiscriminatorMapping(value = "xml", schema = XmlSchemaConfig.class)
+    })
 
 /**
  * The type Schema config.
@@ -52,15 +86,24 @@ public abstract class SchemaConfig implements Serializable {
   @Getter
   protected String uniqueId;
 
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  @JsonSerialize(using = LocalDateTimeSerializer.class)
+  @JsonDeserialize(using = LocalDateTimeDeserializer.class)
   @Getter
   private LocalDateTime creation;
 
   @Getter
   @Setter
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  @JsonSerialize(using = LocalDateTimeSerializer.class)
+  @JsonDeserialize(using = LocalDateTimeDeserializer.class)
   private LocalDateTime expiresAfter;
 
   @Getter
   @Setter
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  @JsonSerialize(using = LocalDateTimeSerializer.class)
+  @JsonDeserialize(using = LocalDateTimeDeserializer.class)
   private LocalDateTime notBefore;
 
   @Setter

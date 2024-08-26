@@ -17,18 +17,21 @@
 
 package io.mapsmessaging.schemas.config.impl;
 
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.CSV_HEADER_NOT_DEFINED;
-
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import java.io.IOException;
-import java.util.Map;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.util.Map;
+
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.CSV_HEADER_NOT_DEFINED;
+
 /**
  * The type Csv schema config.
  */
+@Schema(description = "CVS Schema Configuration")
 public class CsvSchemaConfig extends SchemaConfig {
 
   private static final String NAME = "CSV";

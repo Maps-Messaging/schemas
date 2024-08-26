@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~
-  ~     Copyright [ 2020 - 2023 ] [Matthew Buckton]
+  ~     Copyright [ 2020 - 2024 ] [Matthew Buckton]
   ~
   ~     Licensed under the Apache License, Version 2.0 (the "License");
   ~     you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@
         <repository>
           <id>maps_snapshots</id>
           <name>maps_snapshot_repository</name>
-          <url>https://repository.mapsmessaging.io:8081/repository/maps_snapshots/</url>
+          <url>https://repo.mapsmessaging.io/repository/maps_snapshots/</url>
           <snapshots>
             <enabled>true</enabled>
           </snapshots>
@@ -200,7 +200,7 @@
     <snapshotRepository>
       <id>maps_snapshots</id>
       <name>maps_snapshot_repository</name>
-      <url>https://repository.mapsmessaging.io:8081/repository/maps_snapshots/</url>
+      <url>https://repo.mapsmessaging.io/repository/maps_snapshots/</url>
     </snapshotRepository>
     <repository>
       <id>ossrh</id>
@@ -479,6 +479,14 @@
       <groupId>com.github.javafaker</groupId>
       <artifactId>javafaker</artifactId>
       <version>1.0.2</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>5.10.0</version>
       <scope>test</scope>
     </dependency>
 

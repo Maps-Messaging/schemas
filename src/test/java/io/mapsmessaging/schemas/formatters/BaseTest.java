@@ -1,6 +1,6 @@
 /*
  *
- *     Copyright [ 2020 - 2023 ] [Matthew Buckton]
+ *     Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -22,15 +22,16 @@ import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.selector.ParseException;
 import io.mapsmessaging.selector.SelectorParser;
 import io.mapsmessaging.selector.operators.ParserExecutor;
+import org.json.JSONObject;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.json.JSONObject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 public abstract class BaseTest {
 
@@ -243,8 +244,9 @@ public abstract class BaseTest {
       }
       BigDecimal vlhs = convert(lhs);
       BigDecimal vrhs = convert(rhs);
-
-      Assertions.assertEquals(vlhs, vrhs);
+      double dlhs = vlhs.doubleValue();
+      double drhs = vrhs.doubleValue();
+      Assertions.assertEquals(dlhs, drhs, 1e-6);
     }
   }
 

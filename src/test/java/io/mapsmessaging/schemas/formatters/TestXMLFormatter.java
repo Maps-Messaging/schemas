@@ -1,31 +1,33 @@
 /*
+ * Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
- *     Copyright [ 2020 - 2023 ] [Matthew Buckton]
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     Licensed under the Apache License, Version 2.0 (the "License");
- *     you may not use this file except in compliance with the License.
- *     You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
- *     Unless required by applicable law or agreed to in writing, software
- *     distributed under the License is distributed on an "AS IS" BASIS,
- *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *     See the License for the specific language governing permissions and
- *     limitations under the License.
+ *
  */
 package io.mapsmessaging.schemas.formatters;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
 import io.mapsmessaging.schemas.formatters.impl.XmlFormatter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import org.json.JSONObject;
 import org.json.XML;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 class TestXMLFormatter extends BaseTest {
 
@@ -77,11 +79,11 @@ class TestXMLFormatter extends BaseTest {
     XmlSchemaConfig config = new XmlSchemaConfig();
     config.setRootEntry("catalog");
     XmlFormatter xmlFormatter = (XmlFormatter) MessageFormatterFactory.getInstance().getFormatter(config);
-    Assertions.assertEquals("Cardigan Sweater", xmlFormatter.parse(XMLString.getBytes()).get("product.description"));
-    Assertions.assertEquals(39.95, xmlFormatter.parse(XMLString.getBytes()).get("product.catalog_item[0].price"));
+    Assertions.assertEquals("Cardigan Sweater", xmlFormatter.parse(XML_STRING.getBytes()).get("product.description"));
+    Assertions.assertEquals(39.95, xmlFormatter.parse(XML_STRING.getBytes()).get("product.catalog_item[0].price"));
   }
 
-  private static final String XMLString = "<?xml version=\"1.0\"?>\n"
+  private static final String XML_STRING = "<?xml version=\"1.0\"?>\n"
       + "<?xml-stylesheet href=\"catalog.xsl\" type=\"text/xsl\"?>\n"
       + "<!DOCTYPE catalog  >\n"
       + "<catalog>\n"

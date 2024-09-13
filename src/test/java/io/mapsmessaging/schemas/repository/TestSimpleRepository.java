@@ -30,7 +30,7 @@ import java.util.UUID;
 
 class TestSimpleRepository {
 
-  protected SimpleSchemaRepository getRepository() {
+  protected SimpleSchemaRepository getRepository() throws IOException {
     return new SimpleSchemaRepository();
   }
 

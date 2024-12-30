@@ -428,7 +428,7 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>4.29.1</version>
+      <version>4.29.2</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.avro/avro -->
@@ -470,7 +470,7 @@
       <dependency>
           <groupId>io.swagger.core.v3</groupId>
           <artifactId>swagger-annotations</artifactId>
-          <version>2.2.26</version>
+          <version>2.2.27</version>
       </dependency>
 
     <!-- Junit5 -->
@@ -478,7 +478,7 @@
       <artifactId>junit-jupiter-engine</artifactId>
       <groupId>org.junit.jupiter</groupId>
       <scope>test</scope>
-      <version>5.11.3</version>
+      <version>5.11.4</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/com.github.javafaker/javafaker -->

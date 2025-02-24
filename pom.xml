@@ -426,7 +426,7 @@
     <dependency>
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
-      <version>1.5.5</version>
+      <version>1.5.6</version>
 
       <!-- Only required for versions < 1.0.82. See README.md -->
       <exclusions>

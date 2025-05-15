@@ -96,9 +96,10 @@ public class XmlFormatter extends MessageFormatter {
       ObjectMapper xmlMapper = new XmlMapper();
       Map<String, Object> map = xmlMapper.readValue(payload, new TypeReference<>() {
       });
-      if (map.containsKey("LinkedTreeMap")) {
-        map = (Map<String, Object>) map.get("LinkedTreeMap");
+      if (map.size() == 1 && map.values().iterator().next() instanceof Map) {
+        map = (Map<String, Object>) map.values().iterator().next();
       }
+
       Object cleaned = coerceTypes(map);
       JsonElement jsonElement = gson.toJsonTree(cleaned);
       JsonObject rootObject = jsonElement.getAsJsonObject();
@@ -123,7 +124,7 @@ public class XmlFormatter extends MessageFormatter {
       }.getType();
       Map<String, Object> map = gson.fromJson(jsonObject, type);
 
-      if (root != null && root.length() > 0 && map.containsKey(root)) {
+      if (root != null && !root.isEmpty() && map.containsKey(root)) {
         map = (Map<String, Object>) map.get(root);
       }
       return new StructuredResolver(new MapResolver(map), document);

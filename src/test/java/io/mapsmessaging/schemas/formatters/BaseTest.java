@@ -41,10 +41,10 @@ public abstract class BaseTest {
   private static final String[] UNIT = {"ms", "μs", "ns"};
   private static List<Person> data;
 
-  static List<Person> createList(int size) {
+  static List<Person> createList() {
     Faker faker = new Faker();
     List<Person> list = new ArrayList<>();
-    for (int x = 0; x < size; x++) {
+    for (int x = 0; x < 1000; x++) {
       Person p = new Person();
       switch (x % 6) {
         case 0:
@@ -66,6 +66,9 @@ public abstract class BaseTest {
           p.setStringId(faker.backToTheFuture().character());
           break;
 
+        default:
+          break;
+
       }
       p.setLongId(faker.random().nextLong());
       p.setIntId((int) (faker.random().nextLong()));
@@ -78,7 +81,7 @@ public abstract class BaseTest {
 
   @BeforeAll
   static void createData() {
-    data = createList(1_000);
+    data = createList();
   }
 
   abstract List<byte[]> packList(List<Person> list) throws IOException;

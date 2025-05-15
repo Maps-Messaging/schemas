@@ -1,41 +1,42 @@
 /*
- * Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright [ 2020 - 2024 ] [Matthew Buckton]
+ *  Copyright [ 2024 - 2025 ] [Maps Messaging B.V.]
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *
  */
 
 package io.mapsmessaging.schemas.repository.impl;
 
+import com.google.gson.*;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
 import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
 import lombok.NonNull;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
+import java.util.Map;
 import java.util.UUID;
 
 public class RestSchemaRepository extends SimpleSchemaRepository {
-
+  private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
   private static final String CONTENT_TYPE_HEADER = "Content-Type";
   private static final String CONTENT_TYPE = "application/json";
 
@@ -50,25 +51,30 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
 
   private void loadData() throws IOException, URISyntaxException, InterruptedException {
     HttpRequest request = HttpRequest.newBuilder()
-        .uri(new URI(url+"/api/v1/schema/map"))
+        .uri(new URI(url + "/api/v1/schema/map"))
         .header(CONTENT_TYPE_HEADER, CONTENT_TYPE)
         .GET()
         .build();
 
     HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
     String body = response.body();
-    JSONObject jsonObject = new JSONObject(body);
-    if(jsonObject.has("data")){
-      JSONObject schemaMap = jsonObject.getJSONObject("data");
-      for(String key: schemaMap.keySet()){
-        JSONArray array = schemaMap.getJSONArray(key);
-        for(int x =0;x<array.length();x++){
-          JSONObject schema = new JSONObject(array.getString(x));
+
+    JsonObject jsonObject = JsonParser.parseString(body).getAsJsonObject();
+    if (jsonObject.has("data") && jsonObject.get("data").isJsonObject()) {
+      JsonObject schemaMap = jsonObject.getAsJsonObject("data");
+
+      for (Map.Entry<String, JsonElement> entry : schemaMap.entrySet()) {
+        String key = entry.getKey();
+        JsonArray array = entry.getValue().getAsJsonArray();
+
+        for (JsonElement element : array) {
+          JsonObject schema = JsonParser.parseString(element.getAsString()).getAsJsonObject();
           super.addSchema(key, SchemaConfigFactory.getInstance().constructConfig(schema));
         }
       }
     }
   }
+
 
   @Override
   public SchemaConfig getSchema(@NonNull String uuid) {
@@ -82,11 +88,12 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
             .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         String body = response.body();
-        if(response.statusCode() >= 200 && response.statusCode() < 300) {
-          JSONObject jsonObject = new JSONObject(body);
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+          JsonObject jsonObject = JsonParser.parseString(body).getAsJsonObject();
           config = SchemaConfigFactory.getInstance().constructConfig(jsonObject);
           super.addSchema("/", config);
         }
+
       } catch (IOException | URISyntaxException | InterruptedException e) {
         // to do
         Thread.currentThread().interrupt();
@@ -132,14 +139,16 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
   @Override
   public SchemaConfig addSchema(@NonNull String context, @NonNull SchemaConfig config) {
     try {
-      JSONObject jsonObject = new JSONObject();
-      jsonObject.put("context", context);
-      jsonObject.put("schema", config.pack());
+      JsonObject jsonObject = new JsonObject();
+      jsonObject.addProperty("context", context);
+      jsonObject.add("schema", JsonParser.parseString(config.pack()));
+
       HttpRequest request = HttpRequest.newBuilder()
-          .uri(new URI(url+"/api/v1/schema"))
+          .uri(new URI(url + "/api/v1/schema"))
           .header(CONTENT_TYPE_HEADER, CONTENT_TYPE)
-          .POST(BodyPublishers.ofString(jsonObject.toString(2)))
+          .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(jsonObject)))
           .build();
+
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
       if(response.statusCode() >= 200 && response.statusCode() < 300) {
         return super.addSchema(context, config);

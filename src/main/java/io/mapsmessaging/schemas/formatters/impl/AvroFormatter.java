@@ -1,23 +1,27 @@
 /*
- * Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright [ 2020 - 2024 ] [Matthew Buckton]
+ *  Copyright [ 2024 - 2025 ] [Maps Messaging B.V.]
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *
  */
 
 package io.mapsmessaging.schemas.formatters.impl;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
@@ -29,10 +33,10 @@ import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.*;
 import org.apache.avro.util.Utf8;
-import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -80,14 +84,15 @@ public class AvroFormatter extends MessageFormatter {
   }
 
   @Override
-  public JSONObject parseToJson(byte[] payload) throws IOException {
+  public JsonObject parseToJson(byte[] payload) throws IOException {
     GenericRecord genericRecord = (GenericRecord) parse(payload).getReferenced();
     ByteArrayOutputStream stream = new ByteArrayOutputStream(1024);
-    Encoder binaryEncoder = EncoderFactory.get().jsonEncoder(schema, stream);
+    Encoder jsonEncoder = EncoderFactory.get().jsonEncoder(schema, stream);
     GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
-    writer.write(genericRecord, binaryEncoder);
-    binaryEncoder.flush();
-    return new JSONObject(stream.toString());
+    writer.write(genericRecord, jsonEncoder);
+    jsonEncoder.flush();
+    String jsonString = stream.toString(StandardCharsets.UTF_8);
+    return JsonParser.parseString(jsonString).getAsJsonObject();
   }
 
   @Override

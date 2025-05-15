@@ -1,33 +1,40 @@
 /*
- * Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright [ 2020 - 2024 ] [Matthew Buckton]
+ *  Copyright [ 2024 - 2025 ] [Maps Messaging B.V.]
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *
  */
 
 package io.mapsmessaging.schemas.config;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import io.mapsmessaging.schemas.config.impl.RawSchemaConfig;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import static io.mapsmessaging.schemas.config.SchemaConfigFactory.gson;
 
 class TestConfigConstructors {
 
@@ -35,48 +42,77 @@ class TestConfigConstructors {
   void validSchemaLoad() throws IOException {
     SchemaConfig good = new RawSchemaConfig();
     good.setUniqueId(UUID.randomUUID());
-    JSONObject schema = new JSONObject();
-    schema.put("schema", good.packData());
-    String config = schema.toString(2);
+    JsonObject schema = new JsonObject();
+    schema.add("schema", good.packData());
+    String config = schema.toString();
 
     Assertions.assertNotNull(SchemaConfigFactory.getInstance().constructConfig(config));
     Assertions.assertNotNull(SchemaConfigFactory.getInstance().constructConfig(config.getBytes()));
-    Assertions.assertNotNull(SchemaConfigFactory.getInstance().constructConfig(schema.toMap()));
+    Type type = new TypeToken<Map<String, Object>>() {
+    }.getType();
+    Map<String, Object> map = gson.fromJson(schema, type);
+    Assertions.assertNotNull(SchemaConfigFactory.getInstance().constructConfig(map));
   }
 
 
   @Test
   void invalidSchemaLoad() throws IOException {
     SchemaConfig bad = new BadSchema();
-    JSONObject schema = new JSONObject();
-    schema.put("schema", bad.packData());
-    String config = schema.toString(2);
+    JsonObject schema = new JsonObject();
+    schema.add("schema", bad.packData());
+    String config = schema.toString();
     Assertions.assertThrowsExactly(IOException.class, () -> SchemaConfigFactory.getInstance().constructConfig(config));
     Assertions.assertThrowsExactly(IOException.class, () -> SchemaConfigFactory.getInstance().constructConfig(config.getBytes()));
-    Assertions.assertThrowsExactly(IOException.class, () -> SchemaConfigFactory.getInstance().constructConfig(schema.toMap()));
+    Type type = new TypeToken<Map<String, Object>>() {
+    }.getType();
+    Map<String, Object> map = gson.fromJson(schema, type);
+    Assertions.assertThrowsExactly(IOException.class, () ->
+        SchemaConfigFactory.getInstance().constructConfig(map)
+    );
   }
 
   @Test
   void invalidDataLoad() {
-    Assertions.assertThrowsExactly(IOException.class, () -> SchemaConfigFactory.getInstance().constructConfig(new JSONObject().toString()));
+    Gson gson = new Gson();
 
-    Assertions.assertThrowsExactly(JSONException.class, () -> SchemaConfigFactory.getInstance().constructConfig("".getBytes()));
-    Assertions.assertThrowsExactly(IOException.class, () -> SchemaConfigFactory.getInstance().constructConfig(new LinkedHashMap<>()));
+    // Empty object as string
+    Assertions.assertThrowsExactly(IOException.class, () ->
+        SchemaConfigFactory.getInstance().constructConfig("{}"));
 
-    JSONObject schema = new JSONObject();
-    schema.put("schema", 2);
-    String config = schema.toString(2);
-    Assertions.assertThrowsExactly(IOException.class, () -> SchemaConfigFactory.getInstance().constructConfig(config));
-    Assertions.assertThrowsExactly(IOException.class, () -> SchemaConfigFactory.getInstance().constructConfig(schema.toMap()));
+    // Invalid JSON bytes
+    Assertions.assertThrowsExactly(IllegalStateException.class, () ->
+        SchemaConfigFactory.getInstance().constructConfig("".getBytes(StandardCharsets.UTF_8)));
 
-    JSONObject schema1 = new JSONObject();
-    schema1.put("schema", new JSONObject());
-    String config1 = schema1.toString(2);
-    Assertions.assertThrowsExactly(IOException.class, () -> SchemaConfigFactory.getInstance().constructConfig(config1));
-    Assertions.assertThrowsExactly(IOException.class, () -> SchemaConfigFactory.getInstance().constructConfig(schema1.toMap()));
+    // Empty map
+    Assertions.assertThrowsExactly(IOException.class, () ->
+        SchemaConfigFactory.getInstance().constructConfig(new LinkedHashMap<>()));
 
+    // schema = 2 (invalid schema structure)
+    JsonObject invalidSchema1 = new JsonObject();
+    invalidSchema1.addProperty("schema", 2);
+    String config1 = gson.toJson(invalidSchema1);
+    Assertions.assertThrowsExactly(IOException.class, () ->
+        SchemaConfigFactory.getInstance().constructConfig(config1));
+    Assertions.assertThrowsExactly(IOException.class, () -> {
+      Type type = new TypeToken<Map<String, Object>>() {
+      }.getType();
+      Map<String, Object> map = gson.fromJson(invalidSchema1, type);
+      SchemaConfigFactory.getInstance().constructConfig(map);
+    });
+
+    // schema = {} (still invalid, no "format" field)
+    JsonObject invalidSchema2 = new JsonObject();
+    invalidSchema2.add("schema", new JsonObject());
+    String config2 = gson.toJson(invalidSchema2);
+    Assertions.assertThrowsExactly(IOException.class, () ->
+        SchemaConfigFactory.getInstance().constructConfig(config2));
+    Assertions.assertThrowsExactly(IOException.class, () -> {
+      Type type = new TypeToken<Map<String, Object>>() {
+      }.getType();
+      Map<String, Object> map = gson.fromJson(invalidSchema2, type);
+      SchemaConfigFactory.getInstance().constructConfig(map);
+    });
   }
-
 
   static class BadSchema extends SchemaConfig {
 
@@ -90,8 +126,8 @@ class TestConfigConstructors {
     }
 
     @Override
-    protected JSONObject packData() throws IOException {
-      JSONObject data = new JSONObject();
+    protected JsonObject packData() {
+      JsonObject data = new JsonObject();
       packData(data);
       return data;
     }

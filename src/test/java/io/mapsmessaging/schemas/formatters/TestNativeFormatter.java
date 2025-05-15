@@ -1,17 +1,19 @@
 /*
- * Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright [ 2020 - 2024 ] [Matthew Buckton]
+ *  Copyright [ 2024 - 2025 ] [Maps Messaging B.V.]
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *
  */
@@ -19,10 +21,10 @@
 package io.mapsmessaging.schemas.formatters;
 
 import com.github.javafaker.Faker;
+import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig.TYPE;
 import io.mapsmessaging.schemas.formatters.impl.NativeFormatter;
-import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -146,10 +148,10 @@ class TestNativeFormatter {
   @Test
   void toJson() throws IOException {
     NativeFormatter formatter = getFormatter(TYPE.INT64);
-    JSONObject jsonObject = formatter.parseToJson(packLong(0L, 8));
-    Assertions.assertEquals(0L, jsonObject.getLong("value"));
+    JsonObject jsonObject = formatter.parseToJson(packLong(0L, 8));
+    Assertions.assertEquals(0L, jsonObject.get("value").getAsLong());
     jsonObject = formatter.parseToJson(packLong(Long.MAX_VALUE, 8));
-    Assertions.assertEquals(Long.MAX_VALUE, jsonObject.getLong("value"));
+    Assertions.assertEquals(Long.MAX_VALUE, jsonObject.get("value").getAsLong());
 
   }
 

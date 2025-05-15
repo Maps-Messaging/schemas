@@ -1,17 +1,19 @@
 /*
- * Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright [ 2020 - 2024 ] [Matthew Buckton]
+ *  Copyright [ 2024 - 2025 ] [Maps Messaging B.V.]
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *
  */
@@ -19,10 +21,10 @@
 package io.mapsmessaging.schemas.formatters;
 
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -35,13 +37,13 @@ class TestJsonFormatter extends BaseTest {
 
 
   byte[] pack(io.mapsmessaging.schemas.formatters.Person p) {
-    JSONObject jsonObject = new JSONObject();
-    jsonObject.put("stringId", p.getStringId());
-    jsonObject.put("longId", p.getLongId());
-    jsonObject.put("intId", p.getIntId());
-    jsonObject.put("floatId", p.getFloatId());
-    jsonObject.put("doubleId", p.getDoubleId());
-    return jsonObject.toString(2).getBytes();
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.addProperty("stringId", p.getStringId());
+    jsonObject.addProperty("longId", p.getLongId());
+    jsonObject.addProperty("intId", p.getIntId());
+    jsonObject.addProperty("floatId", p.getFloatId());
+    jsonObject.addProperty("doubleId", p.getDoubleId());
+    return jsonObject.toString().getBytes();
   }
 
   @Override
@@ -78,9 +80,9 @@ class TestJsonFormatter extends BaseTest {
     config.setSource("test");
     config.setVersion("1.0");
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
-    JSONObject jsonObject = new JSONObject();
-    jsonObject.put("something_different", "hello");
-    Assertions.assertNotNull(formatter.parse(jsonObject.toString(2).getBytes()));
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.addProperty("something_different", "hello");
+    Assertions.assertNotNull(formatter.parse(jsonObject.toString().getBytes()));
 
   }
 
@@ -89,18 +91,18 @@ class TestJsonFormatter extends BaseTest {
     SchemaConfig config = new JsonSchemaConfig();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
-    JSONObject top = new JSONObject();
+    JsonObject top = new JsonObject();
     for (int x = 0; x < 10; x++) {
-      top.put("" + x, x);
+      top.addProperty("" + x, x);
     }
-    JSONObject next = new JSONObject();
+    JsonObject next = new JsonObject();
     for (int x = 0; x < 10; x++) {
-      next.put("" + x, x + 10);
+      next.addProperty("" + x, x + 10);
     }
-    top.put("next", next);
-    ParsedObject parsed = formatter.parse(top.toString(2).getBytes());
-    Assertions.assertEquals(11, parsed.get("next.1"));
-    Assertions.assertEquals(1, parsed.get("1"));
+    top.add("next", next);
+    ParsedObject parsed = formatter.parse(top.toString().getBytes());
+    Assertions.assertEquals(11, ((Number) parsed.get("next.1")).intValue());
+    Assertions.assertEquals(1, ((Number) parsed.get("1")).intValue());
   }
 
 
@@ -109,16 +111,16 @@ class TestJsonFormatter extends BaseTest {
     SchemaConfig config = new JsonSchemaConfig();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
-    JSONArray jsonArray = new JSONArray();
+    JsonArray jsonArray = new JsonArray();
     for (int x = 0; x < 10; x++) {
-      jsonArray.put(x);
+      jsonArray.add(x);
     }
-    JSONObject top = new JSONObject();
-    top.put("arr", jsonArray);
-    ParsedObject parsed = formatter.parse(top.toString(2).getBytes());
-    Assertions.assertEquals(1, parsed.get("arr[1]"));
-    Assertions.assertEquals(0, parsed.get("arr[0]"));
-    Assertions.assertEquals(9, parsed.get("arr[9]"));
+    JsonObject top = new JsonObject();
+    top.add("arr", jsonArray);
+    ParsedObject parsed = formatter.parse(top.toString().getBytes());
+    Assertions.assertEquals(1, ((Number) parsed.get("arr[1]")).intValue());
+    Assertions.assertEquals(0, ((Number) parsed.get("arr[0]")).intValue());
+    Assertions.assertEquals(9, ((Number) parsed.get("arr[9]")).intValue());
     Assertions.assertNull(parsed.get("arr[10]"));
     Assertions.assertNull(parsed.get("invalidEntry"));
   }

@@ -1,26 +1,29 @@
 /*
- * Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright [ 2020 - 2024 ] [Matthew Buckton]
+ *  Copyright [ 2024 - 2025 ] [Maps Messaging B.V.]
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *
  */
 
 package io.mapsmessaging.schemas.config;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig.TYPE;
-import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -72,8 +75,9 @@ class TestNativeConfig extends GeneralBaseTest {
       config.setUniqueId(UUID.randomUUID());
       config.setExpiresAfter(LocalDateTime.now().plusDays(10));
       config.setNotBefore(LocalDateTime.now().minusDays(10));
-      JSONObject jsonObject = new JSONObject(config.pack());
-      Assertions.assertEquals(type.toString(), jsonObject.getJSONObject("schema").getString("type"));
+      JsonObject jsonObject = JsonParser.parseString(config.pack()).getAsJsonObject();
+      Assertions.assertEquals(type.toString(), jsonObject.getAsJsonObject("schema").get("type").getAsString());
+
     }
 
     for (TYPE type : NativeSchemaConfig.TYPE.values()) {
@@ -86,8 +90,8 @@ class TestNativeConfig extends GeneralBaseTest {
       schema.put("schema", props);
 
       SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
-      JSONObject jsonObject = new JSONObject(config.pack());
-      Assertions.assertEquals(type.toString(), jsonObject.getJSONObject("schema").getString("type"));
+      JsonObject jsonObject = JsonParser.parseString(config.pack()).getAsJsonObject();
+      Assertions.assertEquals(type.toString(), jsonObject.getAsJsonObject("schema").get("type").getAsString());
     }
   }
 }

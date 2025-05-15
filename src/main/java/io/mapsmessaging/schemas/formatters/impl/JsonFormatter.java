@@ -1,17 +1,19 @@
 /*
- * Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright [ 2020 - 2024 ] [Matthew Buckton]
+ *  Copyright [ 2024 - 2025 ] [Maps Messaging B.V.]
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *
  */
@@ -21,6 +23,9 @@ package io.mapsmessaging.schemas.formatters.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
@@ -31,10 +36,10 @@ import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Set;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
@@ -73,30 +78,34 @@ public class JsonFormatter extends MessageFormatter {
   @Override
   public ParsedObject parse(byte[] payload) {
     try {
-      JSONObject json = new JSONObject(new String(payload));
+      String jsonString = new String(payload, StandardCharsets.UTF_8);
+      JsonObject json = JsonParser.parseString(jsonString).getAsJsonObject();
 
       if (schema != null) {
         ObjectMapper objectMapper = new ObjectMapper();
-
-        // Parse JSON string to JsonNode
-        JsonNode jsonNode = objectMapper.readTree(payload);
+        JsonNode jsonNode = objectMapper.readTree(jsonString);
         Set<ValidationMessage> validationResult = schema.validate(jsonNode);
         if (!validationResult.isEmpty()) {
           logger.log(JSON_PARSE_EXCEPTION, getName(), validationResult);
           return new DefaultParser(payload);
         }
       }
-      return new StructuredResolver(new MapResolver(json.toMap()), json);
-    } catch (JSONException | IOException e) {
+
+      Gson gson = new Gson();
+      @SuppressWarnings("unchecked")
+      Map<String, Object> map = gson.fromJson(json, Map.class);
+      return new StructuredResolver(new MapResolver(map), json);
+    } catch (Exception e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
       return new DefaultParser(payload);
     }
   }
 
   @Override
-  public JSONObject parseToJson(byte[] payload) throws IOException {
-    return new JSONObject(new String(payload));
+  public JsonObject parseToJson(byte[] payload) throws IOException {
+    return JsonParser.parseString(new String(payload, StandardCharsets.UTF_8)).getAsJsonObject();
   }
+
 
   @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {

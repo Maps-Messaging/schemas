@@ -1,23 +1,27 @@
 /*
- * Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright [ 2020 - 2024 ] [Matthew Buckton]
+ *  Copyright [ 2024 - 2025 ] [Maps Messaging B.V.]
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *
  */
 
 package io.mapsmessaging.schemas.formatters.impl;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Descriptors.DescriptorValidationException;
@@ -31,8 +35,6 @@ import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -91,7 +93,7 @@ public class ProtoBufFormatter extends MessageFormatter {
   }
 
   @Override
-  public JSONObject parseToJson(byte[] payload) {
+  public JsonObject parseToJson(byte[] payload) {
     DynamicMessage dynamicMessage = (DynamicMessage) (parse(payload)).getReferenced();
     return convertToJson(dynamicMessage);
   }
@@ -115,29 +117,34 @@ public class ProtoBufFormatter extends MessageFormatter {
     return Descriptors.FileDescriptor.buildFrom(set.getFile(set.getFileCount() - 1), dependencyFileDescriptorList.toArray(new FileDescriptor[0]));
   }
 
-  private JSONObject convertToJson(DynamicMessage message) {
-    JSONObject jsonObject = new JSONObject();
-    for (Entry<FieldDescriptor, Object> entry : message.getAllFields().entrySet()) {
-      if (entry.getValue() instanceof Collection) {
-        jsonObject.put(entry.getKey().getName(), convertToJson((Collection) entry.getValue()));
+  private JsonObject convertToJson(DynamicMessage message) {
+    JsonObject jsonObject = new JsonObject();
+    for (Map.Entry<FieldDescriptor, Object> entry : message.getAllFields().entrySet()) {
+      String key = entry.getKey().getName();
+      Object value = entry.getValue();
+      if (value instanceof Collection) {
+        jsonObject.add(key, convertToJson((Collection<?>) value));
+      } else if (value instanceof DynamicMessage) {
+        jsonObject.add(key, convertToJson((DynamicMessage) value));
       } else {
-        jsonObject.put(entry.getKey().getName(), entry.getValue());
+        jsonObject.add(key, gson.toJsonTree(value));
       }
     }
     return jsonObject;
   }
 
-  private JSONArray convertToJson(Collection<Object> collection) {
-    JSONArray list = new JSONArray();
+  private JsonArray convertToJson(Collection<?> collection) {
+    JsonArray jsonArray = new JsonArray();
     for (Object obj : collection) {
       if (obj instanceof DynamicMessage) {
-        list.put(convertToJson((DynamicMessage) obj));
+        jsonArray.add(convertToJson((DynamicMessage) obj));
       } else {
-        list.put(obj);
+        jsonArray.add(gson.toJsonTree(obj));
       }
     }
-    return list;
+    return jsonArray;
   }
+
 
   private Map<String, Object> convertToMap(DynamicMessage message) {
     Map<String, Object> map = new LinkedHashMap<>();

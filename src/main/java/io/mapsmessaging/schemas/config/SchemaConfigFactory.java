@@ -1,29 +1,35 @@
 /*
- * Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright [ 2020 - 2024 ] [Matthew Buckton]
+ *  Copyright [ 2024 - 2025 ] [Maps Messaging B.V.]
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *
  */
 
 package io.mapsmessaging.schemas.config;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +46,7 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.SCHEMA_CONFIG_F
 
 @SuppressWarnings("java:S6548") // yes it is a singleton
 public class SchemaConfigFactory {
+  public static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
   private static final String ERROR_MESSAGE = "Not a valid schema config";
   private static final String CONFIG_ERROR = "Unknown schema config found";
@@ -109,39 +116,40 @@ public class SchemaConfigFactory {
    * @throws IOException the io exception
    */
   public SchemaConfig constructConfig(String payload) throws IOException {
-    return constructConfig(new JSONObject(payload));
+    JsonObject json = JsonParser.parseString(payload).getAsJsonObject();
+    return constructConfig(json);
   }
 
-  public SchemaConfig constructConfig(JSONObject schemaJson) throws IOException {
+  public SchemaConfig constructConfig(JsonObject schemaJson) throws IOException {
     String formatName = null;
     try {
-      if (!schemaJson.has(SCHEMA)) {
-        logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
-        throw new IOException(ERROR_MESSAGE);
-      }
-      if (!(schemaJson.get(SCHEMA) instanceof JSONObject)) {
+      if (!schemaJson.has(SCHEMA) || !schemaJson.get(SCHEMA).isJsonObject()) {
         logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
         throw new IOException(ERROR_MESSAGE);
       }
 
-      schemaJson = schemaJson.getJSONObject(SCHEMA);
-      if (!schemaJson.has(FORMAT)) {
+      JsonObject inner = schemaJson.getAsJsonObject(SCHEMA);
+      if (!inner.has(FORMAT) || !inner.get(FORMAT).isJsonPrimitive()) {
         logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
         throw new IOException(CONFIG_ERROR);
       }
 
-      formatName = schemaJson.getString(FORMAT);
+      formatName = inner.get(FORMAT).getAsString();
       for (SchemaConfig config : schemaConfigs) {
         if (config.getFormat().equalsIgnoreCase(formatName)) {
-          return config.getInstance(schemaJson.toMap());
+          Type type = new TypeToken<Map<String, Object>>() {
+          }.getType();
+          Map<String, Object> configMap = gson.fromJson(inner, type);
+          return config.getInstance(configMap);
         }
       }
-    } catch (JSONException e) {
+    } catch (Exception e) {
       logger.log(SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND, formatName);
       throw new IOException(CONFIG_ERROR, e);
     }
+
     logger.log(SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND, formatName);
     throw new IOException(CONFIG_ERROR);
-
   }
+
 }

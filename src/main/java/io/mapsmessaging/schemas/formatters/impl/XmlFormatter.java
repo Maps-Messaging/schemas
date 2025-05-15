@@ -1,31 +1,37 @@
 /*
- * Copyright [ 2020 - 2024 ] [Matthew Buckton]
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright [ 2020 - 2024 ] [Matthew Buckton]
+ *  Copyright [ 2024 - 2025 ] [Maps Messaging B.V.]
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  *
  */
 
 package io.mapsmessaging.schemas.formatters.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
-import org.json.JSONObject;
-import org.json.XML;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -34,10 +40,13 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.XML_CONFIGURATION_EXCEPTION;
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.XML_PARSE_EXCEPTION;
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.*;
 
 /**
  * The type Xml formatter.
@@ -82,19 +91,38 @@ public class XmlFormatter extends MessageFormatter {
   }
 
   @Override
-  public JSONObject parseToJson(byte[] payload) {
-    JSONObject jsonObject = XML.toJSONObject(new String(payload));
-    if (root != null && root.length() > 0) {
-      jsonObject = jsonObject.getJSONObject(root);
+  public JsonObject parseToJson(byte[] payload) {
+    try {
+      ObjectMapper xmlMapper = new XmlMapper();
+      Map<String, Object> map = xmlMapper.readValue(payload, new TypeReference<>() {
+      });
+      if (map.containsKey("LinkedTreeMap")) {
+        map = (Map<String, Object>) map.get("LinkedTreeMap");
+      }
+      Object cleaned = coerceTypes(map);
+      JsonElement jsonElement = gson.toJsonTree(cleaned);
+      JsonObject rootObject = jsonElement.getAsJsonObject();
+
+      if (root != null && !root.isEmpty() && rootObject.has(root)) {
+        return rootObject.getAsJsonObject(root);
+      }
+
+      return rootObject;
+    } catch (Exception e) {
+      logger.log(FORMATTER_UNEXPECTED_OBJECT, getName());
+      return new JsonObject();
     }
-    return jsonObject;
   }
 
   @Override
   public synchronized ParsedObject parse(byte[] payload) {
     try {
       Document document = parser.parse(new ByteArrayInputStream(payload));
-      Map<String, Object> map = parseToJson(payload).toMap();
+      JsonObject jsonObject = parseToJson(payload);
+      Type type = new TypeToken<Map<String, Object>>() {
+      }.getType();
+      Map<String, Object> map = gson.fromJson(jsonObject, type);
+
       if (root != null && root.length() > 0 && map.containsKey(root)) {
         map = (Map<String, Object>) map.get(root);
       }
@@ -118,6 +146,37 @@ public class XmlFormatter extends MessageFormatter {
   @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     return new XmlFormatter((XmlSchemaConfig) config);
+  }
+
+  private Object coerceTypes(Object value) {
+    if (value instanceof Map) {
+      Map<String, Object> result = new LinkedHashMap<>();
+      ((Map<?, ?>) value).forEach((k, v) -> result.put(String.valueOf(k), coerceTypes(v)));
+      return result;
+    } else if (value instanceof List) {
+      List<Object> list = new ArrayList<>();
+      for (Object item : (List<?>) value) {
+        list.add(coerceTypes(item));
+      }
+      return list;
+    } else if (value instanceof String) {
+      String s = (String) value;
+      // Try parsing to Integer, Long, or Double
+      try {
+        return Integer.parseInt(s);
+      } catch (NumberFormatException ignored) {
+      }
+      try {
+        return Long.parseLong(s);
+      } catch (NumberFormatException ignored) {
+      }
+      try {
+        return Double.parseDouble(s);
+      } catch (NumberFormatException ignored) {
+      }
+      return s;
+    }
+    return value;
   }
 
 }

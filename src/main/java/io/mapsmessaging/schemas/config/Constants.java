@@ -33,6 +33,7 @@ public class Constants {
   public static final String CREATION = "creation";
   public static final String COMMENTS = "comments";
   public static final String SOURCE = "source";
+  public static final String TITLE = "title";
   public static final String VERSION = "version";
   public static final String MIME_TYPE = "mime-type";
   public static final String RESOURCE_TYPE = "resource-type";

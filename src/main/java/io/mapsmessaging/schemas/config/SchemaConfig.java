@@ -86,6 +86,10 @@ public abstract class SchemaConfig implements Serializable {
   @Getter
   protected final String format;
 
+  @Getter
+  @Setter
+  protected String title;
+
   /**
    * The Unique id.
    */
@@ -180,6 +184,9 @@ public abstract class SchemaConfig implements Serializable {
     }
     if (config.containsKey(SOURCE)) {
       source = (String)  config.get(SOURCE);
+    }
+    if (config.containsKey(TITLE)) {
+      title = (String) config.get(TITLE);
     }
     if (config.containsKey(MIME_TYPE)) {
       mimeType = (String)config.get(MIME_TYPE);
@@ -282,6 +289,7 @@ public abstract class SchemaConfig implements Serializable {
     pack(jsonObject, comments, COMMENTS);
     pack(jsonObject, version, VERSION);
     pack(jsonObject, source, SOURCE);
+    pack(jsonObject, title, TITLE);
     pack(jsonObject, mimeType, MIME_TYPE);
     pack(jsonObject, resourceType, RESOURCE_TYPE);
     pack(jsonObject, interfaceDescription, INTERFACE_DESCRIPTION);

@@ -49,13 +49,16 @@
 
   <licenses>
     <license>
-      <name>Apache License 2.0 with Commons Clause</name>
+      <name>Apache License, Version 2.0 with Commons Clause</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+      <distribution>repo</distribution>
+    </license>
+    <license>
+      <name>Commons Clause</name>
       <url>https://commonsclause.com/</url>
       <distribution>repo</distribution>
-      <comments>Applied in conjunction with Apache 2.0 to restrict commercial sale</comments>
     </license>
   </licenses>
-
 
   <scm>
     <url>https://github.com/Maps-Messaging/schemas.git</url>
@@ -273,7 +276,7 @@
           </execution>
         </executions>
         <groupId>org.jacoco</groupId>
-        <version>0.8.12</version>
+        <version>0.8.13</version>
       </plugin>
 
       <!-- Setup the JUnit tests runner -->
@@ -434,7 +437,7 @@
     <dependency>
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
-      <version>1.5.6</version>
+      <version>1.5.7</version>
 
       <!-- Only required for versions < 1.0.82. See README.md -->
       <exclusions>
@@ -454,7 +457,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-xml</artifactId>
-      <version>2.18.3</version> <!-- Match your Jackson core version -->
+      <version>2.19.0</version> <!-- Match your Jackson core version -->
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
@@ -533,7 +536,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>5.17.0</version>
+      <version>5.18.0</version>
       <scope>test</scope>
     </dependency>
 

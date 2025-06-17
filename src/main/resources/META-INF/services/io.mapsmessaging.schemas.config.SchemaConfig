@@ -21,6 +21,7 @@ io.mapsmessaging.schemas.config.impl.AvroSchemaConfig
 io.mapsmessaging.schemas.config.impl.CsvSchemaConfig
 io.mapsmessaging.schemas.config.impl.JsonSchemaConfig
 io.mapsmessaging.schemas.config.impl.CborSchemaConfig
+io.mapsmessaging.schemas.config.impl.MessagePackSchemaConfig
 io.mapsmessaging.schemas.config.impl.NativeSchemaConfig
 io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig
 io.mapsmessaging.schemas.config.impl.RawSchemaConfig

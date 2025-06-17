@@ -480,6 +480,11 @@
       <version>2.17.0</version> <!-- or whatever version you're on -->
     </dependency>
 
+    <dependency>
+      <groupId>org.msgpack</groupId>
+      <artifactId>jackson-dataformat-msgpack</artifactId>
+      <version>0.9.0</version>
+    </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.qpid/proton-j -->
     <dependency>

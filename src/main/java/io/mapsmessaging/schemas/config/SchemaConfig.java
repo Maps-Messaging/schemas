@@ -53,6 +53,8 @@ import static io.mapsmessaging.schemas.config.SchemaConfigFactory.gson;
     @JsonSubTypes.Type(value = AvroSchemaConfig.class, name = "avro"),
     @JsonSubTypes.Type(value = CsvSchemaConfig.class, name = "csv"),
     @JsonSubTypes.Type(value = JsonSchemaConfig.class, name = "json"),
+    @JsonSubTypes.Type(value = CborSchemaConfig.class, name = "cbor"),
+    @JsonSubTypes.Type(value = MessagePackSchemaConfig.class, name = "messagePack"),
     @JsonSubTypes.Type(value = NativeSchemaConfig.class, name = "native"),
     @JsonSubTypes.Type(value = ProtoBufSchemaConfig.class, name = "protobuf"),
     @JsonSubTypes.Type(value = RawSchemaConfig.class, name = "raw"),
@@ -64,6 +66,8 @@ import static io.mapsmessaging.schemas.config.SchemaConfigFactory.gson;
         @DiscriminatorMapping(value = "avro", schema = AvroSchemaConfig.class),
         @DiscriminatorMapping(value = "csv", schema = CsvSchemaConfig.class),
         @DiscriminatorMapping(value = "json", schema = JsonSchemaConfig.class),
+        @DiscriminatorMapping(value = "cbor", schema = CborSchemaConfig.class),
+        @DiscriminatorMapping(value = "messagePack", schema = MessagePackSchemaConfig.class),
         @DiscriminatorMapping(value = "native", schema = NativeSchemaConfig.class),
         @DiscriminatorMapping(value = "protobuf", schema = ProtoBufSchemaConfig.class),
         @DiscriminatorMapping(value = "raw", schema = RawSchemaConfig.class),
@@ -89,6 +93,10 @@ public abstract class SchemaConfig implements Serializable {
   @Getter
   @Setter
   protected String title;
+
+  @Getter
+  @Setter
+  protected String name;
 
   /**
    * The Unique id.
@@ -167,6 +175,9 @@ public abstract class SchemaConfig implements Serializable {
   protected SchemaConfig(String format, Map<String, Object> config) {
     this(format);
     uniqueId = config.get(io.mapsmessaging.schemas.config.Constants.UUID).toString();
+    if (config.containsKey(NAME)) {
+      name = (String) config.get(NAME);
+    }
     if (config.containsKey(EXPIRES_AFTER)) {
       expiresAfter = loadDateTime(config, EXPIRES_AFTER);
     }
@@ -196,6 +207,9 @@ public abstract class SchemaConfig implements Serializable {
     }
     if (config.containsKey(INTERFACE_DESCRIPTION)) {
       interfaceDescription = (String)config.get(INTERFACE_DESCRIPTION);
+    }
+    if (name == null && title != null) {
+      name = title;
     }
   }
 
@@ -290,6 +304,7 @@ public abstract class SchemaConfig implements Serializable {
     pack(jsonObject, version, VERSION);
     pack(jsonObject, source, SOURCE);
     pack(jsonObject, title, TITLE);
+    pack(jsonObject, name, NAME);
     pack(jsonObject, mimeType, MIME_TYPE);
     pack(jsonObject, resourceType, RESOURCE_TYPE);
     pack(jsonObject, interfaceDescription, INTERFACE_DESCRIPTION);

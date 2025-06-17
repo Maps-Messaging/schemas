@@ -27,6 +27,7 @@ public class Constants {
 
 
   public static final String UUID = "uuid";
+  public static final String NAME = "name";
   public static final String NOT_BEFORE = "notBefore";
   public static final String EXPIRES_AFTER = "expiresAfter";
 

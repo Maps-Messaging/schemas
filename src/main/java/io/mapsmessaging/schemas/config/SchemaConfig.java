@@ -202,7 +202,15 @@ public abstract class SchemaConfig implements Serializable {
       if (config.get(VERSION) instanceof Integer) {
         version = (int) config.get(VERSION);
       } else {
-        version = Integer.parseInt(config.get(VERSION).toString());
+        String val = (String) config.get(VERSION);
+        if (val.contains(".")) {
+          val = val.substring(0, val.indexOf("."));
+        }
+        try {
+          version = Integer.parseInt(val);
+        } catch (NumberFormatException e) {
+          version = 1;
+        }
       }
     }
     if (config.containsKey(SOURCE)) {

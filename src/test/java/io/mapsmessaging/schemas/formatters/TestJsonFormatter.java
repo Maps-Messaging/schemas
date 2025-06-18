@@ -78,7 +78,7 @@ class TestJsonFormatter extends BaseTest {
     SchemaConfig config = getSchema();
     config.setUniqueId(UUID.randomUUID());
     config.setSource("test");
-    config.setVersion("1.0");
+    config.setVersion(1);
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
     JsonObject jsonObject = new JsonObject();
     jsonObject.addProperty("something_different", "hello");

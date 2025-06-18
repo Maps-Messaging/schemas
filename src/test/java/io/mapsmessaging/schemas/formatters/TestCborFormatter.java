@@ -79,7 +79,7 @@ class TestCborFormatter extends BaseTest {
     SchemaConfig config = getSchema();
     config.setUniqueId(UUID.randomUUID());
     config.setSource("test");
-    config.setVersion("1.0");
+    config.setVersion(1);
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
     // This doesn't match the required fields in schema

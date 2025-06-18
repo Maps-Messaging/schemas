@@ -69,7 +69,7 @@ public abstract class GeneralBaseTest {
     props.put("source", "tcp://localhost:1883/topic2");
     props.put("interface-description", "Temperature C");
     props.put("resource-type", "sensor");
-    props.put("version", "1.2.1");
+    props.put("version", 1);
 
     schema.put("schema", props);
     return schema;

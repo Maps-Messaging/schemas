@@ -98,6 +98,11 @@ public abstract class SchemaConfig implements Serializable {
   @Setter
   protected String name;
 
+
+  @Getter
+  @Setter
+  protected String matchExpression;
+
   /**
    * The Unique id.
    */
@@ -131,7 +136,7 @@ public abstract class SchemaConfig implements Serializable {
 
   @Setter
   @Getter
-  private String version;
+  private int version;
 
   @Setter
   @Getter
@@ -178,6 +183,9 @@ public abstract class SchemaConfig implements Serializable {
     if (config.containsKey(NAME)) {
       name = (String) config.get(NAME);
     }
+    if (config.containsKey(MATCH)) {
+      matchExpression = (String) config.get(MATCH);
+    }
     if (config.containsKey(EXPIRES_AFTER)) {
       expiresAfter = loadDateTime(config, EXPIRES_AFTER);
     }
@@ -191,7 +199,11 @@ public abstract class SchemaConfig implements Serializable {
       comments = (String) config.get(COMMENTS);
     }
     if (config.containsKey(VERSION)) {
-      version = (String) config.get(VERSION);
+      if (config.get(VERSION) instanceof Integer) {
+        version = (int) config.get(VERSION);
+      } else {
+        version = Integer.parseInt(config.get(VERSION).toString());
+      }
     }
     if (config.containsKey(SOURCE)) {
       source = (String)  config.get(SOURCE);
@@ -207,9 +219,6 @@ public abstract class SchemaConfig implements Serializable {
     }
     if (config.containsKey(INTERFACE_DESCRIPTION)) {
       interfaceDescription = (String)config.get(INTERFACE_DESCRIPTION);
-    }
-    if (name == null && title != null) {
-      name = title;
     }
   }
 
@@ -301,10 +310,11 @@ public abstract class SchemaConfig implements Serializable {
     }
     jsonObject.addProperty(CREATION, creation.toString());
     pack(jsonObject, comments, COMMENTS);
-    pack(jsonObject, version, VERSION);
+    pack(jsonObject, Integer.toString(version), VERSION);
     pack(jsonObject, source, SOURCE);
     pack(jsonObject, title, TITLE);
     pack(jsonObject, name, NAME);
+    pack(jsonObject, matchExpression, MATCH);
     pack(jsonObject, mimeType, MIME_TYPE);
     pack(jsonObject, resourceType, RESOURCE_TYPE);
     pack(jsonObject, interfaceDescription, INTERFACE_DESCRIPTION);

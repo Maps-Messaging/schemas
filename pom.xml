@@ -457,7 +457,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-xml</artifactId>
-      <version>2.19.0</version> <!-- Match your Jackson core version -->
+      <version>2.19.2</version> <!-- Match your Jackson core version -->
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->

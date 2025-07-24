@@ -38,7 +38,6 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.PROTOBUF_MESSAG
 @Schema(description = "Protobuf Schema Configuration")
 public class ProtoBufSchemaConfig extends SchemaConfig {
 
-  private static final String NAME = "ProtoBuf";
   private static final String DESCRIPTOR = "descriptor";
   private static final String MESSAGE_NAME = "messageName";
 
@@ -54,7 +53,7 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
    * Instantiates a new Proto buf schema config.
    */
   public ProtoBufSchemaConfig() {
-    super(NAME);
+    super("ProtoBuf");
     setMimeType("application/octet-stream");
   }
 
@@ -64,7 +63,7 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
    * @param config the config
    */
   protected ProtoBufSchemaConfig(Map<String, Object> config) {
-    super(NAME, config);
+    super("ProtoBuf", config);
     messageName = config.getOrDefault(MESSAGE_NAME, "").toString();
     descriptorValue = Base64.getDecoder().decode(config.getOrDefault(DESCRIPTOR, "").toString());
     setMimeType("application/octet-stream");

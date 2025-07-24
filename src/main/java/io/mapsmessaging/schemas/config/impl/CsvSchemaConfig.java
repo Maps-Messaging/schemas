@@ -37,7 +37,6 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.CSV_HEADER_NOT_
 @Schema(description = "CVS Schema Configuration")
 public class CsvSchemaConfig extends SchemaConfig {
 
-  private static final String NAME = "CSV";
   private static final String HEADER = "header";
   private static final String NUMERIC_STRINGS = "numericStrings";
 
@@ -54,7 +53,7 @@ public class CsvSchemaConfig extends SchemaConfig {
    * Instantiates a new Csv schema config.
    */
   public CsvSchemaConfig() {
-    super(NAME);
+    super("CSV");
     setMimeType("text/plain");
   }
 
@@ -65,7 +64,7 @@ public class CsvSchemaConfig extends SchemaConfig {
    * @param interpretNumericStrings the interpret numeric strings
    */
   public CsvSchemaConfig(String header, boolean interpretNumericStrings) {
-    super(NAME);
+    super("CSV");
     this.headerValues = header;
     this.interpretNumericStrings = interpretNumericStrings;
     setMimeType("text/plain");
@@ -77,7 +76,7 @@ public class CsvSchemaConfig extends SchemaConfig {
    * @param config the config
    */
   protected CsvSchemaConfig(Map<String, Object> config) {
-    super(NAME, config);
+    super("CSV", config);
     this.headerValues = config.getOrDefault(HEADER, "").toString();
     this.interpretNumericStrings = Boolean.parseBoolean(config.getOrDefault(NUMERIC_STRINGS, "false").toString());
   }

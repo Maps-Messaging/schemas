@@ -39,7 +39,6 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.AVRO_SCHEMA_NOT
 @Schema(description = "AVRO Schema Configuration")
 public class AvroSchemaConfig extends SchemaConfig {
 
-  private static final String NAME = "AVRO";
 
   @Getter
   @Setter
@@ -49,7 +48,7 @@ public class AvroSchemaConfig extends SchemaConfig {
    * Instantiates a new Avro schema config.
    */
   public AvroSchemaConfig() {
-    super(NAME);
+    super("AVRO");
     setMimeType("application/octet-stream");
   }
 
@@ -59,7 +58,7 @@ public class AvroSchemaConfig extends SchemaConfig {
    * @param config the config
    */
   protected AvroSchemaConfig(Map<String, Object> config) {
-    super(NAME, config);
+    super("AVRO", config);
     this.schema = new String(Base64.getDecoder().decode(config.get(SCHEMA).toString()));
     setMimeType("application/octet-stream");
   }
@@ -67,7 +66,7 @@ public class AvroSchemaConfig extends SchemaConfig {
 
   @Override
   protected JsonObject packData() throws IOException {
-    if (schema == null || schema.length() == 0) {
+    if (schema == null || schema.isEmpty()) {
       logger.log(AVRO_SCHEMA_NOT_DEFINED, format, uniqueId);
       throw new IOException("No schema specified");
     }

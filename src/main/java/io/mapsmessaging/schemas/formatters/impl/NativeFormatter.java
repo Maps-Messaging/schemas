@@ -36,6 +36,8 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXP
  */
 public class NativeFormatter extends MessageFormatter {
 
+  private static final String VALUE = "value";
+
   private final NativeEncoderDecoder encoderDecoder;
   private final TYPE type;
 
@@ -130,11 +132,11 @@ public class NativeFormatter extends MessageFormatter {
   @Override
   public JsonObject parseToJson(byte[] payload) throws IOException {
     JsonObject jsonObject = new JsonObject();
-    Object value = parse(payload).get("value");
+    Object value = parse(payload).get(VALUE);
     if (value != null) {
-      jsonObject.add("value", gson.toJsonTree(value));
+      jsonObject.add(VALUE, gson.toJsonTree(value));
     } else {
-      jsonObject.add("value", null);
+      jsonObject.add(VALUE, null);
     }
     jsonObject.addProperty("type", type.name());
     return jsonObject;

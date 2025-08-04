@@ -52,7 +52,7 @@ class TestNativeConfig extends GeneralBaseTest {
 
   @Override
   void validate(SchemaConfig schemaConfig) {
-    Assertions.assertTrue(schemaConfig instanceof NativeSchemaConfig);
+    Assertions.assertInstanceOf(NativeSchemaConfig.class, schemaConfig);
     NativeSchemaConfig config = (NativeSchemaConfig) schemaConfig;
     Assertions.assertEquals(TYPE.DOUBLE, config.getType());
   }
@@ -64,7 +64,7 @@ class TestNativeConfig extends GeneralBaseTest {
     config.setUniqueId(UUID.randomUUID());
     config.setExpiresAfter(LocalDateTime.now().plusDays(10));
     config.setNotBefore(LocalDateTime.now().minusDays(10));
-    Assertions.assertThrowsExactly(IOException.class, () -> config.pack());
+    Assertions.assertThrowsExactly(IOException.class, config::pack);
   }
 
   @Test

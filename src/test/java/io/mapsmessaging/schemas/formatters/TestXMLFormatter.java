@@ -67,9 +67,11 @@ class TestXMLFormatter extends BaseTest {
   @Override
   @Test
   void testGetFormatMap() throws IOException {
-    // does not support this
+    SchemaConfig schemaConfig = getSchema();
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
+    Map<String, Object> format = formatter.getFormat();
+    Assertions.assertEquals(1, format.size(), "Expected empty format map for XML formatter");
   }
-
   @Override
   List<byte[]> packList(List<io.mapsmessaging.schemas.formatters.Person> list) throws IOException {
     List<byte[]> packed = new ArrayList<>();

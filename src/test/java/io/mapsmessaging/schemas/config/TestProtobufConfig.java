@@ -55,7 +55,7 @@ class TestProtobufConfig extends GeneralBaseTest {
 
   @Override
   void validate(SchemaConfig schemaConfig) throws IOException {
-    Assertions.assertTrue(schemaConfig instanceof ProtoBufSchemaConfig);
+    Assertions.assertInstanceOf(ProtoBufSchemaConfig.class, schemaConfig);
     ProtoBufSchemaConfig config = (ProtoBufSchemaConfig) schemaConfig;
     Assertions.assertArrayEquals(getDescriptor(), config.getDescriptorValue());
     Assertions.assertEquals("Person", config.getMessageName());
@@ -79,7 +79,7 @@ class TestProtobufConfig extends GeneralBaseTest {
     config.setUniqueId(UUID.randomUUID());
     config.setExpiresAfter(LocalDateTime.now().plusDays(10));
     config.setNotBefore(LocalDateTime.now().minusDays(10));
-    Assertions.assertThrowsExactly(IOException.class, () -> config.pack());
+    Assertions.assertThrowsExactly(IOException.class, config::pack);
   }
 
   @Test
@@ -89,7 +89,7 @@ class TestProtobufConfig extends GeneralBaseTest {
     config.setUniqueId(UUID.randomUUID());
     config.setExpiresAfter(LocalDateTime.now().plusDays(10));
     config.setNotBefore(LocalDateTime.now().minusDays(10));
-    Assertions.assertThrowsExactly(IOException.class, () -> config.pack());
+    Assertions.assertThrowsExactly(IOException.class, config::pack);
   }
 
 
@@ -99,6 +99,6 @@ class TestProtobufConfig extends GeneralBaseTest {
     config.setUniqueId(UUID.randomUUID());
     config.setExpiresAfter(LocalDateTime.now().plusDays(10));
     config.setNotBefore(LocalDateTime.now().minusDays(10));
-    Assertions.assertThrowsExactly(IOException.class, () -> config.pack());
+    Assertions.assertThrowsExactly(IOException.class, config::pack);
   }
 }

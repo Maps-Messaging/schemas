@@ -49,7 +49,7 @@ class TestCsvConfig extends GeneralBaseTest {
 
   @Override
   void validate(SchemaConfig schemaConfig) {
-    Assertions.assertTrue(schemaConfig instanceof CsvSchemaConfig);
+    Assertions.assertInstanceOf(CsvSchemaConfig.class, schemaConfig);
     CsvSchemaConfig config = (CsvSchemaConfig) schemaConfig;
     Assertions.assertEquals("name, id, email", config.getHeaderValues());
   }
@@ -60,6 +60,6 @@ class TestCsvConfig extends GeneralBaseTest {
     config.setUniqueId(UUID.randomUUID());
     config.setExpiresAfter(LocalDateTime.now().plusDays(10));
     config.setNotBefore(LocalDateTime.now().minusDays(10));
-    Assertions.assertThrowsExactly(IOException.class, () -> config.pack());
+    Assertions.assertThrowsExactly(IOException.class, config::pack);
   }
 }

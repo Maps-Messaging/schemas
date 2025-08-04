@@ -44,6 +44,8 @@ import java.util.UUID;
 import static io.mapsmessaging.schemas.config.Constants.*;
 import static io.mapsmessaging.schemas.config.SchemaConfigFactory.gson;
 
+
+@SuppressWarnings("javaarchitecture:S7091")
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
     include = JsonTypeInfo.As.PROPERTY,
@@ -177,6 +179,7 @@ public abstract class SchemaConfig implements Serializable {
    * @param format the formatter name
    * @param config the config map with the defined fields
    */
+  @SuppressWarnings("java:S134") // too many ifs - required for explicit field mapping
   protected SchemaConfig(String format, Map<String, Object> config) {
     this(format);
     uniqueId = config.get(io.mapsmessaging.schemas.config.Constants.UUID).toString();

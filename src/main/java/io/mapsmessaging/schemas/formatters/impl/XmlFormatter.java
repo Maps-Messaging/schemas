@@ -167,26 +167,33 @@ public class XmlFormatter extends MessageFormatter {
       Map<String, Object> result = new LinkedHashMap<>();
       ((Map<?, ?>) value).forEach((k, v) -> result.put(String.valueOf(k), coerceTypes(v)));
       return result;
-    } else if (value instanceof List) {
+    }
+
+    if (value instanceof List) {
       List<Object> list = new ArrayList<>();
       for (Object item : (List<?>) value) {
         list.add(coerceTypes(item));
       }
       return list;
-    } else if (value instanceof String) {
+    }
+
+    if (value instanceof String) {
       String s = (String) value;
       // Try parsing to Integer, Long, or Double
       try {
         return Integer.parseInt(s);
       } catch (NumberFormatException ignored) {
+        // lets drop through, maybe long or double will work
       }
       try {
         return Long.parseLong(s);
       } catch (NumberFormatException ignored) {
+        // lets drop through, maybe double will work
       }
       try {
         return Double.parseDouble(s);
       } catch (NumberFormatException ignored) {
+        // assume a string
       }
       return s;
     }

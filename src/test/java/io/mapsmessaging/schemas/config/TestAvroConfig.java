@@ -73,6 +73,6 @@ public class TestAvroConfig extends GeneralBaseTest {
     config.setUniqueId(UUID.randomUUID());
     config.setExpiresAfter(LocalDateTime.now().plusDays(10));
     config.setNotBefore(LocalDateTime.now().minusDays(10));
-    Assertions.assertThrowsExactly(IOException.class, () -> config.pack());
+    Assertions.assertThrowsExactly(IOException.class, config::pack);
   }
 }

@@ -28,6 +28,7 @@ import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
 
@@ -152,6 +153,21 @@ public class NativeFormatter extends MessageFormatter {
   public String getName() {
     return "Native";
   }
+
+  @Override
+  public Map<String, Object> getFormat() {
+    if (type == null) {
+      return Map.of();
+    }
+
+    return Map.of(
+        "value", Map.of(
+            "type", type.name().toLowerCase(),
+            "description", "Native encoded value of type " + type.name()
+        )
+    );
+  }
+
 
   /**
    * The interface Native encoder decoder.

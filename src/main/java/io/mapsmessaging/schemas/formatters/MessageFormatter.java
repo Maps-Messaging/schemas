@@ -27,6 +27,7 @@ import io.mapsmessaging.logging.LoggerFactory;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * The type Message formatter.
@@ -79,6 +80,8 @@ public abstract class MessageFormatter {
    */
   public abstract ParsedObject parse(byte[] payload);
 
+
+  public abstract Map<String, Object> getFormat();
   /**
    * The type Default parser.
    */

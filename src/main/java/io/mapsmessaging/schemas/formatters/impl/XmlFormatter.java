@@ -145,6 +145,19 @@ public class XmlFormatter extends MessageFormatter {
   }
 
   @Override
+  public Map<String, Object> getFormat() {
+    // No schema is available, so return unknown type for all fields after parsing
+    // Suggest users inspect a sample payload to see actual structure
+    return Map.of(
+        "note", Map.of(
+            "type", "unknown",
+            "info", "Field structure inferred from XML payload; no schema available"
+        )
+    );
+  }
+
+
+  @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     return new XmlFormatter((XmlSchemaConfig) config);
   }

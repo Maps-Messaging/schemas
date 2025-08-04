@@ -81,6 +81,29 @@ public class ProtoBufFormatter extends MessageFormatter {
   }
 
   @Override
+  public Map<String, Object> getFormat() {
+    if (descriptor == null || messageName == null || messageName.isEmpty()) {
+      return Map.of();
+    }
+
+    Descriptors.Descriptor messageDescriptor = descriptor.findMessageTypeByName(messageName);
+    if (messageDescriptor == null) {
+      return Map.of();
+    }
+
+    Map<String, Object> format = new LinkedHashMap<>();
+    for (FieldDescriptor field : messageDescriptor.getFields()) {
+      Map<String, Object> fieldInfo = new LinkedHashMap<>();
+      fieldInfo.put("type", field.getType().name());
+      fieldInfo.put("label", field.isRepeated() ? "repeated" : "optional");
+      fieldInfo.put("number", field.getNumber());
+      format.put(field.getName(), fieldInfo);
+    }
+
+    return format;
+  }
+
+  @Override
   public ParsedObject parse(byte[] payload) {
     try {
       DynamicMessage message = DynamicMessage.parseFrom(descriptor.findMessageTypeByName(messageName), payload);

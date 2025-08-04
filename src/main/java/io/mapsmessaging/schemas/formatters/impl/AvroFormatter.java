@@ -106,6 +106,25 @@ public class AvroFormatter extends MessageFormatter {
     return "AVRO";
   }
 
+  @Override
+  public Map<String, Object> getFormat() {
+    if (schema == null || schema.getType() != Schema.Type.RECORD) {
+      return Map.of();
+    }
+
+    Map<String, Object> result = new java.util.LinkedHashMap<>();
+
+    for (Schema.Field field : schema.getFields()) {
+      Map<String, Object> fieldInfo = new java.util.LinkedHashMap<>();
+      fieldInfo.put("type", field.schema().getType().getName());
+      fieldInfo.put("doc", field.doc());
+      fieldInfo.put("default", field.defaultVal());
+      result.put(field.name(), fieldInfo);
+    }
+
+    return result;
+  }
+
 
   /**
    * The type Avro resolver.

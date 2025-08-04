@@ -27,6 +27,7 @@ import io.mapsmessaging.schemas.formatters.ParsedObject;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Map;
 
 /**
  * The type Raw formatter.
@@ -71,6 +72,16 @@ public class RawFormatter extends MessageFormatter {
   @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     return this;
+  }
+
+  @Override
+  public Map<String, Object> getFormat() {
+    return Map.of(
+        "payload", Map.of(
+            "type", "base64",
+            "info", "Opaque binary data; no schema available"
+        )
+    );
   }
 
 }

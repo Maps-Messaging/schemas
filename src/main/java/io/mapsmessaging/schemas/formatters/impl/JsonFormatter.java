@@ -102,6 +102,30 @@ public class JsonFormatter extends MessageFormatter {
   }
 
   @Override
+  public Map<String, Object> getFormat() {
+    if (schemaNode == null || !schemaNode.has("properties")) {
+      return Map.of();
+    }
+
+    try {
+      ObjectMapper objectMapper = new ObjectMapper();
+      JsonNode propertiesNode = schemaNode.get("properties");
+      Map<String, Object> result = new java.util.LinkedHashMap<>();
+
+      propertiesNode.fields().forEachRemaining(entry -> {
+        String fieldName = entry.getKey();
+        JsonNode attributes = entry.getValue();
+        Map<String, Object> attrMap = objectMapper.convertValue(attributes, Map.class);
+        result.put(fieldName, attrMap);
+      });
+
+      return result;
+    } catch (Exception e) {
+      logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), e.getMessage());
+      return Map.of();
+    }
+  }
+  @Override
   public JsonObject parseToJson(byte[] payload) throws IOException {
     return JsonParser.parseString(new String(payload, StandardCharsets.UTF_8)).getAsJsonObject();
   }

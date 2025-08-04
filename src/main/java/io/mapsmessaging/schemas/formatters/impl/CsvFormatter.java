@@ -108,4 +108,15 @@ public class CsvFormatter extends MessageFormatter {
     return map;
   }
 
+  @Override
+  public Map<String, Object> getFormat() {
+    Map<String, Object> format = new LinkedHashMap<>();
+    for (String key : keys) {
+      Map<String, Object> info = new LinkedHashMap<>();
+      info.put("type", interpretNumericStrings ? "number|string" : "string");
+      format.put(key, info);
+    }
+    return format;
+  }
+
 }

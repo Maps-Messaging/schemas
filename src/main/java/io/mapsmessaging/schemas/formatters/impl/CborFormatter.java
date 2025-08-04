@@ -100,4 +100,30 @@ public class CborFormatter extends MessageFormatter {
   public String getName() {
     return "CBOR";
   }
+
+  @Override
+  public Map<String, Object> getFormat() {
+    if (schemaNode == null || !schemaNode.has("properties")) {
+      return Map.of();
+    }
+
+    try {
+      ObjectMapper objectMapper = new ObjectMapper();
+      JsonNode propertiesNode = schemaNode.get("properties");
+      Map<String, Object> result = new java.util.LinkedHashMap<>();
+
+      propertiesNode.fields().forEachRemaining(entry -> {
+        String fieldName = entry.getKey();
+        JsonNode attributes = entry.getValue();
+        Map<String, Object> attrMap = objectMapper.convertValue(attributes, Map.class);
+        result.put(fieldName, attrMap);
+      });
+
+      return result;
+    } catch (Exception e) {
+      logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), e.getMessage());
+      return Map.of();
+    }
+  }
+
 }

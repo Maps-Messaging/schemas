@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class BaseTest {
@@ -114,6 +115,20 @@ public abstract class BaseTest {
       validateValues(p.getDoubleId(), jsonObject.get("doubleId").getAsDouble());
     }
   }
+
+
+  @Test
+  void testGetFormatMap() throws IOException {
+    SchemaConfig schemaConfig = getSchema();
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
+    Map<String, Object> format = formatter.getFormat();
+    Assertions.assertTrue(format.containsKey("stringId"));
+    Assertions.assertTrue(format.containsKey("longId"));
+    Assertions.assertTrue(format.containsKey("intId"));
+    Assertions.assertTrue(format.containsKey("floatId"));
+    Assertions.assertTrue(format.containsKey("doubleId"));
+  }
+
 
 
   @Test

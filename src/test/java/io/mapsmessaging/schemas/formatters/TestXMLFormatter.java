@@ -64,6 +64,11 @@ class TestXMLFormatter extends BaseTest {
 
   }
 
+  @Override
+  @Test
+  void testGetFormatMap() throws IOException {
+    // does not support this
+  }
 
   @Override
   List<byte[]> packList(List<io.mapsmessaging.schemas.formatters.Person> list) throws IOException {

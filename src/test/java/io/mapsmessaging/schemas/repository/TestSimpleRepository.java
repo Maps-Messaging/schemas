@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 class TestSimpleRepository {
-  @SuppressWarnings("java:S112") // Is thrown by extending classes
+  @SuppressWarnings("java:S1130") // Is thrown by extending classes
   protected SimpleSchemaRepository getRepository() throws IOException {
     return new SimpleSchemaRepository();
   }

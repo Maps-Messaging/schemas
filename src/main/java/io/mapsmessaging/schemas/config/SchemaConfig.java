@@ -179,7 +179,7 @@ public abstract class SchemaConfig implements Serializable {
    * @param format the formatter name
    * @param config the config map with the defined fields
    */
-  @SuppressWarnings("java:S134") // too many ifs - required for explicit field mapping
+  @SuppressWarnings("java:S3776") // too many ifs - required for explicit field mapping
   protected SchemaConfig(String format, Map<String, Object> config) {
     this(format);
     uniqueId = config.get(io.mapsmessaging.schemas.config.Constants.UUID).toString();

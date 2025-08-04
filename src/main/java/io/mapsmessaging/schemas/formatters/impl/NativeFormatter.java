@@ -161,7 +161,7 @@ public class NativeFormatter extends MessageFormatter {
     }
 
     return Map.of(
-        "value", Map.of(
+        VALUE, Map.of(
             "type", type.name().toLowerCase(),
             "description", "Native encoded value of type " + type.name()
         )

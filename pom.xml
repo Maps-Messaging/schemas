@@ -452,12 +452,12 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.19.0</version>
+      <version>2.19.2</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-xml</artifactId>
-      <version>2.19.0</version> <!-- Match your Jackson core version -->
+      <version>2.19.2</version> <!-- Match your Jackson core version -->
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
@@ -477,13 +477,13 @@
     <dependency>
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-cbor</artifactId>
-      <version>2.17.0</version> <!-- or whatever version you're on -->
+      <version>2.19.2</version> <!-- or whatever version you're on -->
     </dependency>
 
     <dependency>
       <groupId>org.msgpack</groupId>
       <artifactId>jackson-dataformat-msgpack</artifactId>
-      <version>0.9.0</version>
+      <version>0.9.10</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.qpid/proton-j -->
@@ -518,7 +518,7 @@
       <dependency>
           <groupId>io.swagger.core.v3</groupId>
           <artifactId>swagger-annotations</artifactId>
-          <version>2.2.33</version>
+          <version>2.2.34</version>
       </dependency>
 
     <!-- Junit5 -->

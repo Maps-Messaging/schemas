@@ -20,30 +20,30 @@
 
 package io.mapsmessaging.schemas.config;
 
-import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
+import io.mapsmessaging.schemas.config.impl.MessagePackSchemaConfig;
 import org.junit.jupiter.api.Assertions;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-class TestJsonConfig extends GeneralBaseTest {
+public class TestMessagePackConfig extends GeneralBaseTest {
 
   Map<String, Object> getProperties() {
     Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "JSON");
+    props.put("format", "MessagePack");
     return props;
   }
 
   @Override
   SchemaConfig buildConfig() {
-    JsonSchemaConfig config = new JsonSchemaConfig();
+    MessagePackSchemaConfig config = new MessagePackSchemaConfig();
     setBaseConfig(config);
     return config;
   }
 
   @Override
   void validate(SchemaConfig schemaConfig) {
-    Assertions.assertInstanceOf(JsonSchemaConfig.class, schemaConfig);
+    Assertions.assertInstanceOf(MessagePackSchemaConfig.class, schemaConfig);
   }
 
 }

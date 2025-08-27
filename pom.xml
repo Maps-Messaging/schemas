@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~
-  ~     Copyright [ 2020 - 2023 ] [Matthew Buckton]
+  ~     Copyright [ 2020 - 2025 ] [Matthew Buckton]
   ~
   ~     Licensed under the Apache License, Version 2.0 (the "License");
   ~     you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.mapsmessaging</groupId>
   <artifactId>schemas</artifactId>
-  <version>2.1.4</version>
+  <version>2.1.5-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Schema Management</name>
@@ -32,32 +32,39 @@
 
   <developers>
     <developer>
-      <id>mbuckton</id>
-      <name>Matthew Buckton</name>
-      <organization>Maps Messaging</organization>
-      <organizationUrl>http://mapsmessaging.io/</organizationUrl>
+      <id>mapsmessaging</id>
+      <name>MapsMessaging B.V.</name>
+      <organization>MapsMessaging B.V.</organization>
+      <organizationUrl>https://mapsmessaging.io/</organizationUrl>
       <roles>
-        <role>founder</role>
+        <role>developer</role>
+        <role>maintainer</role>
       </roles>
-      <timezone>Australia/Sydney</timezone>
+      <timezone>Europe/Amsterdam</timezone>
+      <properties>
+        <location>Eindhoven, Netherlands</location>
+      </properties>
     </developer>
   </developers>
 
   <licenses>
     <license>
+      <name>Apache License, Version 2.0 with Commons Clause</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0</url>
       <distribution>repo</distribution>
-      <name>Mozilla Public License Version 2.0</name>
-      <url>https://www.mozilla.org/en-US/MPL/2.0/</url>
     </license>
     <license>
-      <distribution>repo</distribution>
-      <name>CommonsClause</name>
+      <name>Commons Clause</name>
       <url>https://commonsclause.com/</url>
+      <distribution>repo</distribution>
     </license>
   </licenses>
 
   <scm>
     <url>https://github.com/Maps-Messaging/schemas.git</url>
+    <connection>scm:git:https://github.com/Maps-Messaging/schemas.git</connection>
+    <developerConnection>scm:git:git@github.com:Maps-Messaging/schemas.git</developerConnection>
+    <tag>HEAD</tag>
   </scm>
 
   <profiles>
@@ -80,7 +87,7 @@
         </os>
       </activation>
       <properties>
-        <protocCommand>protoc</protocCommand>
+          <protocCommand>d:\protobuf\bin\protoc</protocCommand>
       </properties>
     </profile>
     <profile>
@@ -97,40 +104,44 @@
     <profile>
       <!-- Default profile for regular releases -->
       <id>release</id>
+      <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+      </properties>
       <dependencies>
         <dependency>
           <groupId>io.mapsmessaging</groupId>
           <artifactId>simple_logging</artifactId>
-          <version>2.0.12</version>
+          <version>2.1.0</version>
         </dependency>
 
         <!-- JMS Selector logic module -->
         <dependency>
           <groupId>io.mapsmessaging</groupId>
           <artifactId>jms_selector_parser</artifactId>
-          <version>1.1.15</version>
+          <version>2.0.0</version>
         </dependency>
       </dependencies>
-      <distributionManagement>
-        <repository>
-          <id>ossrh</id>
-          <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-          <snapshots>
-            <enabled>false</enabled>
-          </snapshots>
-        </repository>
-      </distributionManagement>
       <build>
         <plugins>
+          <!-- Central publisher -->
           <plugin>
-            <groupId>org.sonatype.plugins</groupId>
-            <artifactId>nexus-staging-maven-plugin</artifactId>
-            <version>1.6.13</version>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.8.0</version>
             <extensions>true</extensions>
             <configuration>
-              <serverId>mapsmessaging.io</serverId>
-              <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-              <autoReleaseAfterClose>true</autoReleaseAfterClose>
+              <publishingServerId>central</publishingServerId>
+              <autoPublish>true</autoPublish>
+            </configuration>
+          </plugin>
+
+          <!-- Disable default deploy for releases -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <version>3.1.1</version>
+            <configuration>
+              <skip>true</skip>
             </configuration>
           </plugin>
         </plugins>
@@ -139,11 +150,14 @@
 
     <profile>
       <id>snapshot</id>
+      <properties>
+        <gpg.skip>true</gpg.skip>
+      </properties>
       <repositories>
         <repository>
           <id>maps_snapshots</id>
           <name>maps_snapshot_repository</name>
-          <url>https://repository.mapsmessaging.io:8081/repository/maps_snapshots/</url>
+          <url>https://repository.mapsmessaging.io/repository/maps_snapshots/</url>
           <snapshots>
             <enabled>true</enabled>
           </snapshots>
@@ -153,14 +167,14 @@
         <dependency>
           <groupId>io.mapsmessaging</groupId>
           <artifactId>simple_logging</artifactId>
-          <version>2.0.13-SNAPSHOT</version>
+          <version>2.1.1-SNAPSHOT</version>
         </dependency>
 
         <!-- JMS Selector logic module -->
         <dependency>
           <groupId>io.mapsmessaging</groupId>
           <artifactId>jms_selector_parser</artifactId>
-          <version>1.1.16-SNAPSHOT</version>
+          <version>2.1.0-SNAPSHOT</version>
         </dependency>
       </dependencies>
     </profile>
@@ -168,8 +182,9 @@
 
 
   <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
+    <nvd.api.key>${env.NVD_API_KEY}</nvd.api.key>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <gpg.keyname>matthew.buckton@mapsmessaging.io</gpg.keyname>
 
@@ -200,20 +215,26 @@
     <snapshotRepository>
       <id>maps_snapshots</id>
       <name>maps_snapshot_repository</name>
-      <url>https://repository.mapsmessaging.io:8081/repository/maps_snapshots/</url>
+      <url>https://repository.mapsmessaging.io/repository/maps_snapshots/</url>
     </snapshotRepository>
-    <repository>
-      <id>ossrh</id>
-      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
   </distributionManagement>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.1.1</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-gpg-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.2.8</version>
         <executions>
           <execution>
             <id>sign-artifacts</id>
@@ -234,7 +255,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>3.3.0</version>
+        <version>3.3.1</version>
         <executions>
           <execution>
             <id>attach-sources</id>
@@ -271,7 +292,7 @@
           </execution>
         </executions>
         <groupId>org.jacoco</groupId>
-        <version>0.8.11</version>
+        <version>0.8.13</version>
       </plugin>
 
       <!-- Setup the JUnit tests runner -->
@@ -286,7 +307,7 @@
           </includes>
         </configuration>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>3.2.5</version>
+        <version>3.5.3</version>
       </plugin>
 
       <!-- JavaDoc -->
@@ -296,7 +317,7 @@
           <charset>UTF-8</charset>
           <encoding>UTF-8</encoding>
           <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
-          <reportOutputDirectory>${project.build.directory}/site/docs</reportOutputDirectory>
+          <outputDirectory>${project.build.directory}/site/docs</outputDirectory>
           <show>public</show>
           <sourceFileExcludes>
             <sourceFileExclude>**/*Test.java</sourceFileExclude>
@@ -313,7 +334,7 @@
           </execution>
         </executions>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>3.6.3</version>
+        <version>3.11.3</version>
       </plugin>
 
       <plugin>
@@ -347,10 +368,24 @@
           </execution>
         </executions>
       </plugin>
+      <!-- sBOM  generator -->
+      <plugin>
+        <groupId>org.cyclonedx</groupId>
+        <artifactId>cyclonedx-maven-plugin</artifactId>
+        <version>2.9.1</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>makeAggregateBom</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.5.0</version>
+        <version>3.6.1</version>
         <executions>
           <execution>
             <id>add-test-sources</id>
@@ -369,7 +404,7 @@
       <plugin>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-maven-plugin</artifactId>
-        <version>1.11.3</version>
+        <version>1.12.0</version>
         <executions>
           <execution>
             <phase>generate-sources</phase>
@@ -386,27 +421,39 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.12.1</version>
+        <version>3.14.0</version>
         <configuration>
-          <source>11</source>
-          <target>11</target>
+          <source>17</source>
+          <target>17</target>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.owasp</groupId>
+        <artifactId>dependency-check-maven</artifactId>
+        <version>12.1.3</version>
+        <configuration>
+          <nvdApiKey>${nvd.api.key}</nvdApiKey>
+          <failBuildOnCVSS>10</failBuildOnCVSS>
+          <failOnError>false</failOnError>
+          <skipArtifactType>test-jar</skipArtifactType>
+          <skipTestScope>true</skipTestScope>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
 
   <dependencies>
-    <!-- https://mvnrepository.com/artifact/org.json/json -->
-    <dependency>
-      <groupId>org.json</groupId>
-      <artifactId>json</artifactId>
-      <version>20240303</version>
-    </dependency>
-
     <dependency>
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
-      <version>1.3.3</version>
+      <version>1.5.8</version>
 
       <!-- Only required for versions < 1.0.82. See README.md -->
       <exclusions>
@@ -421,23 +468,39 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.16.1</version>
+      <version>2.19.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-xml</artifactId>
+      <version>2.19.2</version> <!-- Match your Jackson core version -->
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>3.25.3</version>
+      <version>4.32.0</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.avro/avro -->
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
-      <version>1.11.3</version>
+      <version>1.12.0</version>
     </dependency>
 
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-cbor</artifactId>
+      <version>2.19.2</version> <!-- or whatever version you're on -->
+    </dependency>
+
+    <dependency>
+      <groupId>org.msgpack</groupId>
+      <artifactId>jackson-dataformat-msgpack</artifactId>
+      <version>0.9.10</version>
+    </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.qpid/proton-j -->
     <dependency>
@@ -457,21 +520,29 @@
     <dependency>
       <groupId>org.quickfixj</groupId>
       <artifactId>quickfixj-core</artifactId>
-      <version>2.3.1</version>
+      <version>2.3.2</version>
     </dependency>
 
     <dependency>
       <artifactId>lombok</artifactId>
       <groupId>org.projectlombok</groupId>
-      <version>1.18.30</version>
+      <version>1.18.38</version>
+      <scope>provided</scope>
     </dependency>
+
+      <!-- https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations -->
+      <dependency>
+          <groupId>io.swagger.core.v3</groupId>
+          <artifactId>swagger-annotations</artifactId>
+          <version>2.2.36</version>
+      </dependency>
 
     <!-- Junit5 -->
     <dependency>
       <artifactId>junit-jupiter-engine</artifactId>
       <groupId>org.junit.jupiter</groupId>
       <scope>test</scope>
-      <version>5.10.2</version>
+      <version>5.13.4</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/com.github.javafaker/javafaker -->
@@ -479,6 +550,14 @@
       <groupId>com.github.javafaker</groupId>
       <artifactId>javafaker</artifactId>
       <version>1.0.2</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>5.19.0</version>
       <scope>test</scope>
     </dependency>
 

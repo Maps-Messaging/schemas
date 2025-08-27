@@ -17,46 +17,38 @@
  *  limitations under the License.
  *
  */
+
 package io.mapsmessaging.schemas.config.impl;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
 import java.util.Map;
 
 import static io.mapsmessaging.schemas.config.SchemaConfigFactory.gson;
 
-/**
- * The type Json schema config.
- */
-@Schema(description = "JSON Schema Configuration")
-public class JsonSchemaConfig extends SimpleSchemaConfig {
+public class MessagePackSchemaConfig extends SimpleSchemaConfig {
 
-  private static final String EMPTY_SCHEMA = "{}";
-  private static final String NAME = "JSON";
+  private static final String NAME = "MessagePack";
 
   @Getter
   private final String schema;
 
-  /**
-   * Instantiates a new Json schema config.
-   */
-  public JsonSchemaConfig() {
+  public MessagePackSchemaConfig() {
     super(NAME);
-    schema = EMPTY_SCHEMA;
-    setMimeType("application/json");
+    schema = "{}";
+    setMimeType("application/msgpack");
   }
 
-  public JsonSchemaConfig(String schema) {
+  public MessagePackSchemaConfig(String schema) {
     super(NAME);
     this.schema = schema;
-    setMimeType("application/json");
+    setMimeType("application/msgpack");
   }
 
-  private JsonSchemaConfig(Map<String, Object> config) {
+  private MessagePackSchemaConfig(Map<String, Object> config) {
     super(NAME, config);
     Object obj = config.get("jsonSchema");
     if (obj instanceof Map) {
@@ -64,12 +56,8 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
       JsonObject jsonSchema = gson.toJsonTree((Map<String, Object>) obj).getAsJsonObject();
       schema = gson.toJson(jsonSchema);
     } else {
-      schema = EMPTY_SCHEMA;
+      schema = "{}";
     }
-  }
-
-  protected SchemaConfig getInstance(Map<String, Object> config) {
-    return new JsonSchemaConfig(config);
   }
 
   @Override
@@ -77,6 +65,10 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
     super.packData(jsonObject);
     JsonObject schemaObject = JsonParser.parseString(schema).getAsJsonObject();
     jsonObject.add("jsonSchema", schemaObject);
+  }
 
+  @Override
+  protected SchemaConfig getInstance(Map<String, Object> config) {
+    return new MessagePackSchemaConfig(config);
   }
 }

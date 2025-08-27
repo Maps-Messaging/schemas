@@ -20,30 +20,21 @@
 
 package io.mapsmessaging.schemas.config;
 
-import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
-import org.junit.jupiter.api.Assertions;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
-class TestJsonConfig extends GeneralBaseTest {
+public class LocalDateTimeDeserializer extends JsonDeserializer<LocalDateTime> {
 
-  Map<String, Object> getProperties() {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "JSON");
-    return props;
-  }
+  private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
   @Override
-  SchemaConfig buildConfig() {
-    JsonSchemaConfig config = new JsonSchemaConfig();
-    setBaseConfig(config);
-    return config;
+  public LocalDateTime deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+    String str = p.getText().trim();
+    return LocalDateTime.parse(str, formatter);
   }
-
-  @Override
-  void validate(SchemaConfig schemaConfig) {
-    Assertions.assertInstanceOf(JsonSchemaConfig.class, schemaConfig);
-  }
-
 }

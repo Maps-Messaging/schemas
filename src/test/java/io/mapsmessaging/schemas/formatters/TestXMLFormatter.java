@@ -1,52 +1,77 @@
 /*
  *
- *     Copyright [ 2020 - 2023 ] [Matthew Buckton]
+ *  Copyright [ 2020 - 2024 ] Matthew Buckton
+ *  Copyright [ 2024 - 2025 ] MapsMessaging B.V.
  *
- *     Licensed under the Apache License, Version 2.0 (the "License");
- *     you may not use this file except in compliance with the License.
- *     You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 with the Commons Clause
+ *  (the "License"); you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://commonsclause.com/
  *
- *     Unless required by applicable law or agreed to in writing, software
- *     distributed under the License is distributed on an "AS IS" BASIS,
- *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *     See the License for the specific language governing permissions and
- *     limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package io.mapsmessaging.schemas.formatters;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
 import io.mapsmessaging.schemas.formatters.impl.XmlFormatter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import org.json.JSONObject;
-import org.json.XML;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static io.mapsmessaging.schemas.config.SchemaConfigFactory.gson;
+
 class TestXMLFormatter extends BaseTest {
 
-  byte[] pack(io.mapsmessaging.schemas.formatters.Person p) {
-    JSONObject jsonObject = new JSONObject();
-    jsonObject.put("stringId", p.getStringId());
-    jsonObject.put("longId", p.getLongId());
-    jsonObject.put("intId", p.getIntId());
-    jsonObject.put("floatId", p.getFloatId());
-    jsonObject.put("doubleId", p.getDoubleId());
-    String xml = XML.toString(jsonObject);
-    xml = "<?xml version=\"1.0\"?>\n" +
-        "<!DOCTYPE person  >\n"
-        + "<person>\n"
-        + xml + "\n" +
+  byte[] pack(io.mapsmessaging.schemas.formatters.Person p) throws JsonProcessingException {
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.addProperty("stringId", p.getStringId());
+    jsonObject.addProperty("longId", p.getLongId());
+    jsonObject.addProperty("intId", p.getIntId());
+    jsonObject.addProperty("floatId", p.getFloatId());
+    jsonObject.addProperty("doubleId", p.getDoubleId());
+    Type type = new TypeToken<Map<String, Object>>() {
+    }.getType();
+    Map<String, Object> map = gson.fromJson(jsonObject, type);
+
+    XmlMapper xmlMapper = new XmlMapper();
+    String xmlContent = xmlMapper.writeValueAsString(map);
+
+    String xml = "<?xml version=\"1.0\"?>\n" +
+        "<!DOCTYPE person>\n" +
+        "<person>\n" +
+        xmlContent + "\n" +
         "</person>\n";
 
-    return xml.getBytes();
+    return xml.getBytes(StandardCharsets.UTF_8);
+
   }
 
-
+  @Override
+  @Test
+  void testGetFormatMap() throws IOException {
+    SchemaConfig schemaConfig = getSchema();
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
+    Map<String, Object> format = formatter.getFormat();
+    Assertions.assertEquals(1, format.size(), "Expected empty format map for XML formatter");
+  }
   @Override
   List<byte[]> packList(List<io.mapsmessaging.schemas.formatters.Person> list) throws IOException {
     List<byte[]> packed = new ArrayList<>();
@@ -77,11 +102,11 @@ class TestXMLFormatter extends BaseTest {
     XmlSchemaConfig config = new XmlSchemaConfig();
     config.setRootEntry("catalog");
     XmlFormatter xmlFormatter = (XmlFormatter) MessageFormatterFactory.getInstance().getFormatter(config);
-    Assertions.assertEquals("Cardigan Sweater", xmlFormatter.parse(XMLString.getBytes()).get("product.description"));
-    Assertions.assertEquals(39.95, xmlFormatter.parse(XMLString.getBytes()).get("product.catalog_item[0].price"));
+    Assertions.assertEquals("Cardigan Sweater", xmlFormatter.parse(XML_STRING.getBytes()).get("product.description"));
+    Assertions.assertEquals(39.95, xmlFormatter.parse(XML_STRING.getBytes()).get("product.catalog_item[0].price"));
   }
 
-  private static final String XMLString = "<?xml version=\"1.0\"?>\n"
+  private static final String XML_STRING = "<?xml version=\"1.0\"?>\n"
       + "<?xml-stylesheet href=\"catalog.xsl\" type=\"text/xsl\"?>\n"
       + "<!DOCTYPE catalog  >\n"
       + "<catalog>\n"

@@ -20,7 +20,6 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -31,60 +30,45 @@ import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
+import io.mapsmessaging.schemas.config.impl.MessagePackSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
+import org.msgpack.jackson.dataformat.MessagePackFactory;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.JSON_PARSE_EXCEPTION;
 
-/**
- * The type Json formatter.
- */
-public class JsonFormatter extends MessageFormatter {
+public class MessagePackFormatter extends MessageFormatter {
 
   private final JsonNode schemaNode;
   private final JsonSchema schema;
-  private final JsonSchemaFactory schemaFactory;
 
-  /**
-   * Instantiates a new Json formatter.
-   */
-  public JsonFormatter() {
+  public MessagePackFormatter() {
     schemaNode = null;
     schema = null;
-    schemaFactory = null;
   }
 
-
-  public JsonFormatter(String schemaString) throws JsonProcessingException {
+  public MessagePackFormatter(String schemaString) throws IOException {
     ObjectMapper objectMapper = new ObjectMapper();
-
-    // Convert byte[] schema to JsonNode
     schemaNode = objectMapper.readTree(schemaString);
-
-    // Create JsonSchema instance
-    schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7);
-    schema = schemaFactory.getSchema(schemaNode);
+    schema = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7).getSchema(schemaNode);
   }
 
   @Override
   public ParsedObject parse(byte[] payload) {
     try {
-      String jsonString = new String(payload, StandardCharsets.UTF_8);
-      JsonObject json = JsonParser.parseString(jsonString).getAsJsonObject();
+      ObjectMapper messagePackMapper = new ObjectMapper(new MessagePackFactory());
+      Map<String, Object> map = messagePackMapper.readValue(payload, Map.class);
 
       if (schema != null) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode jsonNode = objectMapper.readTree(jsonString);
-        Set<ValidationMessage> validationResult = schema.validate(jsonNode);
+        JsonNode node = messagePackMapper.readTree(payload);
+        Set<ValidationMessage> validationResult = schema.validate(node);
         if (!validationResult.isEmpty()) {
           logger.log(JSON_PARSE_EXCEPTION, getName(), validationResult);
           return new DefaultParser(payload);
@@ -92,13 +76,29 @@ public class JsonFormatter extends MessageFormatter {
       }
 
       Gson gson = new Gson();
-      @SuppressWarnings("unchecked")
-      Map<String, Object> map = gson.fromJson(json, Map.class);
+      JsonObject json = gson.toJsonTree(map).getAsJsonObject();
       return new StructuredResolver(new MapResolver(map), json);
     } catch (Exception e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
       return new DefaultParser(payload);
     }
+  }
+
+  @Override
+  public JsonObject parseToJson(byte[] payload) throws IOException {
+    ObjectMapper messagePackMapper = new ObjectMapper(new MessagePackFactory());
+    Map<String, Object> map = messagePackMapper.readValue(payload, Map.class);
+    return JsonParser.parseString(new Gson().toJson(map)).getAsJsonObject();
+  }
+
+  @Override
+  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+    return new MessagePackFormatter(((MessagePackSchemaConfig) config).getSchema());
+  }
+
+  @Override
+  public String getName() {
+    return "MessagePack";
   }
 
   @Override
@@ -124,22 +124,6 @@ public class JsonFormatter extends MessageFormatter {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), e.getMessage());
       return Map.of();
     }
-  }
-  @Override
-  public JsonObject parseToJson(byte[] payload) throws IOException {
-    return JsonParser.parseString(new String(payload, StandardCharsets.UTF_8)).getAsJsonObject();
-  }
-
-
-  @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
-    JsonSchemaConfig jsonSchemaConfig = (JsonSchemaConfig) config;
-    return new JsonFormatter(jsonSchemaConfig.getSchema());
-  }
-
-  @Override
-  public String getName() {
-    return "JSON";
   }
 
 }

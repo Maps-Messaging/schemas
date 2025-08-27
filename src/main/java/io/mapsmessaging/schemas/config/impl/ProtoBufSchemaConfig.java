@@ -1,38 +1,43 @@
 /*
  *
- *     Copyright [ 2020 - 2023 ] [Matthew Buckton]
+ *  Copyright [ 2020 - 2024 ] Matthew Buckton
+ *  Copyright [ 2024 - 2025 ] MapsMessaging B.V.
  *
- *     Licensed under the Apache License, Version 2.0 (the "License");
- *     you may not use this file except in compliance with the License.
- *     You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 with the Commons Clause
+ *  (the "License"); you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://commonsclause.com/
  *
- *     Unless required by applicable law or agreed to in writing, software
- *     distributed under the License is distributed on an "AS IS" BASIS,
- *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *     See the License for the specific language governing permissions and
- *     limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package io.mapsmessaging.schemas.config.impl;
+
+import com.google.gson.JsonObject;
+import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.IOException;
+import java.util.Base64;
+import java.util.Map;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.PROTOBUF_DESCRIPTOR_NOT_DEFINED;
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.PROTOBUF_MESSAGE_NAME_NOT_DEFINED;
 
-import io.mapsmessaging.schemas.config.SchemaConfig;
-import java.io.IOException;
-import java.util.Base64;
-import java.util.Map;
-import lombok.Getter;
-import lombok.Setter;
-import org.json.JSONObject;
-
 /**
  * The type Proto buf schema config.
  */
+@Schema(description = "Protobuf Schema Configuration")
 public class ProtoBufSchemaConfig extends SchemaConfig {
 
-  private static final String NAME = "ProtoBuf";
   private static final String DESCRIPTOR = "descriptor";
   private static final String MESSAGE_NAME = "messageName";
 
@@ -48,7 +53,7 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
    * Instantiates a new Proto buf schema config.
    */
   public ProtoBufSchemaConfig() {
-    super(NAME);
+    super("ProtoBuf");
     setMimeType("application/octet-stream");
   }
 
@@ -58,7 +63,7 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
    * @param config the config
    */
   protected ProtoBufSchemaConfig(Map<String, Object> config) {
-    super(NAME, config);
+    super("ProtoBuf", config);
     messageName = config.getOrDefault(MESSAGE_NAME, "").toString();
     descriptorValue = Base64.getDecoder().decode(config.getOrDefault(DESCRIPTOR, "").toString());
     setMimeType("application/octet-stream");
@@ -66,20 +71,20 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
 
 
   @Override
-  protected JSONObject packData() throws IOException {
+  protected JsonObject packData() throws IOException {
     if (descriptorValue == null || descriptorValue.length == 0) {
       logger.log(PROTOBUF_DESCRIPTOR_NOT_DEFINED, format, uniqueId);
       throw new IOException("No descriptor specified");
     }
-    if (messageName == null || messageName.length() == 0) {
+    if (messageName == null || messageName.isEmpty()) {
       logger.log(PROTOBUF_MESSAGE_NAME_NOT_DEFINED, format, uniqueId);
       throw new IOException("No message name specified");
     }
 
-    JSONObject data = new JSONObject();
+    JsonObject data = new JsonObject();
     packData(data);
-    data.put(DESCRIPTOR, new String(Base64.getEncoder().encode(descriptorValue)));
-    data.put(MESSAGE_NAME, messageName);
+    data.addProperty(DESCRIPTOR, new String(Base64.getEncoder().encode(descriptorValue)));
+    data.addProperty(MESSAGE_NAME, messageName);
     return data;
   }
 

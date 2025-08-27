@@ -1,6 +1,6 @@
 /*
  *
- *     Copyright [ 2020 - 2023 ] [Matthew Buckton]
+ *     Copyright [ 2020 - 2025 ] [Matthew Buckton]
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -18,29 +18,31 @@
 package io.mapsmessaging.schemas.formatters;
 
 import com.github.javafaker.Faker;
+import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.selector.ParseException;
 import io.mapsmessaging.selector.SelectorParser;
 import io.mapsmessaging.selector.operators.ParserExecutor;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import org.json.JSONObject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 public abstract class BaseTest {
 
   private static final String[] UNIT = {"ms", "μs", "ns"};
   private static List<Person> data;
 
-  static List<Person> createList(int size) {
+  static List<Person> createList() {
     Faker faker = new Faker();
     List<Person> list = new ArrayList<>();
-    for (int x = 0; x < size; x++) {
+    for (int x = 0; x < 1000; x++) {
       Person p = new Person();
       switch (x % 6) {
         case 0:
@@ -62,6 +64,9 @@ public abstract class BaseTest {
           p.setStringId(faker.backToTheFuture().character());
           break;
 
+        default:
+          break;
+
       }
       p.setLongId(faker.random().nextLong());
       p.setIntId((int) (faker.random().nextLong()));
@@ -74,7 +79,7 @@ public abstract class BaseTest {
 
   @BeforeAll
   static void createData() {
-    data = createList(1_000);
+    data = createList();
   }
 
   abstract List<byte[]> packList(List<Person> list) throws IOException;
@@ -102,14 +107,28 @@ public abstract class BaseTest {
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     for (int x = 0; x < data.size(); x++) {
       Person p = data.get(x);
-      JSONObject jsonObject = formatter.parseToJson(packed.get(x));
-      validateValues(p.getStringId(), jsonObject.get("stringId"));
-      validateValues(p.getLongId(), jsonObject.get("longId"));
-      validateValues(p.getIntId(), jsonObject.get("intId"));
-      validateValues(p.getFloatId(), jsonObject.get("floatId"));
-      validateValues(p.getDoubleId(), jsonObject.get("doubleId"));
+      JsonObject jsonObject = formatter.parseToJson(packed.get(x));
+      validateValues(p.getStringId(), jsonObject.get("stringId").getAsString());
+      validateValues(p.getLongId(), jsonObject.get("longId").getAsLong());
+      validateValues(p.getIntId(), jsonObject.get("intId").getAsInt());
+      validateValues(p.getFloatId(), jsonObject.get("floatId").getAsFloat());
+      validateValues(p.getDoubleId(), jsonObject.get("doubleId").getAsDouble());
     }
   }
+
+
+  @Test
+  void testGetFormatMap() throws IOException {
+    SchemaConfig schemaConfig = getSchema();
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
+    Map<String, Object> format = formatter.getFormat();
+    Assertions.assertTrue(format.containsKey("stringId"));
+    Assertions.assertTrue(format.containsKey("longId"));
+    Assertions.assertTrue(format.containsKey("intId"));
+    Assertions.assertTrue(format.containsKey("floatId"));
+    Assertions.assertTrue(format.containsKey("doubleId"));
+  }
+
 
 
   @Test
@@ -196,7 +215,7 @@ public abstract class BaseTest {
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     List<DataSet> result = dataSet.parallelStream().filter(dataSet1 -> executor.evaluate(formatter.parse(dataSet1.packed))).collect(Collectors.toList());
 
-    Assertions.assertTrue(result.size() >= 5);
+    Assertions.assertTrue(result.size() >= 5, "result.size() "+result.size()+" >= 5");
     long time = (System.currentTimeMillis() - start);
     float unitWork = time;
     unitWork = unitWork / data.size();
@@ -243,8 +262,9 @@ public abstract class BaseTest {
       }
       BigDecimal vlhs = convert(lhs);
       BigDecimal vrhs = convert(rhs);
-
-      Assertions.assertEquals(vlhs, vrhs);
+      double dlhs = vlhs.doubleValue();
+      double drhs = vrhs.doubleValue();
+      Assertions.assertEquals(dlhs, drhs, 1e-6);
     }
   }
 

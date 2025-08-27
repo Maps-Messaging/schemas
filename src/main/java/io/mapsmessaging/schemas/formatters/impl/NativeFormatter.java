@@ -1,36 +1,43 @@
 /*
  *
- *     Copyright [ 2020 - 2023 ] [Matthew Buckton]
+ *  Copyright [ 2020 - 2024 ] Matthew Buckton
+ *  Copyright [ 2024 - 2025 ] MapsMessaging B.V.
  *
- *     Licensed under the Apache License, Version 2.0 (the "License");
- *     you may not use this file except in compliance with the License.
- *     You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 with the Commons Clause
+ *  (the "License"); you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://commonsclause.com/
  *
- *     Unless required by applicable law or agreed to in writing, software
- *     distributed under the License is distributed on an "AS IS" BASIS,
- *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *     See the License for the specific language governing permissions and
- *     limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 
 package io.mapsmessaging.schemas.formatters.impl;
 
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
-
+import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig.TYPE;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
+
 import java.io.IOException;
-import org.json.JSONObject;
+import java.util.Map;
+
+import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
 
 /**
  * The type Native formatter.
  */
 public class NativeFormatter extends MessageFormatter {
+
+  private static final String VALUE = "value";
 
   private final NativeEncoderDecoder encoderDecoder;
   private final TYPE type;
@@ -124,10 +131,15 @@ public class NativeFormatter extends MessageFormatter {
   }
 
   @Override
-  public JSONObject parseToJson(byte[] payload) throws IOException {
-    JSONObject jsonObject = new JSONObject();
-    jsonObject.put("value", parse(payload).get("value"));
-    jsonObject.put("type", type);
+  public JsonObject parseToJson(byte[] payload) throws IOException {
+    JsonObject jsonObject = new JsonObject();
+    Object value = parse(payload).get(VALUE);
+    if (value != null) {
+      jsonObject.add(VALUE, gson.toJsonTree(value));
+    } else {
+      jsonObject.add(VALUE, null);
+    }
+    jsonObject.addProperty("type", type.name());
     return jsonObject;
   }
 
@@ -141,6 +153,21 @@ public class NativeFormatter extends MessageFormatter {
   public String getName() {
     return "Native";
   }
+
+  @Override
+  public Map<String, Object> getFormat() {
+    if (type == null) {
+      return Map.of();
+    }
+
+    return Map.of(
+        VALUE, Map.of(
+            "type", type.name().toLowerCase(),
+            "description", "Native encoded value of type " + type.name()
+        )
+    );
+  }
+
 
   /**
    * The interface Native encoder decoder.

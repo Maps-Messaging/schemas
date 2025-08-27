@@ -20,43 +20,44 @@
 
 package io.mapsmessaging.schemas.formatters;
 
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
+import io.mapsmessaging.schemas.config.impl.MessagePackSchemaConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.msgpack.jackson.dataformat.MessagePackFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
-class TestJsonFormatter extends BaseTest {
+class TestMessagePackFormatter extends BaseTest {
 
-
-  byte[] pack(io.mapsmessaging.schemas.formatters.Person p) {
-    JsonObject jsonObject = new JsonObject();
-    jsonObject.addProperty("stringId", p.getStringId());
-    jsonObject.addProperty("longId", p.getLongId());
-    jsonObject.addProperty("intId", p.getIntId());
-    jsonObject.addProperty("floatId", p.getFloatId());
-    jsonObject.addProperty("doubleId", p.getDoubleId());
-    return jsonObject.toString().getBytes();
+  byte[] pack(Person p) throws IOException {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("stringId", p.getStringId());
+    map.put("longId", p.getLongId());
+    map.put("intId", p.getIntId());
+    map.put("floatId", p.getFloatId());
+    map.put("doubleId", p.getDoubleId());
+    ObjectMapper mapper = new ObjectMapper(new MessagePackFactory());
+    return mapper.writeValueAsBytes(map);
   }
 
   @Override
-  List<byte[]> packList(List<io.mapsmessaging.schemas.formatters.Person> list) {
+  List<byte[]> packList(List<Person> list) {
     List<byte[]> packed = new ArrayList<>();
-    for (io.mapsmessaging.schemas.formatters.Person p : list) {
-      packed.add(pack(p));
+    for (Person p : list) {
+      try {
+        packed.add(pack(p));
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
     return packed;
   }
 
   @Override
-  SchemaConfig getSchema()  {
+  SchemaConfig getSchema() {
     String jsonSchema = "{\n" +
         "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n" +
         "  \"type\": \"object\",\n" +
@@ -70,59 +71,63 @@ class TestJsonFormatter extends BaseTest {
         " \"required\": [\"stringId\", \"longId\", \"intId\", \"floatId\", \"doubleId\"],\n" +
         "  \"additionalProperties\": false\n" +
         "}";
-    return new JsonSchemaConfig(jsonSchema);
+    return new MessagePackSchemaConfig(jsonSchema);
   }
 
   @Test
-  void invalidJson() throws IOException {
+  void invalidMessagePack() throws IOException {
     SchemaConfig config = getSchema();
     config.setUniqueId(UUID.randomUUID());
     config.setSource("test");
     config.setVersion(1);
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
-    JsonObject jsonObject = new JsonObject();
-    jsonObject.addProperty("something_different", "hello");
-    Assertions.assertNotNull(formatter.parse(jsonObject.toString().getBytes()));
 
+    // This doesn't match the required fields in schema
+    Map<String, Object> invalid = new HashMap<>();
+    invalid.put("something_else", "test");
+    byte[] payload = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(invalid);
+    Assertions.assertNotNull(formatter.parse(payload));
   }
 
   @Test
   void testStructuredLookups() throws IOException {
-    SchemaConfig config = new JsonSchemaConfig();
+    SchemaConfig config = new MessagePackSchemaConfig();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
-    JsonObject top = new JsonObject();
+    Map<String, Object> map = new HashMap<>();
+    Map<String, Object> nested = new HashMap<>();
     for (int x = 0; x < 10; x++) {
-      top.addProperty("" + x, x);
+      map.put("" + x, x);
+      nested.put("" + x, x + 10);
     }
-    JsonObject next = new JsonObject();
-    for (int x = 0; x < 10; x++) {
-      next.addProperty("" + x, x + 10);
-    }
-    top.add("next", next);
-    ParsedObject parsed = formatter.parse(top.toString().getBytes());
+    map.put("next", nested);
+
+    byte[] payload = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(map);
+    ParsedObject parsed = formatter.parse(payload);
+
     Assertions.assertEquals(11, ((Number) parsed.get("next.1")).intValue());
     Assertions.assertEquals(1, ((Number) parsed.get("1")).intValue());
   }
 
-
   @Test
   void testArrayLookups() throws IOException {
-    SchemaConfig config = new JsonSchemaConfig();
+    SchemaConfig config = new MessagePackSchemaConfig();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
-    JsonArray jsonArray = new JsonArray();
+    Map<String, Object> map = new HashMap<>();
+    List<Integer> array = new ArrayList<>();
     for (int x = 0; x < 10; x++) {
-      jsonArray.add(x);
+      array.add(x);
     }
-    JsonObject top = new JsonObject();
-    top.add("arr", jsonArray);
-    ParsedObject parsed = formatter.parse(top.toString().getBytes());
+    map.put("arr", array);
+
+    byte[] payload = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(map);
+    ParsedObject parsed = formatter.parse(payload);
+
     Assertions.assertEquals(1, ((Number) parsed.get("arr[1]")).intValue());
     Assertions.assertEquals(0, ((Number) parsed.get("arr[0]")).intValue());
     Assertions.assertEquals(9, ((Number) parsed.get("arr[9]")).intValue());
     Assertions.assertNull(parsed.get("arr[10]"));
     Assertions.assertNull(parsed.get("invalidEntry"));
   }
-
 }

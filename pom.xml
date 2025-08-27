@@ -62,6 +62,9 @@
 
   <scm>
     <url>https://github.com/Maps-Messaging/schemas.git</url>
+    <connection>scm:git:https://github.com/Maps-Messaging/schemas.git</connection>
+    <developerConnection>scm:git:git@github.com:Maps-Messaging/schemas.git</developerConnection>
+    <tag>HEAD</tag>
   </scm>
 
   <profiles>
@@ -101,40 +104,44 @@
     <profile>
       <!-- Default profile for regular releases -->
       <id>release</id>
+      <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+      </properties>
       <dependencies>
         <dependency>
           <groupId>io.mapsmessaging</groupId>
           <artifactId>simple_logging</artifactId>
-          <version>2.0.12</version>
+          <version>2.1.0</version>
         </dependency>
 
         <!-- JMS Selector logic module -->
         <dependency>
           <groupId>io.mapsmessaging</groupId>
           <artifactId>jms_selector_parser</artifactId>
-          <version>1.1.15</version>
+          <version>2.0.0</version>
         </dependency>
       </dependencies>
-      <distributionManagement>
-        <repository>
-          <id>ossrh</id>
-          <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-          <snapshots>
-            <enabled>false</enabled>
-          </snapshots>
-        </repository>
-      </distributionManagement>
       <build>
         <plugins>
+          <!-- Central publisher -->
           <plugin>
-            <groupId>org.sonatype.plugins</groupId>
-            <artifactId>nexus-staging-maven-plugin</artifactId>
-            <version>1.7.0</version>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.8.0</version>
             <extensions>true</extensions>
             <configuration>
-              <serverId>mapsmessaging.io</serverId>
-              <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-              <autoReleaseAfterClose>true</autoReleaseAfterClose>
+              <publishingServerId>central</publishingServerId>
+              <autoPublish>true</autoPublish>
+            </configuration>
+          </plugin>
+
+          <!-- Disable default deploy for releases -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <version>3.1.1</version>
+            <configuration>
+              <skip>true</skip>
             </configuration>
           </plugin>
         </plugins>
@@ -143,6 +150,9 @@
 
     <profile>
       <id>snapshot</id>
+      <properties>
+        <gpg.skip>true</gpg.skip>
+      </properties>
       <repositories>
         <repository>
           <id>maps_snapshots</id>
@@ -157,14 +167,14 @@
         <dependency>
           <groupId>io.mapsmessaging</groupId>
           <artifactId>simple_logging</artifactId>
-          <version>2.0.13-SNAPSHOT</version>
+          <version>2.1.1-SNAPSHOT</version>
         </dependency>
 
         <!-- JMS Selector logic module -->
         <dependency>
           <groupId>io.mapsmessaging</groupId>
           <artifactId>jms_selector_parser</artifactId>
-          <version>2.0.0-SNAPSHOT</version>
+          <version>2.1.0-SNAPSHOT</version>
         </dependency>
       </dependencies>
     </profile>
@@ -173,8 +183,8 @@
 
   <properties>
     <nvd.api.key>${env.NVD_API_KEY}</nvd.api.key>
-    <maven.compiler.source>13</maven.compiler.source>
-    <maven.compiler.target>13</maven.compiler.target>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <gpg.keyname>matthew.buckton@mapsmessaging.io</gpg.keyname>
 
@@ -207,13 +217,19 @@
       <name>maps_snapshot_repository</name>
       <url>https://repository.mapsmessaging.io/repository/maps_snapshots/</url>
     </snapshotRepository>
-    <repository>
-      <id>ossrh</id>
-      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
   </distributionManagement>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.1.1</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -407,8 +423,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.14.0</version>
         <configuration>
-          <source>13</source>
-          <target>13</target>
+          <source>17</source>
+          <target>17</target>
         </configuration>
       </plugin>
       <plugin>

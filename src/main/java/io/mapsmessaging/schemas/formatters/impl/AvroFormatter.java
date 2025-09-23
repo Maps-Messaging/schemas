@@ -37,6 +37,7 @@ import org.apache.avro.util.Utf8;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -174,6 +175,16 @@ public class AvroFormatter extends MessageFormatter {
       }
       return null;
     }
+
+    @Override
+    public List<String> getKeys() {
+      ArrayList<String> keys = new ArrayList<>();
+      for (Schema.Field field : genericRecord.getSchema().getFields()) {
+        keys.add(field.name());
+      }
+      return keys;
+    }
+
 
     @Override
     public Object getReferenced() {

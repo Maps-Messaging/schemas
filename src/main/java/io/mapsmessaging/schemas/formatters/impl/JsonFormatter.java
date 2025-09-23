@@ -87,7 +87,7 @@ public class JsonFormatter extends MessageFormatter {
         Set<ValidationMessage> validationResult = schema.validate(jsonNode);
         if (!validationResult.isEmpty()) {
           logger.log(JSON_PARSE_EXCEPTION, getName(), validationResult);
-          return new DefaultParser(payload);
+          // return new DefaultParser(payload);
         }
       }
 

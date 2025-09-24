@@ -57,6 +57,10 @@ public class StructuredResolver implements ParsedObject {
     return StructureWalker.locateObject(resolver, keys);
   }
 
+  public List<String> getKeys() {
+    return resolver.getKeys();
+  }
+
   @Override
   public Object getReferenced() {
     return reference;

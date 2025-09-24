@@ -22,6 +22,7 @@ package io.mapsmessaging.schemas.formatters.walker;
 
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -53,6 +54,11 @@ public class MapResolver implements ParsedObject {
     this.parseStringNumerics = parseStringNumerics;
   }
 
+
+  @Override
+  public List<String> getKeys() {
+    return new ArrayList<>(map.keySet());
+  }
 
   @Override
   public Object get(String s) {

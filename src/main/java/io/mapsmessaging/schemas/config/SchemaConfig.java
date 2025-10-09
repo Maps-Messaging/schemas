@@ -235,11 +235,11 @@ public abstract class SchemaConfig implements Serializable {
 
   private LocalDateTime loadDateTime(Map<String, Object> config, String key){
     Object val = config.get(key);
-    if(val instanceof  String) {
-      return LocalDateTime.parse((String)val);
+    if (val instanceof String str) {
+      return LocalDateTime.parse(str);
     }
-    if(val instanceof LocalDateTime){
-      return (LocalDateTime)val;
+    if (val instanceof LocalDateTime dateTime) {
+      return dateTime;
     }
     return null;
   }
@@ -285,6 +285,8 @@ public abstract class SchemaConfig implements Serializable {
     this.uniqueId = uniqueId;
     creation = LocalDateTime.now();
   }
+
+  public abstract byte[] getSchemaDefinition();
 
   /**
    * Pack data to a json object.

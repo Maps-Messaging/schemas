@@ -255,6 +255,9 @@ public abstract class BaseTest {
 
   private void validateValues(Object lhs, Object rhs) {
     if (lhs instanceof String) {
+      if (!((String) lhs).equalsIgnoreCase(rhs.toString())) {
+        System.err.println("Issue with encoding");
+      }
       Assertions.assertEquals(lhs.toString(), rhs.toString());
     } else {
       if (lhs instanceof Float && rhs instanceof Double) {

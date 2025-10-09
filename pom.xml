@@ -182,6 +182,8 @@
 
 
   <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <nvd.api.key>${env.NVD_API_KEY}</nvd.api.key>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
@@ -299,7 +301,7 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <argLine>@{argLine}</argLine>
+          <argLine>@{argLine} -Dfile.encoding=UTF-8</argLine>
           <includes>
             <include>**/*Test.java</include>
             <include>**/Test*.java</include>

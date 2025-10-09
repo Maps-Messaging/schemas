@@ -61,6 +61,11 @@ public class MessagePackSchemaConfig extends SimpleSchemaConfig {
   }
 
   @Override
+  public byte[] getSchemaDefinition() {
+    return schema.getBytes();
+  }
+
+  @Override
   protected void packData(JsonObject jsonObject) {
     super.packData(jsonObject);
     JsonObject schemaObject = JsonParser.parseString(schema).getAsJsonObject();

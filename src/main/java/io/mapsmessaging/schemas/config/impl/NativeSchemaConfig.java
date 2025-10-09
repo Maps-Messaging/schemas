@@ -101,6 +101,11 @@ public class NativeSchemaConfig extends SimpleSchemaConfig {
     return data;
   }
 
+  @Override
+  public byte[] getSchemaDefinition() {
+    return type.name().getBytes();
+  }
+
   protected SchemaConfig getInstance(Map<String, Object> config) {
     return new NativeSchemaConfig(config);
   }

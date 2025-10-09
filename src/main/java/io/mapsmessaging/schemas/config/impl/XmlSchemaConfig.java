@@ -75,6 +75,13 @@ public class XmlSchemaConfig extends SimpleSchemaConfig {
     return new XmlSchemaConfig(config);
   }
 
+
+  @Override
+  public byte[] getSchemaDefinition() {
+    return new byte[0];
+  }
+
+
   @Override
   protected JsonObject packData() {
     JsonObject data = new JsonObject();

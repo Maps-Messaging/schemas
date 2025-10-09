@@ -126,6 +126,11 @@ class TestConfigConstructors {
     }
 
     @Override
+    public byte[] getSchemaDefinition() {
+      return new byte[0];
+    }
+
+    @Override
     protected JsonObject packData() {
       JsonObject data = new JsonObject();
       packData(data);

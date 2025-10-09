@@ -68,6 +68,11 @@ public class JsonSchemaConfig extends SimpleSchemaConfig {
     }
   }
 
+  @Override
+  public byte[] getSchemaDefinition() {
+    return schema.getBytes();
+  }
+
   protected SchemaConfig getInstance(Map<String, Object> config) {
     return new JsonSchemaConfig(config);
   }

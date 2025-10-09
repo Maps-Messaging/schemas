@@ -69,6 +69,10 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
     setMimeType("application/octet-stream");
   }
 
+  @Override
+  public byte[] getSchemaDefinition() {
+    return descriptorValue;
+  }
 
   @Override
   protected JsonObject packData() throws IOException {

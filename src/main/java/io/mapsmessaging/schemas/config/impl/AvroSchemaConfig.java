@@ -65,6 +65,11 @@ public class AvroSchemaConfig extends SchemaConfig {
 
 
   @Override
+  public byte[] getSchemaDefinition() {
+    return schema.getBytes();
+  }
+
+  @Override
   protected JsonObject packData() throws IOException {
     if (schema == null || schema.isEmpty()) {
       logger.log(AVRO_SCHEMA_NOT_DEFINED, format, uniqueId);

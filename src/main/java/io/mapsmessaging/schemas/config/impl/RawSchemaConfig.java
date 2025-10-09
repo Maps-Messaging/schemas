@@ -53,4 +53,10 @@ public class RawSchemaConfig extends SimpleSchemaConfig {
     return new RawSchemaConfig(config);
   }
 
+
+  @Override
+  public byte[] getSchemaDefinition() {
+    return new byte[0];
+  }
+
 }

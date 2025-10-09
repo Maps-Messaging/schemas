@@ -27,6 +27,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.CSV_HEADER_NOT_DEFINED;
@@ -79,6 +80,11 @@ public class CsvSchemaConfig extends SchemaConfig {
     super("CSV", config);
     this.headerValues = config.getOrDefault(HEADER, "").toString();
     this.interpretNumericStrings = Boolean.parseBoolean(config.getOrDefault(NUMERIC_STRINGS, "false").toString());
+  }
+
+  @Override
+  public byte[] getSchemaDefinition() {
+    return headerValues.getBytes(StandardCharsets.UTF_8);
   }
 
 

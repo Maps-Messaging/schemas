@@ -54,6 +54,7 @@ import static io.mapsmessaging.schemas.config.SchemaConfigFactory.gson;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = AvroSchemaConfig.class, name = "avro"),
     @JsonSubTypes.Type(value = CsvSchemaConfig.class, name = "csv"),
+    @JsonSubTypes.Type(value = CbcSchemaConfig.class, name = "cbc"),
     @JsonSubTypes.Type(value = JsonSchemaConfig.class, name = "json"),
     @JsonSubTypes.Type(value = CborSchemaConfig.class, name = "cbor"),
     @JsonSubTypes.Type(value = MessagePackSchemaConfig.class, name = "messagePack"),
@@ -73,7 +74,8 @@ import static io.mapsmessaging.schemas.config.SchemaConfigFactory.gson;
         @DiscriminatorMapping(value = "native", schema = NativeSchemaConfig.class),
         @DiscriminatorMapping(value = "protobuf", schema = ProtoBufSchemaConfig.class),
         @DiscriminatorMapping(value = "raw", schema = RawSchemaConfig.class),
-        @DiscriminatorMapping(value = "xml", schema = XmlSchemaConfig.class)
+        @DiscriminatorMapping(value = "xml", schema = XmlSchemaConfig.class),
+        @DiscriminatorMapping(value = "cbc", schema = CbcSchemaConfig.class)
     })
 
 /**

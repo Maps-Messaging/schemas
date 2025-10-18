@@ -68,6 +68,8 @@ public class StructureWalker {
       return lookup;
     } else if (lookup instanceof BigDecimal) {
       return ((BigDecimal) lookup).doubleValue();
+    } else if (lookup instanceof byte[]) {
+      return lookup;
     }
     return lookup.toString();
   }

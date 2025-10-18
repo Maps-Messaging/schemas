@@ -26,3 +26,4 @@ io.mapsmessaging.schemas.config.impl.NativeSchemaConfig
 io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig
 io.mapsmessaging.schemas.config.impl.RawSchemaConfig
 io.mapsmessaging.schemas.config.impl.XmlSchemaConfig
+io.mapsmessaging.schemas.config.impl.CbcSchemaConfig

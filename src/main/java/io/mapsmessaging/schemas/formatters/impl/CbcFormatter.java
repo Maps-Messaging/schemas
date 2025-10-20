@@ -26,6 +26,7 @@ import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.CbcSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.cbc.BitReader;
 import io.mapsmessaging.schemas.config.impl.cbc.BitWriter;
+import io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
@@ -108,7 +109,6 @@ public class CbcFormatter extends MessageFormatter {
       ParsedObject parsed = new MapResolver(map);
       return new StructuredResolver(parsed, map);
     } catch (Exception e) {
-      e.printStackTrace();
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
       return new DefaultParser(payload);
     }
@@ -177,49 +177,58 @@ public class CbcFormatter extends MessageFormatter {
 
     String t = f.getType().toLowerCase();
     switch (t) {
-      case "struct": {
-        Map<String, Object> m = new LinkedHashMap<>();
-        if (f.getFields() != null) {
-          for (io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification child : f.getFields()) {
-            Object cv = readField(c, child);
-            if (cv != null) m.put(child.getName(), cv);
-          }
-        }
-        return m;
+      case "struct" -> {
+        return readStruct(f, c);
       }
-      case "uint":
-      case "bitmask": {
+      case "uint", "bitmask" -> {
         long raw = c.readUnsigned(reqSizeBits(f));
         return applyDecalcUint(raw, f);
       }
-      case "int": {
+      case "int" -> {
         long raw = c.readSigned(reqSizeBits(f));
         return applyDecalcInt(raw, f);
       }
-      case "string": {
-        boolean fixed = Boolean.TRUE.equals(f.getFixed());
-        int size = f.getSize();
-        if (fixed) {
-          byte[] data = c.readBytes(size);
-          int end = size;
-          while (end > 0 && data[end - 1] == 0) end--;
-          return new String(data, 0, end, StandardCharsets.US_ASCII);
-        } else {
-          int len = (int) c.readUnsigned(8);
-          byte[] data = c.readBytes(len);
-          return new String(data, StandardCharsets.US_ASCII);
-        }
+      case "string" -> {
+        return readString(f, c);
       }
+      case "data" -> {
+        return readData(f, c);
+      }
+      default -> throw new IllegalArgumentException("Unsupported CBC type in decode: " + f.getType());
+    }
+  }
 
-      case "data": {
-        if (!Boolean.TRUE.equals(f.getFixed())) {
-          throw new IllegalArgumentException("data with fixed=false not supported without length semantics");
-        }
-        int n = reqSizeBits(f) / 8;
-        return c.readBytes(n);
+  private Map<String, Object> readStruct(FieldSpecification f, BitReader c) {
+    Map<String, Object> m = new LinkedHashMap<>();
+    if (f.getFields() != null) {
+      for (io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification child : f.getFields()) {
+        Object cv = readField(c, child);
+        if (cv != null) m.put(child.getName(), cv);
       }
-      default:
-        throw new IllegalArgumentException("Unsupported CBC type in decode: " + f.getType());
+    }
+    return m;
+  }
+
+  private byte[] readData(FieldSpecification f, BitReader c) {
+    if (!Boolean.TRUE.equals(f.getFixed())) {
+      throw new IllegalArgumentException("data with fixed=false not supported without length semantics");
+    }
+    int n = reqSizeBits(f) / 8;
+    return c.readBytes(n);
+  }
+
+  private String readString(FieldSpecification f, BitReader c) {
+    boolean fixed = Boolean.TRUE.equals(f.getFixed());
+    int size = f.getSize();
+    if (fixed) {
+      byte[] data = c.readBytes(size);
+      int end = size;
+      while (end > 0 && data[end - 1] == 0) end--;
+      return new String(data, 0, end, StandardCharsets.US_ASCII);
+    } else {
+      int len = (int) c.readUnsigned(8);
+      byte[] data = c.readBytes(len);
+      return new String(data, StandardCharsets.US_ASCII);
     }
   }
 
@@ -230,14 +239,7 @@ public class CbcFormatter extends MessageFormatter {
   }
 
   private Number applyDecalcUint(long raw, io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f) {
-    // decalc is optional; supports "v/const" or "v*const"
-    String expr = f.getDecalc();
-    if (expr == null) return raw;
-    double d = raw;
-    Double out = evalDecalc(expr, d);
-    // choose integer if exact
-    long li = (long) out.doubleValue();
-    return (out == li) ? li : out;
+    return applyDecalcInt(raw, f);
   }
 
   private Number applyDecalcInt(long raw, io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f) {
@@ -295,69 +297,67 @@ public class CbcFormatter extends MessageFormatter {
 
     String t = f.getType().toLowerCase();
     switch (t) {
-      case "struct": {
-        if (!(value instanceof Map)) {
-          if (value == null) return; // already handled as optional
-          throw new IllegalArgumentException("Struct '" + f.getName() + "' expects Map value");
-        }
-        Map<String, Object> map = (Map<String, Object>) value;
-        if (f.getFields() != null) {
-          for (io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification child : f.getFields()) {
-            writeField(w, child, map.get(child.getName()));
-          }
-        }
-        return;
-      }
-      case "uint":
-      case "bitmask": {
+      case "struct" -> writeStruct(f, w, value);
+      case "uint", "bitmask" -> {
         long raw = toUintRaw(value, f);
         w.writeUnsigned(raw, reqSizeBits(f));
-        return;
       }
-      case "int": {
+      case "int" -> {
         long raw = toIntRaw(value, f);
         w.writeSigned(raw, reqSizeBits(f));
-        return;
       }
+      case "string" -> writeString(f, w, value);
+      case "data" -> writeData(f, w, value);
+      default -> throw new IllegalArgumentException("Unsupported CBC type in encode: " + f.getType());
+    }
+  }
 
-      case "string": {
-        boolean fixed = Boolean.TRUE.equals(f.getFixed());
-        int size = f.getSize();
-        String s = Objects.toString(value, "");
-        byte[] ascii = s.getBytes(StandardCharsets.US_ASCII);
-        if (fixed) {
-          byte[] out = new byte[size];
-          System.arraycopy(ascii, 0, out, 0, Math.min(ascii.length, size));
-          w.writeRawBytes(out);
-        } else {
-          int len = Math.min(ascii.length, size);
-          w.writeUnsigned(len, 8);           // length prefix
-          for (int i = 0; i < len; i++) {
-            w.writeUnsigned(ascii[i] & 0x7F, 8);
-          }
-        }
-        return;
+  private void writeStruct(FieldSpecification f, BitWriter w, Object value) {
+    if (!(value instanceof Map)) {
+      if (value == null) return; // already handled as optional
+      throw new IllegalArgumentException("Struct '" + f.getName() + "' expects Map value");
+    }
+    Map<String, Object> map = (Map<String, Object>) value;
+    if (f.getFields() != null) {
+      for (FieldSpecification child : f.getFields()) {
+        writeField(w, child, map.get(child.getName()));
       }
+    }
+  }
 
-      case "data": { // raw bytes
-        int n = reqSizeBits(f) / 8;
-        if (!Boolean.TRUE.equals(f.getFixed())) {
-          throw new IllegalArgumentException("data with fixed=false not supported without length semantics");
-        }
-        if (!(value instanceof byte[] bytes)) {
-          throw new IllegalArgumentException("Field '" + f.getName() + "' expects byte[]");
-        }
-        if (bytes.length != n) {
-          byte[] out = new byte[n];
-          System.arraycopy(bytes, 0, out, 0, Math.min(bytes.length, n));
-          w.writeRawBytes(out);
-        } else {
-          w.writeRawBytes(bytes);
-        }
-        return;
+
+  private void writeString(FieldSpecification f, BitWriter w, Object value) {
+    boolean fixed = Boolean.TRUE.equals(f.getFixed());
+    int size = f.getSize();
+    String s = Objects.toString(value, "");
+    byte[] ascii = s.getBytes(StandardCharsets.US_ASCII);
+    if (fixed) {
+      byte[] out = new byte[size];
+      System.arraycopy(ascii, 0, out, 0, Math.min(ascii.length, size));
+      w.writeRawBytes(out);
+    } else {
+      int len = Math.min(ascii.length, size);
+      w.writeUnsigned(len, 8);           // length prefix
+      for (int i = 0; i < len; i++) {
+        w.writeUnsigned(ascii[i] & 0x7F, 8);
       }
-      default:
-        throw new IllegalArgumentException("Unsupported CBC type in encode: " + f.getType());
+    }
+  }
+
+  private void writeData(FieldSpecification f, BitWriter w, Object value) {
+    int n = reqSizeBits(f) / 8;
+    if (!Boolean.TRUE.equals(f.getFixed())) {
+      throw new IllegalArgumentException("data with fixed=false not supported without length semantics");
+    }
+    if (!(value instanceof byte[] bytes)) {
+      throw new IllegalArgumentException("Field '" + f.getName() + "' expects byte[]");
+    }
+    if (bytes.length != n) {
+      byte[] out = new byte[n];
+      System.arraycopy(bytes, 0, out, 0, Math.min(bytes.length, n));
+      w.writeRawBytes(out);
+    } else {
+      w.writeRawBytes(bytes);
     }
   }
 

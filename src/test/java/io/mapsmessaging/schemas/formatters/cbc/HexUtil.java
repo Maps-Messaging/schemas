@@ -18,10 +18,28 @@
  *
  */
 
-package io.mapsmessaging.schemas.config.impl.cbc;
+package io.mapsmessaging.schemas.formatters.cbc;
 
-public enum CrcType {
-  NONE,
-  CRC16_X25,
-  CRC32_IEEE
+public final class HexUtil {
+  private HexUtil() {
+  }
+
+  public static byte[] parseHex(String hex) {
+    String s = hex.replaceAll("[^0-9A-Fa-f]", "");
+    int len = s.length();
+    if ((len & 1) == 1) throw new IllegalArgumentException("Odd hex length");
+    byte[] out = new byte[len / 2];
+    for (int i = 0; i < len; i += 2) {
+      out[i / 2] = (byte) Integer.parseInt(s.substring(i, i + 2), 16);
+    }
+    return out;
+  }
+
+  public static String toHex(byte[] bytes) {
+    StringBuilder sb = new StringBuilder(bytes.length * 2);
+    for (byte b : bytes) {
+      sb.append(String.format("%02X", b));
+    }
+    return sb.toString();
+  }
 }

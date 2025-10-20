@@ -24,18 +24,16 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.CbcSchemaConfig;
-import io.mapsmessaging.schemas.config.impl.cbc.BitCursor;
-import io.mapsmessaging.schemas.config.impl.cbc.CrcType;
-import io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification;
+import io.mapsmessaging.schemas.config.impl.cbc.BitReader;
+import io.mapsmessaging.schemas.config.impl.cbc.BitWriter;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
-import io.mapsmessaging.schemas.formatters.impl.cbc.PresenceEvaluator;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
 
@@ -64,22 +62,45 @@ public class CbcFormatter extends MessageFormatter {
     if (schema == null || schema.getFieldSpecificationList() == null) {
       return Map.of();
     }
-    Map<String, Object> format = new LinkedHashMap<>();
-    for (FieldSpecification f : schema.getFieldSpecificationList()) {
-      Map<String, Object> fieldInfo = new LinkedHashMap<>();
-      fieldInfo.put("primitiveType", f.getPrimitiveType().name());
-      fieldInfo.put("bitWidth", f.getBitWidth());
-      fieldInfo.put("signed", f.isSigned());
-      if (f.getScale() != 1.0d) fieldInfo.put("scale", f.getScale());
-      if (f.getOffset() != 0.0d) fieldInfo.put("offset", f.getOffset());
-      if (f.getUnit() != null) fieldInfo.put("unit", f.getUnit());
-      if (f.getPresenceCondition() != null) fieldInfo.put("presence", f.getPresenceCondition());
-      if (f.isByteAlignAfter()) fieldInfo.put("byteAlignAfter", true);
-      format.put(f.getFieldName(), fieldInfo);
+    Map<String, Object> out = new LinkedHashMap<>();
+    for (io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f : schema.getFieldSpecificationList()) {
+      out.put(f.getName(), toFieldMap(f));
     }
-    return format;
+    return out;
   }
 
+  private static Map<String, Object> toFieldMap(io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f) {
+    Map<String, Object> m = new LinkedHashMap<>();
+    m.put("type", f.getType());
+    if (f.getSize() != null) m.put("size", f.getSize());
+    if (Boolean.TRUE.equals(f.getOptional())) m.put("optional", true);
+    if (!Boolean.TRUE.equals(f.getFixed())) m.put("fixed", false);
+    if (f.getDescription() != null) m.put("description", f.getDescription());
+    if (f.getDecalc() != null) m.put("decalc", f.getDecalc());
+    if (f.getEncalc() != null) m.put("encalc", f.getEncalc());
+    if (f.getMin() != null) m.put("min", f.getMin());
+    if (f.getMax() != null) m.put("max", f.getMax());
+
+    if (f.getEnumTable() != null && !f.getEnumTable().isEmpty()) {
+      Map<String, String> e = new LinkedHashMap<>();
+      f.getEnumTable().entrySet().stream()
+          .sorted(Map.Entry.comparingByKey())
+          .forEach(en -> e.put(String.valueOf(en.getKey()), en.getValue()));
+      m.put("enum", e);
+    }
+
+    if (f.getFields() != null && !f.getFields().isEmpty()) {
+      List<Map<String, Object>> children = new ArrayList<>();
+      for (io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification c : f.getFields()) {
+        Map<String, Object> child = new LinkedHashMap<>();
+        child.put("name", c.getName());
+        child.putAll(toFieldMap(c));
+        children.add(child);
+      }
+      m.put("fields", children);
+    }
+    return m;
+  }
   @Override
   public ParsedObject parse(byte[] payload) {
     try {
@@ -87,6 +108,7 @@ public class CbcFormatter extends MessageFormatter {
       ParsedObject parsed = new MapResolver(map);
       return new StructuredResolver(parsed, map);
     } catch (Exception e) {
+      e.printStackTrace();
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
       return new DefaultParser(payload);
     }
@@ -109,81 +131,304 @@ public class CbcFormatter extends MessageFormatter {
     return new CbcFormatter(c);
   }
 
-  private Map<String, Object> decode(byte[] data) {
+  @SuppressWarnings("unchecked")
+  public byte[] toBytes(Object data) {
     if (schema == null) {
       throw new IllegalStateException("CBC SchemaConfig not set on formatter");
     }
+    final Map<String, Object> values;
+    if (data instanceof Map<?, ?> m) {
+      values = (Map<String, Object>) m;
+    } else if (data instanceof JsonObject json) {
+      values = new Gson().fromJson(json, Map.class);
+    } else {
+      throw new IllegalArgumentException("Unsupported data type for CBC encode: " + data);
+    }
+    return encode(values);
+  }
 
-    BitCursor cursor = new BitCursor(data, schema.isLittleEndian());
+  // ------------------------ Decode ------------------------
+  private Map<String, Object> decode(byte[] data) {
+    if (schema == null) throw new IllegalStateException("CBC SchemaConfig not set on formatter");
+
+    BitReader cursor = new BitReader(data);
     Map<String, Object> out = new LinkedHashMap<>();
 
-    if (schema.getMessageTypeId() > 0) {
-      out.put("messageTypeId", cursor.readUnsigned(16));
+    // header
+    if (schema.getMessageKey() > 0) {
+      out.put("messageKey", cursor.readUnsigned(16));
     }
 
-    for (FieldSpecification f : schema.getFieldSpecificationList()) {
-      if (!PresenceEvaluator.isPresent(f, out)) {
-        continue;
-      }
-
-      Object value;
-      int bits = f.getBitWidth();
-      boolean signed = f.isSigned();
-
-      switch (f.getPrimitiveType()) {
-        case BOOLEAN: {
-          value = cursor.readUnsigned(1) != 0L;
-          break;
-        }
-        case UNSIGNED_INTEGER: {
-          long v = cursor.readUnsigned(bits);
-          value = applyScale(v, f);
-          break;
-        }
-        case SIGNED_INTEGER: {
-          long v = signed ? cursor.readSigned(bits) : cursor.readUnsigned(bits);
-          value = applyScale(v, f);
-          break;
-        }
-        case FLOAT_FIXED: {
-          long raw = signed ? cursor.readSigned(bits) : cursor.readUnsigned(bits);
-          value = (raw * f.getScale()) + f.getOffset();
-          break;
-        }
-        case BYTES: {
-          int byteCount = bits / 8;
-          value = cursor.readBytes(byteCount);
-          break;
-        }
-        case RESERVED: {
-          cursor.skip(bits);
-          value = null;
-          break;
-        }
-        default:
-          throw new IllegalArgumentException("Unsupported primitive type: " + f.getPrimitiveType());
-      }
-
-      if (value != null) {
-        out.put(f.getFieldName(), value);
-      }
-      if (f.isByteAlignAfter()) {
-        cursor.alignToNextByte();
-      }
+    for (io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f : schema.getFieldSpecificationList()) {
+      Object v = readField(cursor, f);
+      if (v != null) out.put(f.getName(), v);
     }
 
-    if (schema.isIncludeHeaderChecksum() && schema.getChecksumType() != CrcType.NONE) {
-      // Placeholder: validation can be added if checksum position is specified in schema
-      // Crc.computeChecksum(data, schema.getChecksumType());
-    }
-
+    // CRC handling deferred until placement defined in schema
     return out;
   }
 
-  private Object applyScale(long v, FieldSpecification f) {
-    if (f.getScale() != 1.0d || f.getOffset() != 0.0d) {
-      return (v * f.getScale()) + f.getOffset();
+  private Object readField(BitReader c, io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f) {
+    boolean present;
+    if (Boolean.TRUE.equals(f.getOptional())) {
+      present = c.readUnsigned(1) == 1L;
+      if (!present) return null;
     }
-    return v;
+
+    String t = f.getType().toLowerCase();
+    switch (t) {
+      case "struct": {
+        Map<String, Object> m = new LinkedHashMap<>();
+        if (f.getFields() != null) {
+          for (io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification child : f.getFields()) {
+            Object cv = readField(c, child);
+            if (cv != null) m.put(child.getName(), cv);
+          }
+        }
+        return m;
+      }
+      case "uint":
+      case "bitmask": {
+        long raw = c.readUnsigned(reqSizeBits(f));
+        return applyDecalcUint(raw, f);
+      }
+      case "int": {
+        long raw = c.readSigned(reqSizeBits(f));
+        return applyDecalcInt(raw, f);
+      }
+      case "string": {
+        boolean fixed = Boolean.TRUE.equals(f.getFixed());
+        int size = f.getSize();
+        if (fixed) {
+          byte[] data = c.readBytes(size);
+          int end = size;
+          while (end > 0 && data[end - 1] == 0) end--;
+          return new String(data, 0, end, StandardCharsets.US_ASCII);
+        } else {
+          int len = (int) c.readUnsigned(8);
+          byte[] data = c.readBytes(len);
+          return new String(data, StandardCharsets.US_ASCII);
+        }
+      }
+
+      case "data": {
+        if (!Boolean.TRUE.equals(f.getFixed())) {
+          throw new IllegalArgumentException("data with fixed=false not supported without length semantics");
+        }
+        int n = reqSizeBits(f) / 8;
+        return c.readBytes(n);
+      }
+      default:
+        throw new IllegalArgumentException("Unsupported CBC type in decode: " + f.getType());
+    }
   }
+
+  private static int reqSizeBits(io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f) {
+    Integer s = f.getSize();
+    if (s == null) throw new IllegalStateException("Field '" + f.getName() + "' requires size");
+    return s;
+  }
+
+  private Number applyDecalcUint(long raw, io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f) {
+    // decalc is optional; supports "v/const" or "v*const"
+    String expr = f.getDecalc();
+    if (expr == null) return raw;
+    double d = raw;
+    Double out = evalDecalc(expr, d);
+    // choose integer if exact
+    long li = (long) out.doubleValue();
+    return (out == li) ? li : out;
+  }
+
+  private Number applyDecalcInt(long raw, io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f) {
+    String expr = f.getDecalc();
+    if (expr == null) return raw;
+    double d = raw;
+    Double out = evalDecalc(expr, d);
+    long li = (long) out.doubleValue();
+    return (out == li) ? li : out;
+  }
+
+  private static Double evalDecalc(String expr, double v) {
+    String e = expr.trim();
+    if (e.startsWith("v/")) {
+      double denom = Double.parseDouble(e.substring(2).trim());
+      return v / denom;
+    } else if (e.startsWith("v*")) {
+      double mult = Double.parseDouble(e.substring(2).trim());
+      return v * mult;
+    } else if (e.startsWith("v+")) {
+      double add = Double.parseDouble(e.substring(2).trim());
+      return v + add;
+    } else if (e.startsWith("v-")) {
+      double sub = Double.parseDouble(e.substring(2).trim());
+      return v - sub;
+    }
+    throw new IllegalArgumentException("Unsupported decalc expression: " + expr);
+  }
+
+  // ------------------------ Encode ------------------------
+  @SuppressWarnings("unchecked")
+  private byte[] encode(Map<String, Object> fieldValues) {
+    BitWriter w = new BitWriter();
+
+    if (schema.getMessageKey() > 0) {
+      w.writeUnsigned(schema.getMessageKey(), 16);
+    }
+
+    for (io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f : schema.getFieldSpecificationList()) {
+      writeField(w, f, fieldValues.get(f.getName()));
+    }
+
+    // CRC append deferred until placement defined in schema
+    return w.toByteArray();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void writeField(BitWriter w, io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f, Object value) {
+    boolean present = value != null;
+
+    if (Boolean.TRUE.equals(f.getOptional())) {
+      w.writeUnsigned(present ? 1 : 0, 1);
+      if (!present) return;
+    }
+
+    String t = f.getType().toLowerCase();
+    switch (t) {
+      case "struct": {
+        if (!(value instanceof Map)) {
+          if (value == null) return; // already handled as optional
+          throw new IllegalArgumentException("Struct '" + f.getName() + "' expects Map value");
+        }
+        Map<String, Object> map = (Map<String, Object>) value;
+        if (f.getFields() != null) {
+          for (io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification child : f.getFields()) {
+            writeField(w, child, map.get(child.getName()));
+          }
+        }
+        return;
+      }
+      case "uint":
+      case "bitmask": {
+        long raw = toUintRaw(value, f);
+        w.writeUnsigned(raw, reqSizeBits(f));
+        return;
+      }
+      case "int": {
+        long raw = toIntRaw(value, f);
+        w.writeSigned(raw, reqSizeBits(f));
+        return;
+      }
+
+      case "string": {
+        boolean fixed = Boolean.TRUE.equals(f.getFixed());
+        int size = f.getSize();
+        String s = Objects.toString(value, "");
+        byte[] ascii = s.getBytes(StandardCharsets.US_ASCII);
+        if (fixed) {
+          byte[] out = new byte[size];
+          System.arraycopy(ascii, 0, out, 0, Math.min(ascii.length, size));
+          w.writeRawBytes(out);
+        } else {
+          int len = Math.min(ascii.length, size);
+          w.writeUnsigned(len, 8);           // length prefix
+          for (int i = 0; i < len; i++) {
+            w.writeUnsigned(ascii[i] & 0x7F, 8);
+          }
+        }
+        return;
+      }
+
+      case "data": { // raw bytes
+        int n = reqSizeBits(f) / 8;
+        if (!Boolean.TRUE.equals(f.getFixed())) {
+          throw new IllegalArgumentException("data with fixed=false not supported without length semantics");
+        }
+        if (!(value instanceof byte[] bytes)) {
+          throw new IllegalArgumentException("Field '" + f.getName() + "' expects byte[]");
+        }
+        if (bytes.length != n) {
+          byte[] out = new byte[n];
+          System.arraycopy(bytes, 0, out, 0, Math.min(bytes.length, n));
+          w.writeRawBytes(out);
+        } else {
+          w.writeRawBytes(bytes);
+        }
+        return;
+      }
+      default:
+        throw new IllegalArgumentException("Unsupported CBC type in encode: " + f.getType());
+    }
+  }
+
+  private long toUintRaw(Object v, io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f) {
+    if (!(v instanceof Number n)) throw new IllegalArgumentException("Field '" + f.getName() + "' expects numeric");
+    double dv = n.doubleValue();
+    String expr = f.getEncalc();
+    if (expr != null) dv = evalEncalc(expr, dv);
+    if (dv < 0) dv = 0; // clip at 0 for uint
+    long raw = Math.round(dv);
+    int bits = reqSizeBits(f);
+    long mask = (bits == 64) ? -1L : ((1L << bits) - 1L);
+    return raw & mask;
+  }
+
+  private long toIntRaw(Object v, io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f) {
+    if (!(v instanceof Number n)) throw new IllegalArgumentException("Field '" + f.getName() + "' expects numeric");
+    if (n instanceof Long l) {
+      String expr = f.getEncalc();
+      if (expr != null) {
+        return Math.round(evalEncalc(expr, l));
+      }
+      return l;
+    } else if (n instanceof Integer i) {
+      String expr = f.getEncalc();
+      if (expr != null) {
+        return Math.round(evalEncalc(expr, i));
+      }
+      return i;
+    } else {
+      double dv = n.doubleValue();
+      String expr = f.getEncalc();
+      if (expr != null) dv = evalEncalc(expr, dv);
+      return Math.round(dv);
+    }
+  }
+
+  private static double evalEncalc(String expr, long v) {
+    String e = expr.trim();
+    if (e.startsWith("v/")) {
+      double denom = Double.parseDouble(e.substring(2).trim());
+      return v / denom;
+    } else if (e.startsWith("v*")) {
+      double mult = Double.parseDouble(e.substring(2).trim());
+      return v * mult;
+    } else if (e.startsWith("v+")) {
+      double add = Double.parseDouble(e.substring(2).trim());
+      return v + add;
+    } else if (e.startsWith("v-")) {
+      double sub = Double.parseDouble(e.substring(2).trim());
+      return v - sub;
+    }
+    throw new IllegalArgumentException("Unsupported encalc expression: " + expr);
+  }
+
+  private static double evalEncalc(String expr, double v) {
+    String e = expr.trim();
+    if (e.startsWith("v/")) {
+      double denom = Double.parseDouble(e.substring(2).trim());
+      return v / denom;
+    } else if (e.startsWith("v*")) {
+      double mult = Double.parseDouble(e.substring(2).trim());
+      return v * mult;
+    } else if (e.startsWith("v+")) {
+      double add = Double.parseDouble(e.substring(2).trim());
+      return v + add;
+    } else if (e.startsWith("v-")) {
+      double sub = Double.parseDouble(e.substring(2).trim());
+      return v - sub;
+    }
+    throw new IllegalArgumentException("Unsupported encalc expression: " + expr);
+  }
+
 }

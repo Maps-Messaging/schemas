@@ -21,9 +21,7 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.CbcSchemaConfig;
-import io.mapsmessaging.schemas.config.impl.cbc.CrcType;
 import io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification;
-import io.mapsmessaging.schemas.config.impl.cbc.PrimitiveType;
 import org.junit.jupiter.api.Assertions;
 
 import java.io.IOException;
@@ -44,29 +42,21 @@ class TestCbcConfig extends GeneralBaseTest {
     props.put("mimeType", "application/x-cbc");
 
     // Optional CBC-level settings
-    props.put("littleEndian", true);
-    props.put("includeHeaderChecksum", false);
-    props.put("checksumType", "NONE");
-    props.put("messageTypeId", 0);
+    props.put("message", 0);
 
     // Minimal valid field list: one unsigned 16-bit field, then byte-align
     List<Map<String, Object>> fields = new ArrayList<>();
     Map<String, Object> f1 = new LinkedHashMap<>();
-    f1.put("fieldName", "sensorId");
-    f1.put("primitiveType", "UNSIGNED_INTEGER");
-    f1.put("bitWidth", 16);
-    f1.put("signed", false);
-    f1.put("byteAlignAfter", true);
+    f1.put("name", "sensorId");
+    f1.put("type", "uint");
+    f1.put("size", 16);
     fields.add(f1);
 
     // Second field: signed 12-bit temperature with scale/offset
     Map<String, Object> f2 = new LinkedHashMap<>();
-    f2.put("fieldName", "temperatureC");
-    f2.put("primitiveType", "SIGNED_INTEGER");
-    f2.put("bitWidth", 12);
-    f2.put("signed", true);
-    f2.put("scale", 0.1d);
-    f2.put("offset", 0.0d);
+    f2.put("name", "temperatureC");
+    f2.put("type", "int");
+    f2.put("size", 12);
     fields.add(f2);
 
     props.put("fields", fields);
@@ -78,32 +68,24 @@ class TestCbcConfig extends GeneralBaseTest {
     CbcSchemaConfig config = new CbcSchemaConfig();
     setBaseConfig(config);
     // CBC defaults
-    config.setLittleEndian(true);
-    config.setIncludeHeaderChecksum(false);
-    config.setChecksumType(CrcType.NONE);
-    config.setMessageTypeId(0);
+    config.setMessageKey(0);
 
     // Mirror the field list used in getProperties()
     List<FieldSpecification> list = new ArrayList<>();
 
     FieldSpecification sensorId =
         FieldSpecification.builder()
-            .fieldName("sensorId")
-            .primitiveType(PrimitiveType.UNSIGNED_INTEGER)
-            .bitWidth(16)
-            .signed(false)
-            .byteAlignAfter(true)
+            .name("sensorId")
+            .type("uint")
+            .size(16)
             .build();
     list.add(sensorId);
 
     FieldSpecification temp =
         FieldSpecification.builder()
-            .fieldName("temperatureC")
-            .primitiveType(PrimitiveType.SIGNED_INTEGER)
-            .bitWidth(12)
-            .signed(true)
-            .scale(0.1d)
-            .offset(0.0d)
+            .name("temperatureC")
+            .type("uint")
+            .size(12)
             .build();
     list.add(temp);
 
@@ -117,10 +99,8 @@ class TestCbcConfig extends GeneralBaseTest {
     Assertions.assertInstanceOf(CbcSchemaConfig.class, schemaConfig);
     CbcSchemaConfig c = (CbcSchemaConfig) schemaConfig;
     Assertions.assertEquals("application/x-cbc", c.getMimeType());
-    Assertions.assertTrue(c.isLittleEndian());
-    Assertions.assertEquals(CrcType.NONE, c.getChecksumType());
     Assertions.assertNotNull(c.getFieldSpecificationList());
     Assertions.assertFalse(c.getFieldSpecificationList().isEmpty());
-    Assertions.assertEquals("sensorId", c.getFieldSpecificationList().get(0).getFieldName());
+    Assertions.assertEquals("sensorId", c.getFieldSpecificationList().get(0).getName());
   }
 }

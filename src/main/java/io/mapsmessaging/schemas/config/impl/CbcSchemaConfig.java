@@ -20,10 +20,8 @@
 // File: src/main/java/io/mapsmessaging/schemas/config/impl/CbcSchemaConfig.java
 package io.mapsmessaging.schemas.config.impl;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.config.impl.cbc.CrcType;
 import io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -32,6 +30,7 @@ import lombok.Setter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,19 +48,19 @@ public class CbcSchemaConfig extends SchemaConfig {
 
   @Getter
   @Setter
-  private boolean littleEndian = true;
+  private String name;
 
   @Getter
   @Setter
-  private boolean includeHeaderChecksum = false;
+  private String direction;
 
   @Getter
   @Setter
-  private CrcType checksumType = CrcType.NONE;
+  private String description;
 
   @Getter
   @Setter
-  private int messageTypeId = 0;
+  private int messageKey = 0;
 
   @Getter
   @Setter
@@ -77,28 +76,101 @@ public class CbcSchemaConfig extends SchemaConfig {
     if (getMimeType() == null || getMimeType().isEmpty()) {
       setMimeType(DEFAULT_MIME);
     }
-    if (config.containsKey("littleEndian")) {
-      Object value = config.get("littleEndian");
-      littleEndian = (value instanceof Boolean) ? (Boolean) value : Boolean.parseBoolean(String.valueOf(value));
+    parseSchema(config);
+  }
+
+  private static Map<String, Object> toObjectMap(Map<String, JsonElement> source) {
+    Map<String, Object> out = new LinkedHashMap<>();
+    for (Map.Entry<String, JsonElement> entry : source.entrySet()) {
+      out.put(entry.getKey(), fromJsonElement(entry.getValue()));
     }
-    if (config.containsKey("includeHeaderChecksum")) {
-      Object value = config.get("includeHeaderChecksum");
-      includeHeaderChecksum = (value instanceof Boolean) ? (Boolean) value : Boolean.parseBoolean(String.valueOf(value));
-    }
-    if (config.containsKey("checksumType")) {
-      Object value = config.get("checksumType");
-      try {
-        checksumType = CrcType.valueOf(String.valueOf(value));
-      } catch (IllegalArgumentException ignored) {
-        checksumType = CrcType.NONE;
+    return out;
+  }
+
+  private static Object fromJsonElement(JsonElement e) {
+    if (e == null || e.isJsonNull()) return null;
+    if (e.isJsonPrimitive()) {
+      JsonPrimitive p = e.getAsJsonPrimitive();
+      if (p.isBoolean()) return p.getAsBoolean();
+      if (p.isNumber()) {
+        Number n = p.getAsNumber();
+        // choose integer vs double sensibly
+        double d = n.doubleValue();
+        long l = n.longValue();
+        return (d == (double) l) ? l : d;
       }
+      return p.getAsString();
     }
-    if (config.containsKey("messageTypeId")) {
-      Object value = config.get("messageTypeId");
+    if (e.isJsonArray()) {
+      List<Object> list = new ArrayList<>();
+      for (JsonElement el : e.getAsJsonArray()) list.add(fromJsonElement(el));
+      return list;
+    }
+    if (e.isJsonObject()) {
+      Map<String, Object> map = new LinkedHashMap<>();
+      for (Map.Entry<String, JsonElement> en : e.getAsJsonObject().entrySet()) {
+        map.put(en.getKey(), fromJsonElement(en.getValue()));
+      }
+      return map;
+    }
+    return null;
+  }
+
+  public void setSchema(String schema) {
+    JsonObject jsonSchema = new JsonParser().parse(schema).getAsJsonObject();
+    parseSchema(toObjectMap(jsonSchema.asMap()));
+  }
+
+  @Override
+  public byte[] getSchemaDefinition() {
+    try {
+      return packData().toString().getBytes(StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  protected JsonObject packData() throws IOException {
+    JsonObject schemaJson = new JsonObject();
+    super.packData(schemaJson);
+    schemaJson.addProperty(MIME_TYPE, getMimeType());
+    schemaJson.addProperty("direction", direction);
+    schemaJson.addProperty("name", name);
+    schemaJson.addProperty("description", description);
+    schemaJson.addProperty("messageKey", messageKey);
+    schemaJson.add("fields", toFieldsJsonArray());
+    return schemaJson;
+  }
+
+  @Override
+  protected SchemaConfig getInstance(Map<String, Object> config) {
+    return new CbcSchemaConfig(config);
+  }
+
+  private void parseSchema(Map<String, Object> config) {
+    if (config.containsKey("direction")) {
+      Object value = config.get("direction");
+      direction = String.valueOf(value);
+    }
+    if (config.containsKey("name")) {
+      Object value = config.get("name");
+      name = String.valueOf(value);
+    }
+    if (config.containsKey("description")) {
+      Object value = config.get("description");
+      description = String.valueOf(value);
+    }
+    if (config.containsKey("messageKey")) {
+      Object value = config.get("messageKey");
       try {
-        messageTypeId = Integer.parseInt(String.valueOf(value));
+        if (value instanceof Double) {
+          messageKey = ((Double) value).intValue();
+        } else {
+          messageKey = Integer.parseInt(String.valueOf(value));
+        }
       } catch (NumberFormatException ignored) {
-        messageTypeId = 0;
+        messageKey = 0;
       }
     }
     if (config.containsKey("fields")) {
@@ -115,38 +187,6 @@ public class CbcSchemaConfig extends SchemaConfig {
     }
   }
 
-  @Override
-  public byte[] getSchemaDefinition() {
-    // Return the schema layout as JSON bytes for portability
-    JsonObject jsonObject = new JsonObject();
-    jsonObject.addProperty("type", NAME);
-    jsonObject.addProperty("littleEndian", littleEndian);
-    jsonObject.addProperty("includeHeaderChecksum", includeHeaderChecksum);
-    jsonObject.addProperty("checksumType", checksumType.name());
-    jsonObject.addProperty("messageTypeId", messageTypeId);
-    jsonObject.add("fields", toFieldsJsonArray());
-    return jsonObject.toString().getBytes(StandardCharsets.UTF_8);
-  }
-
-  @Override
-  protected JsonObject packData() throws IOException {
-    JsonObject schemaJson = new JsonObject();
-    super.packData(schemaJson);
-    schemaJson.addProperty(MIME_TYPE, getMimeType());
-    schemaJson.addProperty("littleEndian", littleEndian);
-    schemaJson.addProperty("includeHeaderChecksum", includeHeaderChecksum);
-    schemaJson.addProperty("checksumType", checksumType.name());
-    schemaJson.addProperty("messageTypeId", messageTypeId);
-    schemaJson.add("fields", toFieldsJsonArray());
-    // Base class will wrap this under { "schema": ... } and append common headers
-    return schemaJson;
-  }
-
-  @Override
-  protected SchemaConfig getInstance(Map<String, Object> config) {
-    return new CbcSchemaConfig(config);
-  }
-
   private JsonArray toFieldsJsonArray() {
     JsonArray array = new JsonArray();
     for (FieldSpecification fieldSpecification : fieldSpecificationList) {
@@ -154,4 +194,5 @@ public class CbcSchemaConfig extends SchemaConfig {
     }
     return array;
   }
+
 }

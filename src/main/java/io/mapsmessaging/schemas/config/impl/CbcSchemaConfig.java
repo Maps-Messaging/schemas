@@ -17,7 +17,7 @@
  *  limitations under the License.
  *
  */
-// File: src/main/java/io/mapsmessaging/schemas/config/impl/CbcSchemaConfig.java
+
 package io.mapsmessaging.schemas.config.impl;
 
 import com.google.gson.*;
@@ -29,12 +29,9 @@ import lombok.Setter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static io.mapsmessaging.schemas.config.Constants.MIME_TYPE;
+import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
 
 /**
  * Compact Binary Codec schema configuration.
@@ -43,12 +40,15 @@ import static io.mapsmessaging.schemas.config.Constants.MIME_TYPE;
 @Schema(name = "CbcSchemaConfig", description = "Schema describing a bit-packed Compact Binary Codec layout")
 public class CbcSchemaConfig extends SchemaConfig {
 
-  public static final String NAME = "cbc";
+  // ---- Constants ----
+  public static final String SCHEMA_NAME = "cbc";
   public static final String DEFAULT_MIME = "application/x-cbc";
 
-  @Getter
-  @Setter
-  private String name;
+  private static final String KEY_DIRECTION = "direction";
+  private static final String KEY_NAME = "name";
+  private static final String KEY_DESCRIPTION = "description";
+  private static final String KEY_MESSAGE_KEY = "messageKey";
+  private static final String KEY_FIELDS = "fields";
 
   @Getter
   @Setter
@@ -67,16 +67,17 @@ public class CbcSchemaConfig extends SchemaConfig {
   private List<FieldSpecification> fieldSpecificationList = new ArrayList<>();
 
   public CbcSchemaConfig() {
-    super(NAME);
+    super(SCHEMA_NAME);
     setMimeType(DEFAULT_MIME);
   }
 
   public CbcSchemaConfig(Map<String, Object> config) {
-    super(NAME, config);
+    super(SCHEMA_NAME, config);
     if (getMimeType() == null || getMimeType().isEmpty()) {
       setMimeType(DEFAULT_MIME);
     }
-    parseSchema(config);
+    Map<String, Object> map = (Map<String, Object>) config.get(SCHEMA);
+    parseSchema(map);
   }
 
   private static Map<String, Object> toObjectMap(Map<String, JsonElement> source) {
@@ -94,7 +95,6 @@ public class CbcSchemaConfig extends SchemaConfig {
       if (p.isBoolean()) return p.getAsBoolean();
       if (p.isNumber()) {
         Number n = p.getAsNumber();
-        // choose integer vs double sensibly
         double d = n.doubleValue();
         long l = n.longValue();
         return (d == (double) l) ? l : d;
@@ -117,7 +117,11 @@ public class CbcSchemaConfig extends SchemaConfig {
   }
 
   public void setSchema(String schema) {
-    JsonObject jsonSchema = new JsonParser().parse(schema).getAsJsonObject();
+    JsonObject jsonSchema = JsonParser.parseString(schema).getAsJsonObject();
+    parseSchema(toObjectMap(jsonSchema.asMap()));
+  }
+
+  protected void processJsonSchema(JsonObject jsonSchema) {
     parseSchema(toObjectMap(jsonSchema.asMap()));
   }
 
@@ -133,13 +137,14 @@ public class CbcSchemaConfig extends SchemaConfig {
   @Override
   protected JsonObject packData() throws IOException {
     JsonObject schemaJson = new JsonObject();
-    super.packData(schemaJson);
-    schemaJson.addProperty(MIME_TYPE, getMimeType());
-    schemaJson.addProperty("direction", direction);
-    schemaJson.addProperty("name", name);
-    schemaJson.addProperty("description", description);
-    schemaJson.addProperty("messageKey", messageKey);
-    schemaJson.add("fields", toFieldsJsonArray());
+    packData(schemaJson);
+    JsonObject schema = new JsonObject();
+    schema.addProperty(KEY_DIRECTION, direction);
+    schema.addProperty(KEY_NAME, name);
+    schema.addProperty(KEY_DESCRIPTION, description);
+    schema.addProperty(KEY_MESSAGE_KEY, messageKey);
+    schema.add(KEY_FIELDS, toFieldsJsonArray());
+    schemaJson.add(SCHEMA, schema);
     return schemaJson;
   }
 
@@ -149,23 +154,23 @@ public class CbcSchemaConfig extends SchemaConfig {
   }
 
   private void parseSchema(Map<String, Object> config) {
-    if (config.containsKey("direction")) {
-      Object value = config.get("direction");
+    if (config.containsKey(KEY_DIRECTION)) {
+      Object value = config.get(KEY_DIRECTION);
       direction = String.valueOf(value);
     }
-    if (config.containsKey("name")) {
-      Object value = config.get("name");
+    if (config.containsKey(KEY_NAME)) {
+      Object value = config.get(KEY_NAME);
       name = String.valueOf(value);
     }
-    if (config.containsKey("description")) {
-      Object value = config.get("description");
+    if (config.containsKey(KEY_DESCRIPTION)) {
+      Object value = config.get(KEY_DESCRIPTION);
       description = String.valueOf(value);
     }
-    if (config.containsKey("messageKey")) {
-      Object value = config.get("messageKey");
+    if (config.containsKey(KEY_MESSAGE_KEY)) {
+      Object value = config.get(KEY_MESSAGE_KEY);
       try {
-        if (value instanceof Double) {
-          messageKey = ((Double) value).intValue();
+        if (value instanceof Double d) {
+          messageKey = d.intValue();
         } else {
           messageKey = Integer.parseInt(String.valueOf(value));
         }
@@ -173,8 +178,8 @@ public class CbcSchemaConfig extends SchemaConfig {
         messageKey = 0;
       }
     }
-    if (config.containsKey("fields")) {
-      Object value = config.get("fields");
+    if (config.containsKey(KEY_FIELDS)) {
+      Object value = config.get(KEY_FIELDS);
       if (value instanceof List<?> list) {
         for (Object element : list) {
           if (element instanceof Map<?, ?> mapElement) {
@@ -195,4 +200,17 @@ public class CbcSchemaConfig extends SchemaConfig {
     return array;
   }
 
+  public static List<CbcSchemaConfig> parseSchema(String config) {
+    JsonObject jsonSchema = JsonParser.parseString(config).getAsJsonObject();
+    List<CbcSchemaConfig> list = new ArrayList<>();
+    JsonArray jsonArray = jsonSchema.getAsJsonArray("messages");
+    for (int i = 0; i < jsonArray.size(); i++) {
+      JsonObject jsonObject = jsonArray.get(i).getAsJsonObject();
+      CbcSchemaConfig cbcSchemaConfig = new CbcSchemaConfig();
+      cbcSchemaConfig.processJsonSchema(jsonObject);
+      cbcSchemaConfig.setUniqueId(UUID.randomUUID().toString());
+      list.add(cbcSchemaConfig);
+    }
+    return list;
+  }
 }

@@ -23,12 +23,15 @@ package io.mapsmessaging.schemas.config;
 import io.mapsmessaging.schemas.config.impl.CbcSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static io.mapsmessaging.schemas.formatters.cbc.TestCbcHeartbeatConformance.INMARSAT_HEARTBEAT_JSON;
 
 /**
  * Tests for CBC SchemaConfig using GeneralBaseTest harness.
@@ -39,10 +42,9 @@ class TestCbcConfig extends GeneralBaseTest {
   Map<String, Object> getProperties() {
     Map<String, Object> props = new LinkedHashMap<>();
     props.put("format", "cbc");                       // must match CbcSchemaConfig.TYPE
-    props.put("mimeType", "application/x-cbc");
-
+    Map<String, Object> schema = new LinkedHashMap<>();
     // Optional CBC-level settings
-    props.put("message", 0);
+    schema.put("message", 0);
 
     // Minimal valid field list: one unsigned 16-bit field, then byte-align
     List<Map<String, Object>> fields = new ArrayList<>();
@@ -59,7 +61,9 @@ class TestCbcConfig extends GeneralBaseTest {
     f2.put("size", 12);
     fields.add(f2);
 
-    props.put("fields", fields);
+    schema.put("fields", fields);
+
+    props.put("schema", schema);
     return props;
   }
 
@@ -102,5 +106,19 @@ class TestCbcConfig extends GeneralBaseTest {
     Assertions.assertNotNull(c.getFieldSpecificationList());
     Assertions.assertFalse(c.getFieldSpecificationList().isEmpty());
     Assertions.assertEquals("sensorId", c.getFieldSpecificationList().get(0).getName());
+  }
+
+  @Test
+  void testCompleteParseToList() throws IOException {
+    List<CbcSchemaConfig> configList = CbcSchemaConfig.parseSchema(INMARSAT_HEARTBEAT_JSON);
+    Assertions.assertNotNull(configList);
+    Assertions.assertFalse(configList.isEmpty());
+    for (CbcSchemaConfig config : configList) {
+      String packed = config.pack();
+      Assertions.assertNotNull(packed);
+      SchemaConfig reloaded = SchemaConfigFactory.getInstance().constructConfig(packed);
+      Assertions.assertNotNull(reloaded);
+      Assertions.assertInstanceOf(CbcSchemaConfig.class, reloaded);
+    }
   }
 }

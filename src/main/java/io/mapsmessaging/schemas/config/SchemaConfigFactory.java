@@ -144,6 +144,7 @@ public class SchemaConfigFactory {
         }
       }
     } catch (Exception e) {
+      e.printStackTrace();
       logger.log(SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND, formatName);
       throw new IOException(CONFIG_ERROR, e);
     }

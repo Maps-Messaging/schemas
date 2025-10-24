@@ -20,21 +20,20 @@
 
 package io.mapsmessaging.schemas.formatters;
 
-import com.google.gson.JsonObject;
-import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.RawSchemaConfig;
+import io.mapsmessaging.schemas.config.impl.XRegistrySchemaVersionImpl;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.UUID;
 
 class TestFormatConstructors {
 
   @Test
   void validSchemaLoad() throws IOException {
-    SchemaConfig good = new RawSchemaConfig();
+    XRegistrySchemaVersion good = new RawSchemaConfig();
     good.setUniqueId(UUID.randomUUID());
     Assertions.assertNotNull(MessageFormatterFactory.getInstance().getFormatter(good));
   }
@@ -42,37 +41,30 @@ class TestFormatConstructors {
 
   @Test
   void invalidSchemaLoad() {
-    SchemaConfig bad = new BadSchema();
+    XRegistrySchemaVersion bad = new BadSchema();
     bad.setUniqueId(UUID.randomUUID());
     Assertions.assertThrowsExactly(IOException.class, () -> MessageFormatterFactory.getInstance().getFormatter(bad));
   }
 
-  static class BadSchema extends SchemaConfig {
+  static class BadSchema extends XRegistrySchemaVersionImpl {
 
     protected BadSchema() {
       super("BAD");
-      uniqueId = UUID.randomUUID().toString();
+      setVersionId(UUID.randomUUID().toString());
     }
 
-    protected BadSchema(String format, Map<String, Object> config) {
-      super(format, config);
-    }
-
-    @Override
-    public byte[] getSchemaDefinition() {
-      return new byte[0];
+    protected BadSchema(XRegistrySchemaVersion config) {
+      super(config);
     }
 
     @Override
-    protected JsonObject packData() {
-      JsonObject data = new JsonObject();
-      packData(data);
-      return data;
+    public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
+      return new BadSchema(config);
     }
 
     @Override
-    protected SchemaConfig getInstance(Map<String, Object> config) {
-      return this;
+    public String getMimeType() {
+      return "";
     }
   }
 

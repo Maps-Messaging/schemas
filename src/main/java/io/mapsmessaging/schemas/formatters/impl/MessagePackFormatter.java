@@ -29,12 +29,11 @@ import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
-import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.config.impl.MessagePackSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
 
 import java.io.IOException;
@@ -54,9 +53,9 @@ public class MessagePackFormatter extends MessageFormatter {
     schema = null;
   }
 
-  public MessagePackFormatter(String schemaString) throws IOException {
+  public MessagePackFormatter(JsonObject schemaString) throws IOException {
     ObjectMapper objectMapper = new ObjectMapper();
-    schemaNode = objectMapper.readTree(schemaString);
+    schemaNode = objectMapper.readTree(schemaString.toString());
     schema = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7).getSchema(schemaNode);
   }
 
@@ -92,8 +91,8 @@ public class MessagePackFormatter extends MessageFormatter {
   }
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
-    return new MessagePackFormatter(((MessagePackSchemaConfig) config).getSchema());
+  public MessageFormatter getInstance(XRegistrySchemaVersion config) throws IOException {
+    return new MessagePackFormatter(config.getSchema());
   }
 
   @Override

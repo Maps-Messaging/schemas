@@ -19,10 +19,8 @@
  */
 package io.mapsmessaging.schemas.config.impl;
 
-import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -49,10 +47,4 @@ abstract class SimpleSchemaConfig extends SchemaConfig {
     super(format, config);
   }
 
-  @Override
-  protected JsonObject packData() throws IOException {
-    JsonObject data = new JsonObject();
-    packData(data);
-    return data;
-  }
 }

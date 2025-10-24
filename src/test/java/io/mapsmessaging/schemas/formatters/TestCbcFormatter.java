@@ -2,6 +2,7 @@ package io.mapsmessaging.schemas.formatters;
 
 import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.impl.CbcSchemaConfig;
+import io.mapsmessaging.schemas.config.impl.cbc.CbcFormat;
 import io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification;
 import io.mapsmessaging.schemas.formatters.impl.CbcFormatter;
 import org.junit.jupiter.api.Assertions;
@@ -22,8 +23,6 @@ class TestCbcFormatter {
 
   private CbcSchemaConfig buildSchema() {
     CbcSchemaConfig cfg = new CbcSchemaConfig();
-    cfg.setMimeType("application/x-cbc");
-    cfg.setMessageKey(0);
 
     List<FieldSpecification> fields = new ArrayList<>();
 
@@ -52,7 +51,12 @@ class TestCbcFormatter {
         .encalc("v*" + (DOUBLE_SCALE))
         .build());
 
-    cfg.setFieldSpecificationList(fields);
+    CbcFormat format = new CbcFormat();
+    format.setFields(fields);
+    format.setDescription("Format description");
+    format.setMessageKey(0);
+    format.setDirection("INBOUND");
+    cfg.setCbcFormat(format);
     return cfg;
   }
 

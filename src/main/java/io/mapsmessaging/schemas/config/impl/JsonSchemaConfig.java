@@ -19,69 +19,43 @@
  */
 package io.mapsmessaging.schemas.config.impl;
 
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-
-import java.util.Map;
-
-import static io.mapsmessaging.schemas.config.SchemaConfigFactory.gson;
 
 /**
  * The type Json schema config.
  */
 @Schema(description = "JSON Schema Configuration")
-public class JsonSchemaConfig extends SimpleSchemaConfig {
+public class JsonSchemaConfig extends XRegistrySchemaVersionImpl {
 
   private static final String EMPTY_SCHEMA = "{}";
   private static final String NAME = "JSON";
-
-  @Getter
-  private final String schema;
 
   /**
    * Instantiates a new Json schema config.
    */
   public JsonSchemaConfig() {
     super(NAME);
-    schema = EMPTY_SCHEMA;
-    setMimeType("application/json");
+    setSchema(JsonParser.parseString(EMPTY_SCHEMA).getAsJsonObject());
   }
 
   public JsonSchemaConfig(String schema) {
     super(NAME);
-    this.schema = schema;
-    setMimeType("application/json");
+    setSchema(JsonParser.parseString(schema).getAsJsonObject());
   }
 
-  private JsonSchemaConfig(Map<String, Object> config) {
-    super(NAME, config);
-    Object obj = config.get("jsonSchema");
-    if (obj instanceof Map) {
-      @SuppressWarnings("unchecked")
-      JsonObject jsonSchema = gson.toJsonTree((Map<String, Object>) obj).getAsJsonObject();
-      schema = gson.toJson(jsonSchema);
-    } else {
-      schema = EMPTY_SCHEMA;
-    }
+  private JsonSchemaConfig(XRegistrySchemaVersion config) {
+    super(config);
   }
 
   @Override
-  public byte[] getSchemaDefinition() {
-    return schema.getBytes();
+  public String getMimeType() {
+    return "application/json";
   }
 
-  protected SchemaConfig getInstance(Map<String, Object> config) {
+  public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
     return new JsonSchemaConfig(config);
   }
 
-  @Override
-  protected void packData(JsonObject jsonObject) {
-    super.packData(jsonObject);
-    JsonObject schemaObject = JsonParser.parseString(schema).getAsJsonObject();
-    jsonObject.add("jsonSchema", schemaObject);
-
-  }
 }

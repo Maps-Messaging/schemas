@@ -20,39 +20,41 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 class TestXmlConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties() {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "XML");
-    props.put("validating", true);
-    props.put("coalescing", true);
-    props.put("namespaceAware", true);
+  XRegistrySchemaVersion getProperties() {
+    XmlSchemaConfig props = new XmlSchemaConfig();
+    XmlSchemaConfig.XmlConfig xmlConfig = new XmlSchemaConfig.XmlConfig();
+    xmlConfig.setValidating(true);
+    xmlConfig.setCoalescing(true);
+    xmlConfig.setNamespaceAware(true);
+    props.setConfig(xmlConfig);
     return props;
   }
 
   @Override
-  SchemaConfig buildConfig() {
+  XRegistrySchemaVersion buildConfig() {
     XmlSchemaConfig config = new XmlSchemaConfig();
-    config.setValidating(true);
-    config.setCoalescing(true);
-    config.setNamespaceAware(true);
+    XmlSchemaConfig.XmlConfig xmlConfig = new XmlSchemaConfig.XmlConfig();
+    xmlConfig.setValidating(true);
+    xmlConfig.setCoalescing(true);
+    xmlConfig.setNamespaceAware(true);
+    config.setConfig(xmlConfig);
     setBaseConfig(config);
     return config;
   }
 
 
   @Override
-  void validate(SchemaConfig schemaConfig) {
+  void validate(XRegistrySchemaVersion schemaConfig) {
     Assertions.assertTrue(schemaConfig instanceof XmlSchemaConfig);
     XmlSchemaConfig config = (XmlSchemaConfig) schemaConfig;
-    Assertions.assertTrue(config.isValidating());
-    Assertions.assertTrue(config.isCoalescing());
-    Assertions.assertTrue(config.isNamespaceAware());
+    XmlSchemaConfig.XmlConfig xmlConfig = config.getConfig();
+    Assertions.assertTrue(xmlConfig.isValidating());
+    Assertions.assertTrue(xmlConfig.isCoalescing());
+    Assertions.assertTrue(xmlConfig.isNamespaceAware());
   }
 }

@@ -20,8 +20,8 @@
 
 package io.mapsmessaging.schemas.formatters;
 
-import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.CsvSchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ class TestCsvFormatter extends BaseTest {
   }
 
   @Override
-  SchemaConfig getSchema() throws IOException {
+  XRegistrySchemaVersion getSchema() throws IOException {
     return new CsvSchemaConfig("stringId, longId, intId, floatId, doubleId", true);
   }
 }

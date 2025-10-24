@@ -21,28 +21,24 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 class TestJsonConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties() {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "JSON");
-    return props;
+  XRegistrySchemaVersion getProperties() {
+    return new JsonSchemaConfig();
   }
 
   @Override
-  SchemaConfig buildConfig() {
+  XRegistrySchemaVersion buildConfig() {
     JsonSchemaConfig config = new JsonSchemaConfig();
     setBaseConfig(config);
     return config;
   }
 
   @Override
-  void validate(SchemaConfig schemaConfig) {
+  void validate(XRegistrySchemaVersion schemaConfig) {
     Assertions.assertInstanceOf(JsonSchemaConfig.class, schemaConfig);
   }
 

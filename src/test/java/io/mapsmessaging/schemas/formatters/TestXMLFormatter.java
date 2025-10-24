@@ -23,9 +23,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
 import io.mapsmessaging.schemas.formatters.impl.XmlFormatter;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -67,7 +67,7 @@ class TestXMLFormatter extends BaseTest {
   @Override
   @Test
   void testGetFormatMap() throws IOException {
-    SchemaConfig schemaConfig = getSchema();
+    XRegistrySchemaVersion schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     Map<String, Object> format = formatter.getFormat();
     Assertions.assertEquals(1, format.size(), "Expected empty format map for XML formatter");
@@ -82,16 +82,23 @@ class TestXMLFormatter extends BaseTest {
   }
 
   @Override
-  SchemaConfig getSchema() {
+  XRegistrySchemaVersion getSchema() {
     XmlSchemaConfig xmlSchemaConfig = new XmlSchemaConfig();
-    xmlSchemaConfig.setRootEntry("person");
+    XmlSchemaConfig.XmlConfig xmlConfig = new XmlSchemaConfig.XmlConfig();
+    xmlConfig.setValidating(true);
+    xmlConfig.setCoalescing(true);
+    xmlConfig.setNamespaceAware(true);
+    xmlConfig.setRootEntry("person");
+    xmlSchemaConfig.setConfig(xmlConfig);
     return xmlSchemaConfig;
   }
 
   @Test
   void testBadDocument() throws IOException {
     XmlSchemaConfig config = new XmlSchemaConfig();
-    config.setRootEntry("catalog");
+    XmlSchemaConfig.XmlConfig xmlConfig = new XmlSchemaConfig.XmlConfig();
+    xmlConfig.setRootEntry("catalog");
+    config.setConfig(xmlConfig);
     XmlFormatter xmlFormatter = (XmlFormatter) MessageFormatterFactory.getInstance().getFormatter(config);
     Assertions.assertNotNull(xmlFormatter.parse("This is not a XML document".getBytes()));
     Assertions.assertNull(xmlFormatter.parse("This is not a XML document".getBytes()).get("Whatever"));
@@ -100,7 +107,9 @@ class TestXMLFormatter extends BaseTest {
   @Test
   void testComplexDocument() throws IOException {
     XmlSchemaConfig config = new XmlSchemaConfig();
-    config.setRootEntry("catalog");
+    XmlSchemaConfig.XmlConfig xmlConfig = new XmlSchemaConfig.XmlConfig();
+    xmlConfig.setRootEntry("catalog");
+    config.setConfig(xmlConfig);
     XmlFormatter xmlFormatter = (XmlFormatter) MessageFormatterFactory.getInstance().getFormatter(config);
     Assertions.assertEquals("Cardigan Sweater", xmlFormatter.parse(XML_STRING.getBytes()).get("product.description"));
     Assertions.assertEquals(39.95, xmlFormatter.parse(XML_STRING.getBytes()).get("product.catalog_item[0].price"));

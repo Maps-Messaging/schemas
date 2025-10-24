@@ -20,7 +20,7 @@
 
 package io.mapsmessaging.schemas.repository;
 
-import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.util.List;
 import java.util.Map;
@@ -34,10 +34,10 @@ public interface SchemaRepository {
    * Add schema schema config.
    *
    * @param context the context
-   * @param config the config
+   * @param config  the config
    * @return the schema config
    */
-  SchemaConfig addSchema(String context, SchemaConfig config);
+  XRegistrySchemaVersion addSchema(String context, XRegistrySchemaVersion config);
 
   /**
    * Gets schema.
@@ -45,7 +45,7 @@ public interface SchemaRepository {
    * @param uuid the uuid
    * @return the schema
    */
-  SchemaConfig getSchema(String uuid);
+  XRegistrySchemaVersion getSchema(String uuid);
 
   /**
    * Gets schema by context.
@@ -53,7 +53,7 @@ public interface SchemaRepository {
    * @param context the context
    * @return the schema by context
    */
-  List<SchemaConfig> getSchemaByContext(String context);
+  List<XRegistrySchemaVersion> getSchemaByContext(String context);
 
   /**
    * Gets schemas.
@@ -61,21 +61,21 @@ public interface SchemaRepository {
    * @param type the type
    * @return the schemas
    */
-  List<SchemaConfig> getSchemas(String type);
+  List<XRegistrySchemaVersion> getSchemas(String type);
 
   /**
    * Gets all.
    *
    * @return the all
    */
-  List<SchemaConfig> getAll();
+  List<XRegistrySchemaVersion> getAll();
 
   /**
    * get mapped schemas
    *
    * @return a map of schema configurations keyed on a context, could be path name for example
    */
-  Map<String, List<SchemaConfig>> getMappedSchemas();
+  Map<String, List<XRegistrySchemaVersion>> getMappedSchemas();
 
   /**
    * Remove schema.

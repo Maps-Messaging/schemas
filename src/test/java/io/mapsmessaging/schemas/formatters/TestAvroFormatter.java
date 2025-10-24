@@ -20,9 +20,9 @@
 
 package io.mapsmessaging.schemas.formatters;
 
-import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.TestAvroConfig;
 import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
@@ -61,7 +61,7 @@ class TestAvroFormatter extends BaseTest {
   }
 
   @Override
-  SchemaConfig getSchema() throws IOException {
+  XRegistrySchemaVersion getSchema() throws IOException {
     AvroSchemaConfig avroSchemaConfig = new AvroSchemaConfig();
     avroSchemaConfig.setSchema(TestAvroConfig.getSchema());
     return avroSchemaConfig;

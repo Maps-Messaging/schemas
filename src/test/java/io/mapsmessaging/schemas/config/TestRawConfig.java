@@ -21,29 +21,25 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.RawSchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 class TestRawConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties() {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "RAW");
-    return props;
+  XRegistrySchemaVersion getProperties() {
+    return new RawSchemaConfig();
   }
 
   @Override
-  SchemaConfig buildConfig() {
+  XRegistrySchemaVersion buildConfig() {
     RawSchemaConfig config = new RawSchemaConfig();
     setBaseConfig(config);
     return config;
   }
 
   @Override
-  void validate(SchemaConfig schemaConfig) {
-    Assertions.assertTrue(schemaConfig instanceof RawSchemaConfig);
+  void validate(XRegistrySchemaVersion schemaConfig) {
+    Assertions.assertInstanceOf(RawSchemaConfig.class, schemaConfig);
   }
 
 

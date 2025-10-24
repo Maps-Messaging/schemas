@@ -19,16 +19,17 @@
  */
 package io.mapsmessaging.schemas.config.impl;
 
-import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.util.Map;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * The type Raw schema config.
  */
 @Schema(description = "Raw Schema Configuration")
-public class RawSchemaConfig extends SimpleSchemaConfig {
+public class RawSchemaConfig extends XRegistrySchemaVersionImpl {
 
   private static final String NAME = "RAW";
 
@@ -44,19 +45,21 @@ public class RawSchemaConfig extends SimpleSchemaConfig {
    *
    * @param config the config
    */
-  protected RawSchemaConfig(Map<String, Object> config) {
-    super(NAME, config);
-    setMimeType("application/octet-stream");
+  protected RawSchemaConfig(XRegistrySchemaVersion config) {
+    super(config);
   }
 
-  protected SchemaConfig getInstance(Map<String, Object> config) {
+  @Override
+  public String getMimeType() {
+    return "application/octet-stream";
+  }
+
+  public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
     return new RawSchemaConfig(config);
   }
 
-
-  @Override
-  public byte[] getSchemaDefinition() {
-    return new byte[0];
+  public byte[] pack() throws IOException {
+    XRegistrySchemaVersion tmp = new XRegistrySchemaVersion(this);
+    return gson.toJson(tmp).getBytes(StandardCharsets.UTF_8);
   }
-
 }

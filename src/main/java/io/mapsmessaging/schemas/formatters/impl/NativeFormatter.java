@@ -21,11 +21,11 @@
 package io.mapsmessaging.schemas.formatters.impl;
 
 import com.google.gson.JsonObject;
-import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig.TYPE;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.IOException;
 import java.util.Map;
@@ -144,7 +144,7 @@ public class NativeFormatter extends MessageFormatter {
   }
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  public MessageFormatter getInstance(XRegistrySchemaVersion config) throws IOException {
     NativeSchemaConfig schemaConfig = (NativeSchemaConfig) config;
     return new NativeFormatter(schemaConfig.getType());
   }

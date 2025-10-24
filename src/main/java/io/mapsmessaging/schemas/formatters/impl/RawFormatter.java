@@ -21,9 +21,9 @@
 package io.mapsmessaging.schemas.formatters.impl;
 
 import com.google.gson.JsonObject;
-import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -70,7 +70,7 @@ public class RawFormatter extends MessageFormatter {
   }
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  public MessageFormatter getInstance(XRegistrySchemaVersion config) throws IOException {
     return this;
   }
 

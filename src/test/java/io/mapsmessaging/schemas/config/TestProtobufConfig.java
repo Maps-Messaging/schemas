@@ -22,43 +22,45 @@ package io.mapsmessaging.schemas.config;
 
 
 import io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 class TestProtobufConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties() throws IOException {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "ProtoBuf");
-    props.put("descriptor", new String(Base64.getEncoder().encode(getDescriptor())));
-    props.put("messageName", "Person");
-    return props;
+  XRegistrySchemaVersion getProperties() throws IOException {
+    ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
+    ProtoBufSchemaConfig.ProtobufConfig protobufSchema = new ProtoBufSchemaConfig.ProtobufConfig();
+    protobufSchema.setMessageName("Person");
+    protobufSchema.setDescriptorValue(getDescriptor());
+    config.setProtobufConfig(protobufSchema);
+    return config;
   }
 
   @Override
-  SchemaConfig buildConfig() throws IOException {
+  XRegistrySchemaVersion buildConfig() throws IOException {
     ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
-    config.setDescriptorValue(getDescriptor());
-    config.setMessageName("Person");
+    ProtoBufSchemaConfig.ProtobufConfig protobufSchema = new ProtoBufSchemaConfig.ProtobufConfig();
+    protobufSchema.setMessageName("Person");
+    protobufSchema.setDescriptorValue(getDescriptor());
+    config.setProtobufConfig(protobufSchema);
     setBaseConfig(config);
     return config;
   }
 
   @Override
-  void validate(SchemaConfig schemaConfig) throws IOException {
+  void validate(XRegistrySchemaVersion schemaConfig) throws IOException {
     Assertions.assertInstanceOf(ProtoBufSchemaConfig.class, schemaConfig);
     ProtoBufSchemaConfig config = (ProtoBufSchemaConfig) schemaConfig;
-    Assertions.assertArrayEquals(getDescriptor(), config.getDescriptorValue());
-    Assertions.assertEquals("Person", config.getMessageName());
+    ProtoBufSchemaConfig.ProtobufConfig protobufSchema = config.getProtobufConfig();
+    Assertions.assertArrayEquals(getDescriptor(), protobufSchema.getDescriptorValue());
+    Assertions.assertEquals("Person", protobufSchema.getMessageName());
   }
 
 
@@ -75,20 +77,24 @@ class TestProtobufConfig extends GeneralBaseTest {
   @Test
   void invalidConfigWithName() {
     ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
-    config.setMessageName("justAName");
+    ProtoBufSchemaConfig.ProtobufConfig protobufSchema = new ProtoBufSchemaConfig.ProtobufConfig();
+    protobufSchema.setMessageName("justAName");
+    config.setProtobufConfig(protobufSchema);
     config.setUniqueId(UUID.randomUUID());
-    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
-    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    config.setExpiresAfter(OffsetDateTime.now().plusDays(10));
+    config.setNotBefore(OffsetDateTime.now().minusDays(10));
     Assertions.assertThrowsExactly(IOException.class, config::pack);
   }
 
   @Test
   void invalidConfigWithDescriptor() throws IOException {
     ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
-    config.setDescriptorValue(getDescriptor());
+    ProtoBufSchemaConfig.ProtobufConfig protobufSchema = new ProtoBufSchemaConfig.ProtobufConfig();
+    protobufSchema.setDescriptorValue(getDescriptor());
+    config.setProtobufConfig(protobufSchema);
     config.setUniqueId(UUID.randomUUID());
-    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
-    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    config.setExpiresAfter(OffsetDateTime.now().plusDays(10));
+    config.setNotBefore(OffsetDateTime.now().minusDays(10));
     Assertions.assertThrowsExactly(IOException.class, config::pack);
   }
 
@@ -97,8 +103,8 @@ class TestProtobufConfig extends GeneralBaseTest {
   void invalidConfig() {
     ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
     config.setUniqueId(UUID.randomUUID());
-    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
-    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    config.setExpiresAfter(OffsetDateTime.now().plusDays(10));
+    config.setNotBefore(OffsetDateTime.now().minusDays(10));
     Assertions.assertThrowsExactly(IOException.class, config::pack);
   }
 }

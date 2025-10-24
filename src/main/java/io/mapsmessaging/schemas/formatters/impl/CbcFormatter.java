@@ -22,15 +22,16 @@ package io.mapsmessaging.schemas.formatters.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.CbcSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.cbc.BitReader;
 import io.mapsmessaging.schemas.config.impl.cbc.BitWriter;
+import io.mapsmessaging.schemas.config.impl.cbc.CbcFormat;
 import io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -40,7 +41,7 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXP
 
 public class CbcFormatter extends MessageFormatter {
 
-  private final CbcSchemaConfig schema;
+  private final CbcFormat schema;
 
   // Required for ServiceLoader
   public CbcFormatter() {
@@ -49,25 +50,9 @@ public class CbcFormatter extends MessageFormatter {
   }
 
   // Concrete instance used by getInstance(SchemaConfig)
-  CbcFormatter(CbcSchemaConfig schema) {
+  CbcFormatter(CbcFormat schema) {
     super();
     this.schema = schema;
-  }
-
-  public String getName() {
-    return "CBC";
-  }
-
-  @Override
-  public Map<String, Object> getFormat() {
-    if (schema == null || schema.getFieldSpecificationList() == null) {
-      return Map.of();
-    }
-    Map<String, Object> out = new LinkedHashMap<>();
-    for (io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f : schema.getFieldSpecificationList()) {
-      out.put(f.getName(), toFieldMap(f));
-    }
-    return out;
   }
 
   private static Map<String, Object> toFieldMap(io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f) {
@@ -102,6 +87,83 @@ public class CbcFormatter extends MessageFormatter {
     }
     return m;
   }
+
+  private static int reqSizeBits(io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f) {
+    Integer s = f.getSize();
+    if (s == null) throw new IllegalStateException("Field '" + f.getName() + "' requires size");
+    return s;
+  }
+
+  private static Double evalDecalc(String expr, double v) {
+    String e = expr.trim();
+    if (e.startsWith("v/")) {
+      double denom = Double.parseDouble(e.substring(2).trim());
+      return v / denom;
+    } else if (e.startsWith("v*")) {
+      double mult = Double.parseDouble(e.substring(2).trim());
+      return v * mult;
+    } else if (e.startsWith("v+")) {
+      double add = Double.parseDouble(e.substring(2).trim());
+      return v + add;
+    } else if (e.startsWith("v-")) {
+      double sub = Double.parseDouble(e.substring(2).trim());
+      return v - sub;
+    }
+    throw new IllegalArgumentException("Unsupported decalc expression: " + expr);
+  }
+
+  private static double evalEncalc(String expr, long v) {
+    String e = expr.trim();
+    if (e.startsWith("v/")) {
+      double denom = Double.parseDouble(e.substring(2).trim());
+      return v / denom;
+    } else if (e.startsWith("v*")) {
+      double mult = Double.parseDouble(e.substring(2).trim());
+      return v * mult;
+    } else if (e.startsWith("v+")) {
+      double add = Double.parseDouble(e.substring(2).trim());
+      return v + add;
+    } else if (e.startsWith("v-")) {
+      double sub = Double.parseDouble(e.substring(2).trim());
+      return v - sub;
+    }
+    throw new IllegalArgumentException("Unsupported encalc expression: " + expr);
+  }
+
+  private static double evalEncalc(String expr, double v) {
+    String e = expr.trim();
+    if (e.startsWith("v/")) {
+      double denom = Double.parseDouble(e.substring(2).trim());
+      return v / denom;
+    } else if (e.startsWith("v*")) {
+      double mult = Double.parseDouble(e.substring(2).trim());
+      return v * mult;
+    } else if (e.startsWith("v+")) {
+      double add = Double.parseDouble(e.substring(2).trim());
+      return v + add;
+    } else if (e.startsWith("v-")) {
+      double sub = Double.parseDouble(e.substring(2).trim());
+      return v - sub;
+    }
+    throw new IllegalArgumentException("Unsupported encalc expression: " + expr);
+  }
+
+  public String getName() {
+    return "CBC";
+  }
+
+  @Override
+  public Map<String, Object> getFormat() {
+    if (schema == null) {
+      return Map.of();
+    }
+    Map<String, Object> out = new LinkedHashMap<>();
+    for (io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f : schema.getFields()) {
+      out.put(f.getName(), toFieldMap(f));
+    }
+    return out;
+  }
+
   @Override
   public ParsedObject parse(byte[] payload) {
     try {
@@ -124,11 +186,11 @@ public class CbcFormatter extends MessageFormatter {
   }
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  public MessageFormatter getInstance(XRegistrySchemaVersion config) throws IOException {
     if (!(config instanceof CbcSchemaConfig c)) {
       throw new IllegalArgumentException("Expected CbcSchemaConfig");
     }
-    return new CbcFormatter(c);
+    return new CbcFormatter(c.getCbcFormat());
   }
 
   @SuppressWarnings("unchecked")
@@ -159,7 +221,7 @@ public class CbcFormatter extends MessageFormatter {
       out.put("messageKey", cursor.readUnsigned(16));
     }
 
-    for (io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f : schema.getFieldSpecificationList()) {
+    for (io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f : schema.getFields()) {
       Object v = readField(cursor, f);
       if (v != null) out.put(f.getName(), v);
     }
@@ -232,12 +294,6 @@ public class CbcFormatter extends MessageFormatter {
     }
   }
 
-  private static int reqSizeBits(io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f) {
-    Integer s = f.getSize();
-    if (s == null) throw new IllegalStateException("Field '" + f.getName() + "' requires size");
-    return s;
-  }
-
   private Number applyDecalcUint(long raw, io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f) {
     return applyDecalcInt(raw, f);
   }
@@ -251,24 +307,6 @@ public class CbcFormatter extends MessageFormatter {
     return (out == li) ? li : out;
   }
 
-  private static Double evalDecalc(String expr, double v) {
-    String e = expr.trim();
-    if (e.startsWith("v/")) {
-      double denom = Double.parseDouble(e.substring(2).trim());
-      return v / denom;
-    } else if (e.startsWith("v*")) {
-      double mult = Double.parseDouble(e.substring(2).trim());
-      return v * mult;
-    } else if (e.startsWith("v+")) {
-      double add = Double.parseDouble(e.substring(2).trim());
-      return v + add;
-    } else if (e.startsWith("v-")) {
-      double sub = Double.parseDouble(e.substring(2).trim());
-      return v - sub;
-    }
-    throw new IllegalArgumentException("Unsupported decalc expression: " + expr);
-  }
-
   // ------------------------ Encode ------------------------
   @SuppressWarnings("unchecked")
   private byte[] encode(Map<String, Object> fieldValues) {
@@ -278,7 +316,7 @@ public class CbcFormatter extends MessageFormatter {
       w.writeUnsigned(schema.getMessageKey(), 16);
     }
 
-    for (io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f : schema.getFieldSpecificationList()) {
+    for (io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification f : schema.getFields()) {
       writeField(w, f, fieldValues.get(f.getName()));
     }
 
@@ -324,7 +362,6 @@ public class CbcFormatter extends MessageFormatter {
       }
     }
   }
-
 
   private void writeString(FieldSpecification f, BitWriter w, Object value) {
     boolean fixed = Boolean.TRUE.equals(f.getFixed());
@@ -393,42 +430,6 @@ public class CbcFormatter extends MessageFormatter {
       if (expr != null) dv = evalEncalc(expr, dv);
       return Math.round(dv);
     }
-  }
-
-  private static double evalEncalc(String expr, long v) {
-    String e = expr.trim();
-    if (e.startsWith("v/")) {
-      double denom = Double.parseDouble(e.substring(2).trim());
-      return v / denom;
-    } else if (e.startsWith("v*")) {
-      double mult = Double.parseDouble(e.substring(2).trim());
-      return v * mult;
-    } else if (e.startsWith("v+")) {
-      double add = Double.parseDouble(e.substring(2).trim());
-      return v + add;
-    } else if (e.startsWith("v-")) {
-      double sub = Double.parseDouble(e.substring(2).trim());
-      return v - sub;
-    }
-    throw new IllegalArgumentException("Unsupported encalc expression: " + expr);
-  }
-
-  private static double evalEncalc(String expr, double v) {
-    String e = expr.trim();
-    if (e.startsWith("v/")) {
-      double denom = Double.parseDouble(e.substring(2).trim());
-      return v / denom;
-    } else if (e.startsWith("v*")) {
-      double mult = Double.parseDouble(e.substring(2).trim());
-      return v * mult;
-    } else if (e.startsWith("v+")) {
-      double add = Double.parseDouble(e.substring(2).trim());
-      return v + add;
-    } else if (e.startsWith("v-")) {
-      double sub = Double.parseDouble(e.substring(2).trim());
-      return v - sub;
-    }
-    throw new IllegalArgumentException("Unsupported encalc expression: " + expr);
   }
 
 }

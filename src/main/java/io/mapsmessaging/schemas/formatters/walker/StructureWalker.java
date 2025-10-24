@@ -37,7 +37,7 @@ public class StructureWalker {
   /**
    * Locate object object.
    *
-   * @param resolver the resolver
+   * @param resolver   the resolver
    * @param searchPath the search path
    * @return the object
    */

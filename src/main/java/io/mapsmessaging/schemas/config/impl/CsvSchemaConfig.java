@@ -20,55 +20,38 @@
 
 package io.mapsmessaging.schemas.config.impl;
 
-import com.google.gson.JsonObject;
-import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.CSV_HEADER_NOT_DEFINED;
 
 /**
  * The type Csv schema config.
  */
 @Schema(description = "CVS Schema Configuration")
-public class CsvSchemaConfig extends SchemaConfig {
-
-  private static final String HEADER = "header";
-  private static final String NUMERIC_STRINGS = "numericStrings";
+public class CsvSchemaConfig extends XRegistrySchemaVersionImpl {
 
   @Getter
-  @Setter
-  private String headerValues;
-
-  @Getter
-  @Setter
-  private boolean interpretNumericStrings;
-
+  private CsvConfig config;
 
   /**
    * Instantiates a new Csv schema config.
    */
   public CsvSchemaConfig() {
     super("CSV");
-    setMimeType("text/plain");
   }
 
   /**
    * Instantiates a new Csv schema config.
    *
-   * @param header the header
+   * @param header                  the header
    * @param interpretNumericStrings the interpret numeric strings
    */
   public CsvSchemaConfig(String header, boolean interpretNumericStrings) {
     super("CSV");
-    this.headerValues = header;
-    this.interpretNumericStrings = interpretNumericStrings;
-    setMimeType("text/plain");
+    config = new CsvConfig();
+    config.setHeaderValues(header);
+    config.setInterpretNumericStrings(interpretNumericStrings);
   }
 
   /**
@@ -76,32 +59,32 @@ public class CsvSchemaConfig extends SchemaConfig {
    *
    * @param config the config
    */
-  protected CsvSchemaConfig(Map<String, Object> config) {
-    super("CSV", config);
-    this.headerValues = config.getOrDefault(HEADER, "").toString();
-    this.interpretNumericStrings = Boolean.parseBoolean(config.getOrDefault(NUMERIC_STRINGS, "false").toString());
-  }
-
-  @Override
-  public byte[] getSchemaDefinition() {
-    return headerValues.getBytes(StandardCharsets.UTF_8);
-  }
-
-
-  @Override
-  protected JsonObject packData() throws IOException {
-    if (headerValues == null || headerValues.isEmpty()) {
-      logger.log(CSV_HEADER_NOT_DEFINED, format, uniqueId);
-      throw new IOException("No header specified");
+  protected CsvSchemaConfig(XRegistrySchemaVersion config) {
+    super(config);
+    if (config.getSchema() != null) {
+      this.config = gson.fromJson(config.getSchema(), CsvConfig.class);
     }
-    JsonObject data = new JsonObject();
-    packData(data);
-    data.addProperty(HEADER, headerValues);
-    data.addProperty(NUMERIC_STRINGS, interpretNumericStrings);
-    return data;
   }
 
-  protected SchemaConfig getInstance(Map<String, Object> config) {
+  @Override
+  public String getMimeType() {
+    return "text/csv";
+  }
+
+  @Override
+  public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
     return new CsvSchemaConfig(config);
+  }
+
+  public void setConfig(CsvConfig csvConfig) {
+    this.config = csvConfig;
+    setSchema(gson.toJsonTree(csvConfig).getAsJsonObject());
+  }
+
+  @Getter
+  @Setter
+  public static final class CsvConfig {
+    private String headerValues;
+    private boolean interpretNumericStrings;
   }
 }

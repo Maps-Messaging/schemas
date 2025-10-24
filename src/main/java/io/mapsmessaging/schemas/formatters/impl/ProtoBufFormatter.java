@@ -29,12 +29,12 @@ import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FileDescriptor;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
-import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -63,7 +63,7 @@ public class ProtoBufFormatter extends MessageFormatter {
   /**
    * Instantiates a new Proto buf formatter.
    *
-   * @param messageName the message name
+   * @param messageName     the message name
    * @param descriptorImage the descriptor image
    * @throws IOException the io exception
    */
@@ -122,9 +122,10 @@ public class ProtoBufFormatter extends MessageFormatter {
   }
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  public MessageFormatter getInstance(XRegistrySchemaVersion config) throws IOException {
     ProtoBufSchemaConfig protoBufSchemaConfig = (ProtoBufSchemaConfig) config;
-    return new ProtoBufFormatter(protoBufSchemaConfig.getMessageName(), protoBufSchemaConfig.getDescriptorValue());
+    ProtoBufSchemaConfig.ProtobufConfig protobufConfig = protoBufSchemaConfig.getProtobufConfig();
+    return new ProtoBufFormatter(protobufConfig.getMessageName(), protobufConfig.getDescriptorValue());
   }
 
   private FileDescriptor loadDescFile(byte[] descriptorImage) throws IOException, DescriptorValidationException {

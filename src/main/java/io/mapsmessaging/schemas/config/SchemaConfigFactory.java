@@ -23,22 +23,16 @@ package io.mapsmessaging.schemas.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.reflect.TypeToken;
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
+import io.mapsmessaging.schemas.config.impl.XRegistrySchemaVersionImpl;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
-
-import static io.mapsmessaging.schemas.config.Constants.FORMAT;
-import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.SCHEMA_CONFIG_FACTORY_INVALID_CONFIG;
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND;
 
 /**
  * The type Schema config factory.
@@ -47,54 +41,39 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.SCHEMA_CONFIG_F
 @SuppressWarnings("java:S6548") // yes it is a singleton
 public class SchemaConfigFactory {
   public static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+  private final List<XRegistrySchemaVersion> schemaConfigs;
+  private final Logger logger;
 
-  private static final String ERROR_MESSAGE = "Not a valid schema config";
-  private static final String CONFIG_ERROR = "Unknown schema config found";
-
-  private static class Holder {
-    static final SchemaConfigFactory INSTANCE = new SchemaConfigFactory();
+  private SchemaConfigFactory() {
+    schemaConfigs = new ArrayList<>();
+    ServiceLoader<XRegistrySchemaVersion> schemaConfigServiceLoader = ServiceLoader.load(XRegistrySchemaVersion.class);
+    for (XRegistrySchemaVersion config : schemaConfigServiceLoader) {
+      schemaConfigs.add(config);
+    }
+    logger = LoggerFactory.getLogger(SchemaConfigFactory.class);
   }
 
   public static SchemaConfigFactory getInstance() {
     return SchemaConfigFactory.Holder.INSTANCE;
   }
 
-  private final List<SchemaConfig> schemaConfigs;
-  private final Logger logger;
+  @SuppressWarnings("unchecked")
+  public static String detectFormat(Map<String, Object> root) {
+    String uniqueId = root.get("uuid").toString();
+    Object groupsRaw = root.get("schemagroups");
+    if (!(groupsRaw instanceof Map<?, ?> groups)) return null;
 
-  private SchemaConfigFactory() {
-    schemaConfigs = new ArrayList<>();
-    ServiceLoader<SchemaConfig> schemaConfigServiceLoader = ServiceLoader.load(SchemaConfig.class);
-    for (SchemaConfig config : schemaConfigServiceLoader) {
-      schemaConfigs.add(config);
-    }
-    logger = LoggerFactory.getLogger(SchemaConfigFactory.class);
-  }
+    Object groupRaw = groups.get(uniqueId);
+    if (!(groupRaw instanceof Map<?, ?> group)) return null;
 
-  /**
-   * Construct config schema config.
-   *
-   * @param properties the properties
-   * @return the schema config
-   * @throws IOException the io exception
-   */
-  public SchemaConfig constructConfig(Map<String, Object> properties) throws IOException {
-    if (properties.containsKey(SCHEMA)) {
-      Object val = properties.get(SCHEMA);
-      if (val instanceof Map) {
-        Map<String, Object> formatMap = (Map) properties.get(SCHEMA);
-        Object formatName = formatMap.get(FORMAT);
-        if (formatName != null) {
-          for (SchemaConfig config : schemaConfigs) {
-            if (config.getFormat().equalsIgnoreCase(formatName.toString())) {
-              return config.getInstance(formatMap);
-            }
-          }
-        }
-      }
-    }
-    logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
-    throw new IOException(CONFIG_ERROR);
+    Object schemasRaw = group.get("schemas");
+    if (!(schemasRaw instanceof Map<?, ?> schemas)) return null;
+
+    Object schemaRaw = schemas.get(uniqueId);
+    if (!(schemaRaw instanceof Map<?, ?> schema)) return null;
+
+    Object f = schema.get("format");
+    return f == null ? null : String.valueOf(f);
   }
 
   /**
@@ -104,7 +83,7 @@ public class SchemaConfigFactory {
    * @return the schema config
    * @throws IOException the io exception
    */
-  public SchemaConfig constructConfig(byte[] rawPayload) throws IOException {
+  public XRegistrySchemaVersion constructConfig(byte[] rawPayload) throws IOException {
     return constructConfig(new String(rawPayload));
   }
 
@@ -115,42 +94,33 @@ public class SchemaConfigFactory {
    * @return the schema config
    * @throws IOException the io exception
    */
-  public SchemaConfig constructConfig(String payload) throws IOException {
-    JsonObject json = JsonParser.parseString(payload).getAsJsonObject();
-    return constructConfig(json);
+  public XRegistrySchemaVersion constructConfig(String payload) throws IOException {
+    XRegistrySchemaVersion version = gson.fromJson(payload, XRegistrySchemaVersion.class);
+    return constructConfig(version);
   }
 
-  public SchemaConfig constructConfig(JsonObject schemaJson) throws IOException {
-    String formatName = null;
-    try {
-      if (!schemaJson.has(SCHEMA) || !schemaJson.get(SCHEMA).isJsonObject()) {
-        logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
-        throw new IOException(ERROR_MESSAGE);
-      }
+  public XRegistrySchemaVersion constructConfig(JsonObject payload) throws IOException {
+    XRegistrySchemaVersion version = gson.fromJson(payload, XRegistrySchemaVersion.class);
+    return constructConfig(version);
+  }
 
-      JsonObject inner = schemaJson.getAsJsonObject(SCHEMA);
-      if (!inner.has(FORMAT) || !inner.get(FORMAT).isJsonPrimitive()) {
-        logger.log(SCHEMA_CONFIG_FACTORY_INVALID_CONFIG);
-        throw new IOException(CONFIG_ERROR);
-      }
-
-      formatName = inner.get(FORMAT).getAsString();
-      for (SchemaConfig config : schemaConfigs) {
-        if (config.getFormat().equalsIgnoreCase(formatName)) {
-          Type type = new TypeToken<Map<String, Object>>() {
-          }.getType();
-          Map<String, Object> configMap = gson.fromJson(inner, type);
-          return config.getInstance(configMap);
-        }
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-      logger.log(SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND, formatName);
-      throw new IOException(CONFIG_ERROR, e);
+  private XRegistrySchemaVersion constructConfig(XRegistrySchemaVersion config) throws IOException {
+    XRegistrySchemaVersion base = findSchemaConfig(config.getFormat());
+    if (base instanceof XRegistrySchemaVersionImpl impl) {
+      return impl.getInstance(config);
     }
+    return null;
+  }
 
-    logger.log(SCHEMA_CONFIG_FACTORY_SCHEMA_NOT_FOUND, formatName);
-    throw new IOException(CONFIG_ERROR);
+  private XRegistrySchemaVersion findSchemaConfig(String name) {
+    return schemaConfigs.stream()
+        .filter(c -> c.getFormat().equalsIgnoreCase(name))
+        .findFirst()
+        .orElse(null);
+  }
+
+  private static class Holder {
+    static final SchemaConfigFactory INSTANCE = new SchemaConfigFactory();
   }
 
 }

@@ -23,11 +23,11 @@ package io.mapsmessaging.schemas.formatters.impl;
 import com.google.gson.JsonObject;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
-import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.CsvSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.IOException;
 import java.util.*;
@@ -53,7 +53,7 @@ public class CsvFormatter extends MessageFormatter {
   /**
    * Instantiates a new Csv formatter.
    *
-   * @param keyList the key list
+   * @param keyList                 the key list
    * @param interpretNumericStrings the interpret numeric strings
    */
   public CsvFormatter(String keyList, boolean interpretNumericStrings) {
@@ -89,9 +89,13 @@ public class CsvFormatter extends MessageFormatter {
   }
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  public MessageFormatter getInstance(XRegistrySchemaVersion config) throws IOException {
     CsvSchemaConfig csvSchemaConfig = (CsvSchemaConfig) config;
-    return new CsvFormatter(csvSchemaConfig.getHeaderValues(), csvSchemaConfig.isInterpretNumericStrings());
+    CsvSchemaConfig.CsvConfig csvConfig = csvSchemaConfig.getConfig();
+    if (csvConfig != null) {
+      return new CsvFormatter(csvConfig.getHeaderValues(), csvConfig.isInterpretNumericStrings());
+    }
+    return null;
   }
 
   @Override

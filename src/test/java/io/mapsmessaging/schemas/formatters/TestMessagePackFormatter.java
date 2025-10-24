@@ -21,8 +21,8 @@
 package io.mapsmessaging.schemas.formatters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.MessagePackSchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
@@ -57,7 +57,7 @@ class TestMessagePackFormatter extends BaseTest {
   }
 
   @Override
-  SchemaConfig getSchema() {
+  XRegistrySchemaVersion getSchema() {
     String jsonSchema = "{\n" +
         "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n" +
         "  \"type\": \"object\",\n" +
@@ -76,10 +76,10 @@ class TestMessagePackFormatter extends BaseTest {
 
   @Test
   void invalidMessagePack() throws IOException {
-    SchemaConfig config = getSchema();
+    XRegistrySchemaVersion config = getSchema();
     config.setUniqueId(UUID.randomUUID());
     config.setSource("test");
-    config.setVersion(1);
+    config.setVersion("1");
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
     // This doesn't match the required fields in schema
@@ -91,7 +91,7 @@ class TestMessagePackFormatter extends BaseTest {
 
   @Test
   void testStructuredLookups() throws IOException {
-    SchemaConfig config = new MessagePackSchemaConfig();
+    XRegistrySchemaVersion config = new MessagePackSchemaConfig();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
     Map<String, Object> map = new HashMap<>();
@@ -111,7 +111,7 @@ class TestMessagePackFormatter extends BaseTest {
 
   @Test
   void testArrayLookups() throws IOException {
-    SchemaConfig config = new MessagePackSchemaConfig();
+    XRegistrySchemaVersion config = new MessagePackSchemaConfig();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
     Map<String, Object> map = new HashMap<>();

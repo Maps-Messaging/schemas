@@ -22,8 +22,11 @@ package io.mapsmessaging.schemas.formatters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
-import io.mapsmessaging.schemas.config.SchemaConfig;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.impl.CborSchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -57,7 +60,7 @@ class TestCborFormatter extends BaseTest {
   }
 
   @Override
-  SchemaConfig getSchema() {
+  XRegistrySchemaVersion getSchema() {
     String jsonSchema = "{\n" +
         "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n" +
         "  \"type\": \"object\",\n" +
@@ -71,15 +74,22 @@ class TestCborFormatter extends BaseTest {
         " \"required\": [\"stringId\", \"longId\", \"intId\", \"floatId\", \"doubleId\"],\n" +
         "  \"additionalProperties\": false\n" +
         "}";
-    return new CborSchemaConfig(jsonSchema);
+    CborSchemaConfig config = new CborSchemaConfig();
+
+    JsonElement element = JsonParser.parseString(jsonSchema);
+    if (element.isJsonObject()) {
+      JsonObject obj = element.getAsJsonObject();
+      config.setSchema(obj);
+    }
+    return config;
   }
 
   @Test
   void invalidCbor() throws IOException {
-    SchemaConfig config = getSchema();
+    XRegistrySchemaVersion config = getSchema();
     config.setUniqueId(UUID.randomUUID());
     config.setSource("test");
-    config.setVersion(1);
+    config.setVersion("1");
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
     // This doesn't match the required fields in schema
@@ -91,7 +101,7 @@ class TestCborFormatter extends BaseTest {
 
   @Test
   void testStructuredLookups() throws IOException {
-    SchemaConfig config = new CborSchemaConfig();
+    XRegistrySchemaVersion config = new CborSchemaConfig();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
     Map<String, Object> map = new HashMap<>();
@@ -111,7 +121,7 @@ class TestCborFormatter extends BaseTest {
 
   @Test
   void testArrayLookups() throws IOException {
-    SchemaConfig config = new CborSchemaConfig();
+    XRegistrySchemaVersion config = new CborSchemaConfig();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
     Map<String, Object> map = new HashMap<>();

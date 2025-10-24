@@ -20,64 +20,69 @@
 
 package io.mapsmessaging.schemas.config;
 
+
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 public abstract class GeneralBaseTest {
 
-  abstract Map<String, Object> getProperties() throws IOException;
+  abstract XRegistrySchemaVersion getProperties() throws IOException;
 
-  abstract SchemaConfig buildConfig() throws IOException;
+  abstract XRegistrySchemaVersion buildConfig() throws IOException;
 
-  abstract void validate(SchemaConfig schemaConfig) throws IOException;
+  abstract void validate(XRegistrySchemaVersion schemaConfig) throws IOException;
 
-  void setBaseConfig(SchemaConfig config) {
+  void setBaseConfig(XRegistrySchemaVersion config) {
     config.setUniqueId(UUID.randomUUID());
-    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
-    config.setNotBefore(LocalDateTime.now().minusDays(10));
     config.setComments("Unit Tests");
-    config.setSource("tcp://localhost:1883/topic2");
     config.setResourceType("sensor");
     config.setInterfaceDescription("Temperature C");
+
+    config.setExpiresAfter(OffsetDateTime.now().plusDays(10));
+    config.setNotBefore(OffsetDateTime.now().minusDays(10));
+    config.setSource("tcp://localhost:1883/topic2");
+
   }
 
-  void validateSchema(SchemaConfig schemaConfig) throws IOException {
+  void validateSchema(XRegistrySchemaVersion schemaConfig) throws IOException {
     validate(schemaConfig);
-    Assertions.assertTrue(schemaConfig.getExpiresAfter().isAfter(LocalDateTime.now()));
-    Assertions.assertTrue(schemaConfig.getNotBefore().isBefore(LocalDateTime.now()));
-    Assertions.assertEquals("tcp://localhost:1883/topic2", schemaConfig.getSource());
     Assertions.assertEquals("Unit Tests", schemaConfig.getComments());
     Assertions.assertEquals("Temperature C", schemaConfig.getInterfaceDescription());
     Assertions.assertEquals("sensor", schemaConfig.getResourceType());
 
     Assertions.assertNotNull(schemaConfig.getUniqueId());
+
+    Assertions.assertTrue(schemaConfig.getExpiresAfter().isAfter(OffsetDateTime.now()));
+    Assertions.assertTrue(schemaConfig.getNotBefore().isBefore(OffsetDateTime.now()));
+    Assertions.assertEquals("tcp://localhost:1883/topic2", schemaConfig.getSource());
+
   }
 
-  Map<String, Object> getSchemaProperties() throws IOException {
-    Map<String, Object> schema = new LinkedHashMap<>();
-    Map<String, Object> props = getProperties();
-    props.put("uuid", UUID.randomUUID());
-    props.put("notBefore", LocalDateTime.now().minusDays(10));
-    props.put("expiresAfter", LocalDateTime.now().plusDays(10));
-    props.put("comments", "Unit Tests");
-    props.put("source", "tcp://localhost:1883/topic2");
-    props.put("interface-description", "Temperature C");
-    props.put("resource-type", "sensor");
-    props.put("version", 1);
-
-    schema.put("schema", props);
-    return schema;
+  XRegistrySchemaVersion getSchemaProperties() throws IOException {
+    XRegistrySchemaVersion properties = getProperties();
+    // --- Root-level metadata ---
+    String uid = UUID.randomUUID().toString();
+    properties.setVersionId(uid);
+    properties.setDescription("Unit test schema for temperature readings");
+    properties.setComments("Unit Tests");
+    properties.setInterfaceDescription("Temperature C");
+    properties.setResourceType("sensor");
+    properties.setNotBefore(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10));
+    properties.setExpiresAfter(OffsetDateTime.now(ZoneOffset.UTC).plusDays(10));
+    properties.setSource("tcp://localhost:1883/topic2");
+    return properties;
   }
+
 
   @Test
   void validateBaseConstructor() throws IOException {
-    SchemaConfig schemaConfig = buildConfig();
+    XRegistrySchemaVersion schemaConfig = buildConfig();
     validate(schemaConfig);
     validateSchema(schemaConfig);
   }
@@ -85,37 +90,29 @@ public abstract class GeneralBaseTest {
 
   @Test
   void validateConstructors() throws IOException {
-    Map<String, Object> schemaProps = getSchemaProperties();
-    String format = ((Map<String, Object>) schemaProps.get("schema")).get("format").toString();
-    SchemaConfig schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaProps);
-    Assertions.assertEquals(format, schemaConfig.getFormat());
-    validate(schemaConfig);
-    validateSchema(schemaConfig);
+    XRegistrySchemaVersion schemaProps = buildConfig();
+    Assertions.assertNotNull(schemaProps);
+    validate(schemaProps);
+    validateSchema(schemaProps);
   }
 
   @Test
   void validateStreamConstructors() throws IOException {
-    Map<String, Object> schemaProps = getSchemaProperties();
-    String format = ((Map<String, Object>) schemaProps.get("schema")).get("format").toString();
-    SchemaConfig schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaProps);
+    XRegistrySchemaVersion schemaProps = buildConfig();
+    XRegistrySchemaVersion schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaProps.pack());
     validate(schemaConfig);
-    Assertions.assertEquals(format, schemaConfig.getFormat());
-    String packed = schemaConfig.pack();
-    SchemaConfig parsed = SchemaConfigFactory.getInstance().constructConfig(packed);
-    validate(parsed);
-    Assertions.assertEquals(format, parsed.getFormat());
+    Assertions.assertEquals(schemaProps.getClass().getName(), schemaConfig.getClass().getName());
+    validate(schemaConfig);
+    Assertions.assertEquals(schemaProps.getFormat(), schemaConfig.getFormat());
   }
 
   @Test
   void validateConstructorFromMap() throws IOException {
-    Map<String, Object> schemaProps = getSchemaProperties();
-    String format = ((Map<String, Object>) schemaProps.get("schema")).get("format").toString();
-    SchemaConfig schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaProps);
-    Assertions.assertEquals(format, schemaConfig.getFormat());
+    XRegistrySchemaVersion schemaConfig = buildConfig();
     validate(schemaConfig);
     validateSchema(schemaConfig);
-    schemaProps = schemaConfig.toMap();
-    SchemaConfig schemaConfigCheck = SchemaConfigFactory.getInstance().constructConfig(schemaProps);
+    byte[] schemaProps = schemaConfig.pack();
+    XRegistrySchemaVersion schemaConfigCheck = SchemaConfigFactory.getInstance().constructConfig(schemaProps);
     Assertions.assertNotNull(schemaConfigCheck);
     validate(schemaConfigCheck);
     validateSchema(schemaConfigCheck);

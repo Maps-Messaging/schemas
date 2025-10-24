@@ -21,67 +21,42 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import com.google.gson.JsonObject;
-import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
 
-import java.io.IOException;
-import java.util.Base64;
-import java.util.Map;
-
-import static io.mapsmessaging.schemas.config.Constants.SCHEMA;
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.AVRO_SCHEMA_NOT_DEFINED;
 
 /**
  * The type Avro schema config.
  */
 @Schema(description = "AVRO Schema Configuration")
-public class AvroSchemaConfig extends SchemaConfig {
+public class AvroSchemaConfig extends XRegistrySchemaVersionImpl {
 
-
-  @Getter
-  @Setter
-  private String schema;
-
-  /**
-   * Instantiates a new Avro schema config.
-   */
   public AvroSchemaConfig() {
     super("AVRO");
-    setMimeType("application/octet-stream");
   }
 
-  /**
-   * Instantiates a new Avro schema config.
-   *
-   * @param config the config
-   */
-  protected AvroSchemaConfig(Map<String, Object> config) {
-    super("AVRO", config);
-    this.schema = new String(Base64.getDecoder().decode(config.get(SCHEMA).toString()));
-    setMimeType("application/octet-stream");
+  protected AvroSchemaConfig(XRegistrySchemaVersion config) {
+    super(config);
   }
 
+  public String getAvroSchema() {
+    JsonObject json = getSchema();
+    return json.get("schema").getAsString();
+  }
 
-  @Override
-  public byte[] getSchemaDefinition() {
-    return schema.getBytes();
+  public void setAvroSchema(String avroSchema) {
+    JsonObject json = new JsonObject();
+    json.addProperty("schema", avroSchema);
+    setSchema(json);
   }
 
   @Override
-  protected JsonObject packData() throws IOException {
-    if (schema == null || schema.isEmpty()) {
-      logger.log(AVRO_SCHEMA_NOT_DEFINED, format, uniqueId);
-      throw new IOException("No schema specified");
-    }
-    JsonObject data = new JsonObject();
-    packData(data);
-    data.addProperty(SCHEMA, new String(Base64.getEncoder().encode(schema.getBytes())));
-    return data;
+  public String getMimeType() {
+    return "application/octet-stream";
   }
 
-  protected SchemaConfig getInstance(Map<String, Object> config) {
+  @Override
+  public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
     return new AvroSchemaConfig(config);
   }
 }

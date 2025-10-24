@@ -22,8 +22,8 @@ package io.mapsmessaging.schemas.repository.impl;
 
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
-import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import lombok.NonNull;
 
 import java.io.*;
@@ -33,7 +33,7 @@ import java.util.List;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.*;
 
-public class FileSchemaRepository extends SimpleSchemaRepository{
+public class FileSchemaRepository extends SimpleSchemaRepository {
 
   private final Logger logger = LoggerFactory.getLogger(FileSchemaRepository.class);
 
@@ -54,7 +54,7 @@ public class FileSchemaRepository extends SimpleSchemaRepository{
 
   private void loadData() throws IOException {
     File[] children = rootDirectory.listFiles();
-    if(children != null) {
+    if (children != null) {
       for (File child : children) {
         loadFile(child);
       }
@@ -92,14 +92,14 @@ public class FileSchemaRepository extends SimpleSchemaRepository{
         totalRead += res;
       }
 
-      SchemaConfig schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaBytes);
+      XRegistrySchemaVersion schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaBytes);
       addSchema(context, schemaConfig);
     }
   }
 
 
   @Override
-  public SchemaConfig addSchema(@NonNull String context, @NonNull SchemaConfig config) {
+  public XRegistrySchemaVersion addSchema(@NonNull String context, @NonNull XRegistrySchemaVersion config) {
     File schemafile = new File(rootDirectory, config.getUniqueId());
     try (FileOutputStream fileOutputStream = new FileOutputStream(schemafile)) {
       byte[] contextBytes = context.getBytes();
@@ -107,10 +107,9 @@ public class FileSchemaRepository extends SimpleSchemaRepository{
       fileOutputStream.write(((byte) len & 0xff));
       fileOutputStream.write(((byte) (len >> 8) & 0xff));
       fileOutputStream.write(contextBytes);
-      fileOutputStream.write(config.pack().getBytes());
+      fileOutputStream.write(config.pack());
       fileOutputStream.flush();
-    }
-    catch (IOException ex){
+    } catch (IOException ex) {
       logger.log(FILE_REPO_UNABLE_TO_SAVE_EXCEPTION, ex);
     }
     return super.addSchema(context, config);
@@ -129,7 +128,7 @@ public class FileSchemaRepository extends SimpleSchemaRepository{
   @Override
   public void removeAllSchemas() {
     List<String> uniqueIds = new ArrayList<>(super.mapByUUID.keySet());
-    for(String uniqueId:uniqueIds){
+    for (String uniqueId : uniqueIds) {
       removeSchema(uniqueId);
     }
   }

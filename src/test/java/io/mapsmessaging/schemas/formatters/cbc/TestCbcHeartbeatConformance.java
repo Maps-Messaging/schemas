@@ -86,10 +86,10 @@ public class TestCbcHeartbeatConformance {
 
     CbcSchemaConfig schema = new CbcSchemaConfig();
     JsonObject obj = JsonParser.parseString(INMARSAT_HEARTBEAT_JSON).getAsJsonObject();
-    ;
+
     JsonArray arr = obj.getAsJsonArray("messages");
     JsonObject msg1 = arr.get(0).getAsJsonObject();
-    schema.setSchema(msg1.toString());
+    schema.setSchema(msg1);
     CbcFormatter formatter = (CbcFormatter) MessageFormatterFactory.getInstance().getFormatter(schema);
 
     byte[] payload = TestHeartbeatVectors.buildExampleVector(schema); // our local vector builder
@@ -125,7 +125,7 @@ public class TestCbcHeartbeatConformance {
 
   void decode_golden_from_reference() throws Exception {
     CbcSchemaConfig schema = new CbcSchemaConfig();
-    schema.setSource(HEARTBEAT_JSON);
+    schema.setSchema(HEARTBEAT_JSON);
     CbcFormatter formatter = (CbcFormatter) MessageFormatterFactory.getInstance().getFormatter(schema);
 
 

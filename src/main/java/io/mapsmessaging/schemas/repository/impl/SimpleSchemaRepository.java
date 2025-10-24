@@ -20,7 +20,7 @@
 
 package io.mapsmessaging.schemas.repository.impl;
 
-import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.mapsmessaging.schemas.repository.SchemaRepository;
 import lombok.NonNull;
 
@@ -35,8 +35,8 @@ import java.util.stream.Stream;
  */
 public class SimpleSchemaRepository implements SchemaRepository {
 
-  private final Map<String, List<SchemaConfig>> mapByContext;
-  protected final Map<String, SchemaConfig> mapByUUID;
+  protected final Map<String, XRegistrySchemaVersion> mapByUUID;
+  private final Map<String, List<XRegistrySchemaVersion>> mapByContext;
 
 
   /**
@@ -48,26 +48,26 @@ public class SimpleSchemaRepository implements SchemaRepository {
   }
 
   @Override
-  public SchemaConfig addSchema(@NonNull String context, @NonNull SchemaConfig config) {
-    SchemaConfig existing = mapByUUID.get(config.getUniqueId());
+  public XRegistrySchemaVersion addSchema(@NonNull String context, @NonNull XRegistrySchemaVersion config) {
+    XRegistrySchemaVersion existing = mapByUUID.get(config.getUniqueId());
     if (existing != null) {
       config = existing;
     } else {
       mapByUUID.put(config.getUniqueId(), config);
     }
-    List<SchemaConfig> list = mapByContext.computeIfAbsent(context, k -> new ArrayList<>());
+    List<XRegistrySchemaVersion> list = mapByContext.computeIfAbsent(context, k -> new ArrayList<>());
     list.add(config);
     return config;
   }
 
   @Override
-  public SchemaConfig getSchema(@NonNull String uuid) {
+  public XRegistrySchemaVersion getSchema(@NonNull String uuid) {
     return mapByUUID.get(uuid);
   }
 
   @Override
-  public @NonNull List<SchemaConfig> getSchemaByContext(@NonNull String context) {
-    List<SchemaConfig> response = mapByContext.get(context);
+  public @NonNull List<XRegistrySchemaVersion> getSchemaByContext(@NonNull String context) {
+    List<XRegistrySchemaVersion> response = mapByContext.get(context);
     if (response == null) {
       response = new ArrayList<>();
     }
@@ -75,28 +75,28 @@ public class SimpleSchemaRepository implements SchemaRepository {
   }
 
   @Override
-  public List<SchemaConfig> getSchemas(@NonNull String type) {
-    List<SchemaConfig> matching = new ArrayList<>();
-    Stream<SchemaConfig> filteredStream = mapByUUID.values().stream().filter(schemaConfig -> schemaConfig.getFormat().equalsIgnoreCase(type));
+  public List<XRegistrySchemaVersion> getSchemas(@NonNull String type) {
+    List<XRegistrySchemaVersion> matching = new ArrayList<>();
+    Stream<XRegistrySchemaVersion> filteredStream = mapByUUID.values().stream().filter(schemaConfig -> schemaConfig.getFormat().equalsIgnoreCase(type));
     filteredStream.forEach(matching::add);
     return matching;
   }
 
   @Override
-  public @NonNull List<SchemaConfig> getAll() {
+  public @NonNull List<XRegistrySchemaVersion> getAll() {
     return new ArrayList<>(mapByUUID.values());
   }
 
   @Override
-  public @NonNull Map<String, List<SchemaConfig>> getMappedSchemas() {
+  public @NonNull Map<String, List<XRegistrySchemaVersion>> getMappedSchemas() {
     return new LinkedHashMap<>(mapByContext);
   }
 
   @Override
   public void removeSchema(@NonNull String uuid) {
-    SchemaConfig config = mapByUUID.remove(uuid);
+    XRegistrySchemaVersion config = mapByUUID.remove(uuid);
     if (config != null) {
-      for (List<SchemaConfig> list : mapByContext.values()) {
+      for (List<XRegistrySchemaVersion> list : mapByContext.values()) {
         list.remove(config);
       }
     }

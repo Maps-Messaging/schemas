@@ -21,15 +21,13 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.CbcSchemaConfig;
-import io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification;
+import io.mapsmessaging.schemas.config.impl.cbc.CbcFormat;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import static io.mapsmessaging.schemas.formatters.cbc.TestCbcHeartbeatConformance.INMARSAT_HEARTBEAT_JSON;
 
@@ -39,73 +37,29 @@ import static io.mapsmessaging.schemas.formatters.cbc.TestCbcHeartbeatConformanc
 class TestCbcConfig extends GeneralBaseTest {
 
   @Override
-  Map<String, Object> getProperties() {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "cbc");                       // must match CbcSchemaConfig.TYPE
-    Map<String, Object> schema = new LinkedHashMap<>();
-    // Optional CBC-level settings
-    schema.put("message", 0);
-
-    // Minimal valid field list: one unsigned 16-bit field, then byte-align
-    List<Map<String, Object>> fields = new ArrayList<>();
-    Map<String, Object> f1 = new LinkedHashMap<>();
-    f1.put("name", "sensorId");
-    f1.put("type", "uint");
-    f1.put("size", 16);
-    fields.add(f1);
-
-    // Second field: signed 12-bit temperature with scale/offset
-    Map<String, Object> f2 = new LinkedHashMap<>();
-    f2.put("name", "temperatureC");
-    f2.put("type", "int");
-    f2.put("size", 12);
-    fields.add(f2);
-
-    schema.put("fields", fields);
-
-    props.put("schema", schema);
-    return props;
+  XRegistrySchemaVersion getProperties() {
+    CbcSchemaConfig cbcSchemaConfig = new CbcSchemaConfig();
+    cbcSchemaConfig.setSchema(cbcSchema);
+    return cbcSchemaConfig;
   }
 
   @Override
-  SchemaConfig buildConfig() throws IOException {
-    CbcSchemaConfig config = new CbcSchemaConfig();
-    setBaseConfig(config);
-    // CBC defaults
-    config.setMessageKey(0);
-
-    // Mirror the field list used in getProperties()
-    List<FieldSpecification> list = new ArrayList<>();
-
-    FieldSpecification sensorId =
-        FieldSpecification.builder()
-            .name("sensorId")
-            .type("uint")
-            .size(16)
-            .build();
-    list.add(sensorId);
-
-    FieldSpecification temp =
-        FieldSpecification.builder()
-            .name("temperatureC")
-            .type("uint")
-            .size(12)
-            .build();
-    list.add(temp);
-
-    config.setFieldSpecificationList(list);
-    config.setMimeType("application/x-cbc");
-    return config;
+  XRegistrySchemaVersion buildConfig() throws IOException {
+    CbcSchemaConfig cbcSchemaConfig = new CbcSchemaConfig();
+    cbcSchemaConfig.setSchema(cbcSchema);
+    setBaseConfig(cbcSchemaConfig);
+    return cbcSchemaConfig;
   }
 
   @Override
-  void validate(SchemaConfig schemaConfig) {
+  void validate(XRegistrySchemaVersion schemaConfig) {
     Assertions.assertInstanceOf(CbcSchemaConfig.class, schemaConfig);
     CbcSchemaConfig c = (CbcSchemaConfig) schemaConfig;
     Assertions.assertEquals("application/x-cbc", c.getMimeType());
-    Assertions.assertNotNull(c.getFieldSpecificationList());
-    Assertions.assertFalse(c.getFieldSpecificationList().isEmpty());
-    Assertions.assertEquals("sensorId", c.getFieldSpecificationList().get(0).getName());
+    CbcFormat cbcFormat = c.getCbcFormat();
+    Assertions.assertNotNull(cbcFormat.getFields());
+    Assertions.assertFalse(cbcFormat.getFields().isEmpty());
+    Assertions.assertEquals("sensorId", cbcFormat.getFields().get(0).getName());
   }
 
   @Test
@@ -114,11 +68,27 @@ class TestCbcConfig extends GeneralBaseTest {
     Assertions.assertNotNull(configList);
     Assertions.assertFalse(configList.isEmpty());
     for (CbcSchemaConfig config : configList) {
-      String packed = config.pack();
+      String packed = new String(config.pack());
       Assertions.assertNotNull(packed);
-      SchemaConfig reloaded = SchemaConfigFactory.getInstance().constructConfig(packed);
+      XRegistrySchemaVersion reloaded = SchemaConfigFactory.getInstance().constructConfig(packed);
       Assertions.assertNotNull(reloaded);
       Assertions.assertInstanceOf(CbcSchemaConfig.class, reloaded);
     }
   }
+
+  private static final String cbcSchema = "{\n" +
+      "    \"messageKey\": 0,\n" +
+      "    \"fields\": [\n" +
+      "      {\n" +
+      "        \"name\": \"sensorId\",\n" +
+      "        \"type\": \"uint\",\n" +
+      "        \"size\": 16\n" +
+      "      },\n" +
+      "      {\n" +
+      "        \"name\": \"temperatureC\",\n" +
+      "        \"type\": \"int\",\n" +
+      "        \"size\": 12\n" +
+      "      }\n" +
+      "    ]\n" +
+      "}";
 }

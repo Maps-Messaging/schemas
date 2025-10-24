@@ -20,7 +20,7 @@
 
 package io.mapsmessaging.schemas.formatters;
 
-import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,14 +33,6 @@ import java.util.ServiceLoader;
 @SuppressWarnings("java:S6548") // yes it is a singleton
 public class MessageFormatterFactory {
 
-  private static class Holder {
-    static final MessageFormatterFactory INSTANCE = new MessageFormatterFactory();
-  }
-
-  public static MessageFormatterFactory getInstance() {
-    return MessageFormatterFactory.Holder.INSTANCE;
-  }
-
   private final List<MessageFormatter> messageFormatters;
 
   private MessageFormatterFactory() {
@@ -51,6 +43,10 @@ public class MessageFormatterFactory {
     }
   }
 
+  public static MessageFormatterFactory getInstance() {
+    return MessageFormatterFactory.Holder.INSTANCE;
+  }
+
   public List<String> getFormatters() {
     List<String> formatList = new ArrayList<>();
     for (MessageFormatter messageFormatter : messageFormatters) {
@@ -59,7 +55,6 @@ public class MessageFormatterFactory {
     return formatList;
   }
 
-
   /**
    * Gets formatter.
    *
@@ -67,13 +62,17 @@ public class MessageFormatterFactory {
    * @return the formatter
    * @throws IOException the io exception
    */
-  public MessageFormatter getFormatter(SchemaConfig config) throws IOException {
+  public MessageFormatter getFormatter(XRegistrySchemaVersion config) throws IOException {
     for (MessageFormatter formatter : messageFormatters) {
       if (formatter.getName().equalsIgnoreCase(config.getFormat())) {
         return formatter.getInstance(config);
       }
     }
     throw new IOException("Unknown format config received");
+  }
+
+  private static class Holder {
+    static final MessageFormatterFactory INSTANCE = new MessageFormatterFactory();
   }
 }
 

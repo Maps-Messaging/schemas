@@ -20,60 +20,43 @@
 
 package io.mapsmessaging.schemas.config.impl;
 
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.mapsmessaging.schemas.config.SchemaConfig;
-import lombok.Getter;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
-import java.util.Map;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
-import static io.mapsmessaging.schemas.config.SchemaConfigFactory.gson;
-
-public class MessagePackSchemaConfig extends SimpleSchemaConfig {
+public class MessagePackSchemaConfig extends XRegistrySchemaVersionImpl {
 
   private static final String NAME = "MessagePack";
 
-  @Getter
-  private final String schema;
-
   public MessagePackSchemaConfig() {
     super(NAME);
-    schema = "{}";
-    setMimeType("application/msgpack");
+    setSchema(JsonParser.parseString("{}").getAsJsonObject());
+
   }
 
   public MessagePackSchemaConfig(String schema) {
     super(NAME);
-    this.schema = schema;
-    setMimeType("application/msgpack");
+    setSchema(JsonParser.parseString(schema).getAsJsonObject());
   }
 
-  private MessagePackSchemaConfig(Map<String, Object> config) {
-    super(NAME, config);
-    Object obj = config.get("jsonSchema");
-    if (obj instanceof Map) {
-      @SuppressWarnings("unchecked")
-      JsonObject jsonSchema = gson.toJsonTree((Map<String, Object>) obj).getAsJsonObject();
-      schema = gson.toJson(jsonSchema);
-    } else {
-      schema = "{}";
-    }
+  private MessagePackSchemaConfig(XRegistrySchemaVersion config) {
+    super(config);
   }
 
   @Override
-  public byte[] getSchemaDefinition() {
-    return schema.getBytes();
+  public String getMimeType() {
+    return "application/msgpack";
   }
 
   @Override
-  protected void packData(JsonObject jsonObject) {
-    super.packData(jsonObject);
-    JsonObject schemaObject = JsonParser.parseString(schema).getAsJsonObject();
-    jsonObject.add("jsonSchema", schemaObject);
-  }
-
-  @Override
-  protected SchemaConfig getInstance(Map<String, Object> config) {
+  public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
     return new MessagePackSchemaConfig(config);
+  }
+
+  public byte[] pack() throws IOException {
+    XRegistrySchemaVersion tmp = new XRegistrySchemaVersion(this);
+    return gson.toJson(tmp).getBytes(StandardCharsets.UTF_8);
   }
 }

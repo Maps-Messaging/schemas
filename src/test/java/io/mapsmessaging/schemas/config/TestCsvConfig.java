@@ -21,45 +21,46 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.CsvSchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 class TestCsvConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties() {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "CSV");
-    props.put("header", "name, id, email");
-    return props;
+  XRegistrySchemaVersion getProperties() {
+    CsvSchemaConfig config = new CsvSchemaConfig();
+    CsvSchemaConfig.CsvConfig csvConfig = new CsvSchemaConfig.CsvConfig();
+    csvConfig.setHeaderValues("name, id, email");
+    return config;
   }
 
   @Override
-  SchemaConfig buildConfig() {
+  XRegistrySchemaVersion buildConfig() {
     CsvSchemaConfig config = new CsvSchemaConfig();
-    config.setHeaderValues("name, id, email");
+    CsvSchemaConfig.CsvConfig csvConfig = new CsvSchemaConfig.CsvConfig();
+    csvConfig.setHeaderValues("name, id, email");
+    config.setConfig(csvConfig);
     setBaseConfig(config);
     return config;
   }
 
   @Override
-  void validate(SchemaConfig schemaConfig) {
+  void validate(XRegistrySchemaVersion schemaConfig) {
     Assertions.assertInstanceOf(CsvSchemaConfig.class, schemaConfig);
     CsvSchemaConfig config = (CsvSchemaConfig) schemaConfig;
-    Assertions.assertEquals("name, id, email", config.getHeaderValues());
+    Assertions.assertEquals("name, id, email", config.getConfig().getHeaderValues());
   }
 
   @Test
   void invalidConfig() {
     CsvSchemaConfig config = new CsvSchemaConfig();
     config.setUniqueId(UUID.randomUUID());
-    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
-    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    config.setExpiresAfter(OffsetDateTime.now().plusDays(10));
+    config.setNotBefore(OffsetDateTime.now().minusDays(10));
     Assertions.assertThrowsExactly(IOException.class, config::pack);
   }
 }

@@ -21,9 +21,9 @@
 package io.mapsmessaging.schemas.repository.impl;
 
 import com.google.gson.*;
-import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
 import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import lombok.NonNull;
 
 import java.io.IOException;
@@ -47,6 +47,18 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
     url = hostUrl;
     client = HttpClient.newHttpClient();
     loadData();
+  }
+
+  public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
+    SimpleSchemaRepository repository = new RestSchemaRepository("http://localhost:8080");
+    JsonSchemaConfig json = new JsonSchemaConfig();
+    json.setUniqueId(UUID.randomUUID());
+    repository.addSchema("/root", json);
+    for (XRegistrySchemaVersion config : repository.getAll()) {
+      if (config.getFormat().equalsIgnoreCase("json")) {
+        repository.removeSchema(config.getUniqueId());
+      }
+    }
   }
 
   private void loadData() throws IOException, URISyntaxException, InterruptedException {
@@ -75,14 +87,13 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
     }
   }
 
-
   @Override
-  public SchemaConfig getSchema(@NonNull String uuid) {
-    SchemaConfig config =  mapByUUID.get(uuid);
-    if(config == null){
+  public XRegistrySchemaVersion getSchema(@NonNull String uuid) {
+    XRegistrySchemaVersion config = mapByUUID.get(uuid);
+    if (config == null) {
       try {
         HttpRequest request = HttpRequest.newBuilder()
-            .uri(new URI(url+"/api/v1/schema/"+uuid))
+            .uri(new URI(url + "/api/v1/schema/" + uuid))
             .header(CONTENT_TYPE_HEADER, CONTENT_TYPE)
             .GET()
             .build();
@@ -106,11 +117,11 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
   public void removeSchema(@NonNull String uuid) {
     try {
       HttpRequest request = HttpRequest.newBuilder()
-          .uri(new URI(url+"/api/v1/schema/"+uuid))
+          .uri(new URI(url + "/api/v1/schema/" + uuid))
           .header(CONTENT_TYPE_HEADER, CONTENT_TYPE)
           .DELETE().build();
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-      if(response.statusCode() >= 200 && response.statusCode() < 300) {
+      if (response.statusCode() >= 200 && response.statusCode() < 300) {
         super.removeSchema(uuid);
       }
     } catch (URISyntaxException | IOException | InterruptedException e) {
@@ -123,11 +134,11 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
   public void removeAllSchemas() {
     try {
       HttpRequest request = HttpRequest.newBuilder()
-          .uri(new URI(url+"/api/v1/schema"))
+          .uri(new URI(url + "/api/v1/schema"))
           .header(CONTENT_TYPE_HEADER, CONTENT_TYPE)
           .DELETE().build();
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-      if(response.statusCode() >= 200 && response.statusCode() < 300) {
+      if (response.statusCode() >= 200 && response.statusCode() < 300) {
         super.removeAllSchemas();
       }
     } catch (URISyntaxException | IOException | InterruptedException e) {
@@ -137,11 +148,11 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
   }
 
   @Override
-  public SchemaConfig addSchema(@NonNull String context, @NonNull SchemaConfig config) {
+  public XRegistrySchemaVersion addSchema(@NonNull String context, @NonNull XRegistrySchemaVersion config) {
     try {
       JsonObject jsonObject = new JsonObject();
       jsonObject.addProperty("context", context);
-      jsonObject.add("schema", JsonParser.parseString(config.pack()));
+      jsonObject.add("schema", gson.toJsonTree(config).getAsJsonObject());
 
       HttpRequest request = HttpRequest.newBuilder()
           .uri(new URI(url + "/api/v1/schema"))
@@ -150,24 +161,12 @@ public class RestSchemaRepository extends SimpleSchemaRepository {
           .build();
 
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-      if(response.statusCode() >= 200 && response.statusCode() < 300) {
+      if (response.statusCode() >= 200 && response.statusCode() < 300) {
         return super.addSchema(context, config);
       }
     } catch (URISyntaxException | IOException | InterruptedException e) {
       Thread.currentThread().interrupt();
     }
     return null;
-  }
-
-  public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
-    SimpleSchemaRepository repository = new RestSchemaRepository("http://localhost:8080");
-    JsonSchemaConfig json = new JsonSchemaConfig();
-    json.setUniqueId(UUID.randomUUID());
-    repository.addSchema("/root", json);
-    for(SchemaConfig config:repository.getAll()){
-      if(config.getFormat().equalsIgnoreCase("json")){
-        repository.removeSchema(config.getUniqueId());
-      }
-    }
   }
 }

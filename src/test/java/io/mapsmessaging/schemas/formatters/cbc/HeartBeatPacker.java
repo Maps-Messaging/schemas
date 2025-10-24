@@ -31,8 +31,8 @@ public final class HeartBeatPacker {
   public static byte[] pack(Heartbeat hb, CbcSchemaConfig schema) {
     BitWriter w = new BitWriter();
 
-    if (schema.getMessageKey() > 0) {
-      w.writeUnsigned(schema.getMessageKey(), 16);
+    if (schema.getCbcFormat().getMessageKey() > 0) {
+      w.writeUnsigned(schema.getCbcFormat().getMessageKey(), 16);
     }
 
     // secOfDay (mandatory)

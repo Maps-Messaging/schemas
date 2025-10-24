@@ -21,26 +21,16 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import com.google.gson.JsonObject;
-import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.io.IOException;
-import java.util.Map;
-
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.NATIVE_TYPE_UNKNOWN;
 
 /**
  * The type Native schema config.
  */
 @Schema(description = "Native Schema Configuration")
-public class NativeSchemaConfig extends SimpleSchemaConfig {
+public class NativeSchemaConfig extends XRegistrySchemaVersionImpl {
 
   private static final String NAME = "Native";
-  @Getter
-  @Setter
-  private TYPE type;
 
   /**
    * Instantiates a new Native schema config.
@@ -54,59 +44,30 @@ public class NativeSchemaConfig extends SimpleSchemaConfig {
    *
    * @param config the config
    */
-  protected NativeSchemaConfig(Map<String, Object> config) {
-    super(NAME, config);
-    String typeName = (String)config.get("type");
-    switch (typeName.toUpperCase()) {
-      case "STRING":
-        type = TYPE.STRING;
-        break;
-      case "NUMERIC_STRING":
-        type = TYPE.NUMERIC_STRING;
-        break;
-      case "INT8":
-        type = TYPE.INT8;
-        break;
-      case "INT16":
-        type = TYPE.INT16;
-        break;
-      case "INT32":
-        type = TYPE.INT32;
-        break;
-      case "INT64":
-        type = TYPE.INT64;
-        break;
-      case "FLOAT":
-        type = TYPE.FLOAT;
-        break;
-      case "DOUBLE":
-        type = TYPE.DOUBLE;
-        break;
-
-      default:
-        logger.log(NATIVE_TYPE_UNKNOWN, getFormat(), uniqueId);
-        type = TYPE.STRING;
-    }
+  public NativeSchemaConfig(XRegistrySchemaVersion config) {
+    super(config);
   }
 
   @Override
-  protected JsonObject packData() throws IOException {
-    if (type == null) {
-      logger.log(NATIVE_TYPE_UNKNOWN, getFormat(), uniqueId);
-      throw new IOException("No type defined specified");
+  public String getMimeType() {
+    return "application/text";
+  }
+
+  public TYPE getType() {
+    JsonObject json = getSchema();
+    if (json.has("type")) {
+      return TYPE.valueOf(json.get("type").getAsString());
     }
-    JsonObject data = new JsonObject();
-    packData(data);
-    data.addProperty("type", type.toString());
-    return data;
+    return null;
   }
 
-  @Override
-  public byte[] getSchemaDefinition() {
-    return type.name().getBytes();
+  public void setType(TYPE type) {
+    JsonObject json = new JsonObject();
+    json.addProperty("type", type.name());
+    setSchema(json);
   }
 
-  protected SchemaConfig getInstance(Map<String, Object> config) {
+  public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
     return new NativeSchemaConfig(config);
   }
 

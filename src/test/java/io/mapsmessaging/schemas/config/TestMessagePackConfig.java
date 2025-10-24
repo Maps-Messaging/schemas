@@ -21,28 +21,26 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.MessagePackSchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class TestMessagePackConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties() {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "MessagePack");
-    return props;
+  XRegistrySchemaVersion getProperties() {
+    MessagePackSchemaConfig config = new MessagePackSchemaConfig();
+    return config;
   }
 
   @Override
-  SchemaConfig buildConfig() {
+  XRegistrySchemaVersion buildConfig() {
     MessagePackSchemaConfig config = new MessagePackSchemaConfig();
     setBaseConfig(config);
     return config;
   }
 
   @Override
-  void validate(SchemaConfig schemaConfig) {
+  void validate(XRegistrySchemaVersion schemaConfig) {
     Assertions.assertInstanceOf(MessagePackSchemaConfig.class, schemaConfig);
   }
 

@@ -20,9 +20,9 @@
 
 package io.mapsmessaging.schemas.repository;
 
-import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.mapsmessaging.schemas.repository.impl.SimpleSchemaRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,14 @@ class TestSimpleRepository {
   void simpleAccess() throws IOException {
     SimpleSchemaRepository repository = getRepository();
     XmlSchemaConfig xml = new XmlSchemaConfig();
+    XmlSchemaConfig.XmlConfig xmlConfig = new XmlSchemaConfig.XmlConfig();
+    xmlConfig.setRootEntry("simple");
+    xmlConfig.setNamespaceAware(true);
+    xmlConfig.setValidating(true);
+    xmlConfig.setCoalescing(true);
+    xml.setConfig(xmlConfig);
     xml.setUniqueId(UUID.randomUUID());
+
     repository.addSchema("/root", xml);
     Assertions.assertNotNull(repository.getSchema(xml.getUniqueId()));
     Assertions.assertEquals(xml, repository.getSchema(xml.getUniqueId()));
@@ -83,13 +90,13 @@ class TestSimpleRepository {
     Assertions.assertEquals(10, repository.getSchemas("xml").size());
     Assertions.assertEquals(20, repository.getAll().size());
 
-    for(SchemaConfig config: repository.getSchemas("xml")){
+    for (XRegistrySchemaVersion config : repository.getSchemas("xml")) {
       repository.removeSchema(config.getUniqueId());
     }
     Assertions.assertEquals(10, repository.getSchemas("json").size());
     Assertions.assertEquals(0, repository.getSchemas("xml").size());
 
-    for (SchemaConfig config : repository.getSchemas("json")) {
+    for (XRegistrySchemaVersion config : repository.getSchemas("json")) {
       repository.removeSchema(config.getUniqueId());
     }
     Assertions.assertEquals(0, repository.getSchemas("json").size());

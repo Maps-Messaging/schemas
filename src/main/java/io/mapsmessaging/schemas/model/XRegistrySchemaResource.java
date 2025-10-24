@@ -21,11 +21,10 @@
 package io.mapsmessaging.schemas.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.*;
 
-import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Getter
@@ -35,71 +34,18 @@ import java.util.Map;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class XRegistrySchemaResource {
-  @JsonProperty("schemaid")
   private String schemaId;
-
-  @JsonProperty("versionid")
   private String versionId;
-
-  @JsonProperty("self")
   private String self;
-
-  @JsonProperty("xid")
   private String xid;
 
-  // Default Version attributes inlined
-  @JsonProperty("epoch")
-  private Long epoch;
-
-  @JsonProperty("name")
-  private String name;
-
-  @JsonProperty("description")
-  private String description;
-
-  @JsonProperty("documentation")
-  private String documentation;
-
-  @JsonProperty("labels")
-  private Map<String, String> labels;
-
-  @JsonProperty("createdat")
-  private OffsetDateTime createdAt;
-
-  @JsonProperty("modifiedat")
-  private OffsetDateTime modifiedAt;
-
-  @JsonProperty("ancestor")
-  private String ancestor;
-
-  @JsonProperty("format")
-  private String format;
-
-  @JsonProperty("schemaurl")
-  private String schemaUrl;
-
-  // schema can be any JSON; use JsonNode for text/object variants
-  @JsonProperty("schema")
-  private JsonNode schema;
-
-  // binary payloads encoded as base64
-  @JsonProperty("schemabase64")
-  private String schemaBase64;
-
-  // Resource-level metadata
-  @JsonProperty("metaurl")
   private String metaUrl;
+  private Map<String, Object> meta = new HashMap<>();
 
-  @JsonProperty("meta")
-  private XRegistrySchemaMeta meta;
-
-  // Versions collection (optional)
-  @JsonProperty("versionsurl")
   private String versionsUrl;
-
-  @JsonProperty("versionscount")
   private Integer versionsCount;
+  private Map<String, XRegistrySchemaVersion> versions = new LinkedHashMap<>();
 
-  @JsonProperty("versions")
-  private Map<String, XRegistrySchemaVersion> versions;
+  private XRegistrySchemaVersion defaultVersion;
+
 }

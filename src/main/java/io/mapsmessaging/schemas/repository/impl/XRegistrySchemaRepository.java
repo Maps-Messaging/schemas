@@ -1,169 +1,153 @@
-/*
- *
- *  Copyright [ 2020 - 2024 ] Matthew Buckton
- *  Copyright [ 2024 - 2025 ] MapsMessaging B.V.
- *
- *  Licensed under the Apache License, Version 2.0 with the Commons Clause
- *  (the "License"); you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at:
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *      https://commonsclause.com/
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- */
-
 package io.mapsmessaging.schemas.repository.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.mapsmessaging.schemas.model.XRegistrySchemaResource;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
+import io.mapsmessaging.schemas.repository.SchemaRepository;
 import io.mapsmessaging.schemas.repository.impl.xregistry.XRegistryClient;
 import io.mapsmessaging.schemas.repository.impl.xregistry.XRegistryConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.NonNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class XRegistrySchemaRepository extends SimpleSchemaRepository {
+/**
+ * xRegistry-backed repository with on-disk caching.
+ * Extends FileSchemaRepository for local persistence and offline use.
+ */
+public class XRegistrySchemaRepository extends FileSchemaRepository implements SchemaRepository {
 
-  private static final Logger log = LoggerFactory.getLogger(XRegistrySchemaRepository.class);
+  private final XRegistryClient client;
 
-  private static final String CONFIG_FILE = "xregistry.yaml";
-  private static final String REPOSITORY_NAME = "xregistry";
-  private XRegistryClient client;
-  private XRegistryConfig config;
-
-  public void XRegistrySchemaRepository(Map<String, String> properties) throws IOException {
-    log.info("Initializing xRegistry Schema Repository");
-    config = loadConfiguration(properties);
-    client = new XRegistryClient(config);
-    log.info("xRegistry initialized: {}", config.getBaseUrl());
+  public XRegistrySchemaRepository(@NonNull File rootDirectory, @NonNull XRegistryConfig config) throws IOException {
+    super(rootDirectory);
+    this.client = new XRegistryClient(config);
   }
 
+  // ---------------------------- API ----------------------------
 
   @Override
-  public List<XRegistrySchemaVersion> getAll() {
-    List<XRegistrySchemaVersion> out = new ArrayList<>();
-    try {
-      for (var x : client.listSchemas()) {
-        out.add(x);
+  public XRegistrySchemaResource createSchema(@NonNull String schemaId, XRegistrySchemaVersion initialVersion) {
+    XRegistrySchemaResource remote = client.createSchema(schemaId, initialVersion);
+    // hydrate cache from remote canonical state
+    cacheFromRemote(remote);
+    return super.getResource(schemaId);
+  }
+
+  @Override
+  public XRegistrySchemaResource getResource(@NonNull String schemaId) {
+    // try remote first; if unavailable, serve from cache
+    XRegistrySchemaResource remote = client.safeGetResource(schemaId);
+    if (remote != null) {
+      cacheFromRemote(remote);
+      return remote;
+    }
+    return super.getResource(schemaId);
+  }
+
+  @Override
+  public XRegistrySchemaVersion getVersion(@NonNull String schemaId, @NonNull String versionId) {
+    XRegistrySchemaVersion remote = client.safeGetVersion(schemaId, versionId);
+    if (remote != null) {
+      // write-through to cache
+      super.addVersion(schemaId, remote);
+      return remote;
+    }
+    return super.getVersion(schemaId, versionId);
+  }
+
+  @Override
+  public XRegistrySchemaVersion addVersion(@NonNull String schemaId, @NonNull XRegistrySchemaVersion version) {
+    XRegistrySchemaVersion created = client.addVersion(schemaId, version);
+    // write-through to cache
+    return super.addVersion(schemaId, created);
+  }
+
+  @Override
+  public XRegistrySchemaResource setDefaultVersion(@NonNull String schemaId, @NonNull String versionId) {
+    XRegistrySchemaResource remote = client.setDefaultVersion(schemaId, versionId);
+    cacheFromRemote(remote);
+    return super.getResource(schemaId);
+  }
+
+  @Override
+  public List<XRegistrySchemaVersion> listVersions(@NonNull String schemaId, int page, int size) {
+    List<XRegistrySchemaVersion> remote = client.safeListVersions(schemaId, page, size);
+    if (remote != null) {
+      for (XRegistrySchemaVersion v : remote) {
+        super.addVersion(schemaId, v);
       }
-    } catch (IOException e) {
-      e.printStackTrace();
+      return remote;
     }
-    return out;
+    return super.listVersions(schemaId, page, size);
   }
 
-  public void removeSchema(String schemaId) {
-    try {
-      client.deleteSchema(schemaId);
-      super.removeSchema(schemaId);
-    } catch (IOException e) {
-      e.printStackTrace();
+  @Override
+  public List<XRegistrySchemaResource> search(String format, Map<String, String> labelFilter, int page, int size) {
+    List<XRegistrySchemaResource> remote = client.safeSearch(format, labelFilter, page, size);
+    if (remote != null) {
+      // gently refresh cache with rows’ defaults
+      for (XRegistrySchemaResource r : remote) cacheFromRemote(r);
+      return remote;
     }
-  }
-
-  public String getName() {
-    return REPOSITORY_NAME;
+    return super.search(format, labelFilter, page, size);
   }
 
   @Override
-  public void removeAllSchemas() {
-    List<XRegistrySchemaVersion> schemas = getAll();
-    for (XRegistrySchemaVersion schema : schemas) {
-      removeSchema(schema.getUniqueId());
+  public XRegistrySchemaResource updateMetadata(@NonNull String schemaId,
+                                                String documentation,
+                                                Map<String, String> labels,
+                                                Map<String, Object> meta) {
+    XRegistrySchemaResource remote = client.updateMetadata(schemaId, documentation, labels, meta);
+    cacheFromRemote(remote);
+    return super.getResource(schemaId);
+  }
+
+  @Override
+  public boolean deleteVersion(@NonNull String schemaId, @NonNull String versionId, boolean force) {
+    boolean ok = client.deleteVersion(schemaId, versionId, force);
+    if (!ok) return false;
+    return super.deleteVersion(schemaId, versionId, force);
+  }
+
+  @Override
+  public boolean deleteSchema(@NonNull String schemaId, boolean force) {
+    boolean ok = client.deleteSchema(schemaId, force);
+    if (!ok) return false;
+    return super.deleteSchema(schemaId, force);
+  }
+
+  // ---------------------------- Cache helpers ----------------------------
+
+  private void cacheFromRemote(XRegistrySchemaResource remote) {
+    if (remote == null) return;
+    // ensure local resource exists
+    XRegistrySchemaResource local = super.getResource(remote.getSchemaId());
+    if (local == null) {
+      super.createSchema(remote.getSchemaId(), null);
     }
-    super.removeAllSchemas();
-  }
-
-  @Override
-  public XRegistrySchemaVersion addSchema(String context, XRegistrySchemaVersion schema) {
-//    try {
-    //return client.registerSchema(schema.getUniqueId(), schema.getFormat(), schema.pack(), "");
-    //  } catch (IOException e) {
-    // e.printStackTrace();
-    //}
-    return schema;
-  }
-
-  @Override
-  public XRegistrySchemaVersion getSchema(String uuid) {
-    String version = "";
-    XRegistrySchemaVersion schema = super.getSchema(uuid);
-    if (schema != null) {
-      return schema;
-    }
-    try {
-      var x = client.getSchema(uuid, version);
-      if (x == null) return null;
-      mapByUUID.put(uuid, x);
-      return x;
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    return null;
-  }
-
-  @Override
-  public List<XRegistrySchemaVersion> getSchemaByContext(String context) {
-    return List.of();
-  }
-
-  @Override
-  public List<XRegistrySchemaVersion> getSchemas(String type) {
-    return List.of();
-  }
-
-  @Override
-  public Map<String, List<XRegistrySchemaVersion>> getMappedSchemas() {
-    return Map.of();
-  }
-
-  public void close() throws Exception {
-    if (client != null) client.close();
-  }
-
-  private XRegistryConfig loadConfiguration(Map<String, String> properties) throws IOException {
-    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-
-    // classpath
-    try (InputStream is = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE)) {
-      if (is != null) {
-        XRegistryConfig cfg = mapper.readValue(is, XRegistryConfig.class);
-        if (properties != null) overrideConfig(cfg, properties);
-        return cfg;
+    // versions map
+    if (remote.getVersions() != null && !remote.getVersions().isEmpty()) {
+      for (Map.Entry<String, XRegistrySchemaVersion> e : remote.getVersions().entrySet()) {
+        super.addVersion(remote.getSchemaId(), e.getValue());
       }
     }
-    // filesystem
-    File f = new File(CONFIG_FILE);
-    if (f.exists()) {
-      XRegistryConfig cfg = mapper.readValue(f, XRegistryConfig.class);
-      if (properties != null) overrideConfig(cfg, properties);
-      return cfg;
+    // default pointer
+    if (remote.getVersionId() != null) {
+      super.setDefaultVersion(remote.getSchemaId(), remote.getVersionId());
     }
-    // properties only
-    XRegistryConfig cfg = new XRegistryConfig();
-    if (properties != null) overrideConfig(cfg, properties);
-    if (cfg.getBaseUrl() == null) throw new IOException("xRegistry baseUrl not configured");
-    return cfg;
+    // meta/doc/labels on default
+    if (remote.getDefaultVersion() != null) {
+      Map<String, String> labels = remote.getDefaultVersion().getLabels();
+      super.updateMetadata(
+          remote.getSchemaId(),
+          remote.getDefaultVersion().getDocumentation(),
+          labels != null ? new LinkedHashMap<>(labels) : null,
+          remote.getMeta());
+    } else if (remote.getMeta() != null) {
+      super.updateMetadata(remote.getSchemaId(), null, null, remote.getMeta());
+    }
   }
-
-  private void overrideConfig(XRegistryConfig cfg, Map<String, String> p) {
-    if (p.containsKey("baseUrl")) cfg.setBaseUrl(p.get("baseUrl"));
-    if (p.containsKey("apiKey")) cfg.setApiKey(p.get("apiKey"));
-    if (p.containsKey("groupName")) cfg.setGroupName(p.get("groupName"));
-    if (p.containsKey("enableCache")) cfg.setEnableCache(Boolean.parseBoolean(p.get("enableCache")));
-  }
-
 }

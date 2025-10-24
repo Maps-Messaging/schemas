@@ -1,6 +1,5 @@
 /*
- *
- *  Copyright [ 2020 - 2024 ] Matthew Buckton
+ *  Copyright [ 2020 - 2025 ] Matthew Buckton
  *  Copyright [ 2024 - 2025 ] MapsMessaging B.V.
  *
  *  Licensed under the Apache License, Version 2.0 with the Commons Clause
@@ -9,18 +8,13 @@
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *      https://commonsclause.com/
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
  */
 
 package io.mapsmessaging.schemas.repository;
 
-import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
+import com.google.gson.JsonObject;
+import io.mapsmessaging.schemas.model.XRegistrySchemaResource;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.mapsmessaging.schemas.repository.impl.FileSchemaRepository;
 import io.mapsmessaging.schemas.repository.impl.SimpleSchemaRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -29,37 +23,93 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.UUID;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
-class TestFileSimpleRepository extends TestSimpleRepository {
+class TestFileSchemaRepository extends TestSchemaRepository {
+
+  private static final File ROOT = new File("./test/report");
 
   @Override
   protected SimpleSchemaRepository getRepository() throws IOException {
-    return new FileSchemaRepository(new File("./test/report"));
+    return new FileSchemaRepository(ROOT);
   }
 
   @AfterEach
   void clearRepository() throws IOException {
-    getRepository().removeAllSchemas();
+    SimpleSchemaRepository repo = getRepository();
+    for (io.mapsmessaging.schemas.model.XRegistrySchemaResource r
+        : repo.search(null, null, 0, Integer.MAX_VALUE)) {
+      repo.deleteSchema(r.getSchemaId(), true);
+    }
+    deleteDir(ROOT);
   }
 
 
   @Test
   void testReload() throws IOException {
-    SimpleSchemaRepository repository = getRepository();
-    for (int x = 0; x < 10; x++) {
-      JsonSchemaConfig json = new JsonSchemaConfig();
-      json.setUniqueId(UUID.randomUUID());
-      repository.addSchema("/root/json/" + x, json);
-      Assertions.assertNotNull(repository.getSchema(json.getUniqueId()));
-      Assertions.assertEquals(json, repository.getSchema(json.getUniqueId()));
+    SimpleSchemaRepository repo = getRepository();
 
-      Assertions.assertNotNull(repository.getSchemaByContext("/root/json/" + x));
-      Assertions.assertEquals(json, repository.getSchemaByContext("/root/json/" + x).get(0));
+    List<String> schemaIds = new ArrayList<>();
+    for (int x = 0; x < 10; x++) {
+      String schemaId = "repo.reload." + x;
+      schemaIds.add(schemaId);
+
+      // create and add a default version
+      repo.createSchema(schemaId, null);
+      XRegistrySchemaVersion v = jsonVersion("v1");
+      v.setEpoch(1L);
+      XRegistrySchemaVersion created = repo.addVersion(schemaId, v);
+      repo.setDefaultVersion(schemaId, created.getVersionId());
+
+      XRegistrySchemaResource r = repo.getResource(schemaId);
+      Assertions.assertNotNull(r);
+      Assertions.assertEquals(created.getVersionId(), r.getVersionId());
+      Assertions.assertNotNull(r.getDefaultVersion());
     }
-    // we should have 10, so lets load up a new repo
-    SimpleSchemaRepository repositoryReload = getRepository();
-    Assertions.assertNotEquals(repositoryReload, repository);
-    Assertions.assertEquals(repositoryReload.getAll().size(), repository.getAll().size());
+
+    // reload from disk into a fresh repo
+    SimpleSchemaRepository reloaded = getRepository();
+    Assertions.assertNotEquals(reloaded, repo);
+
+    for (String id : schemaIds) {
+      XRegistrySchemaResource r = reloaded.getResource(id);
+      Assertions.assertNotNull(r, "missing resource after reload: " + id);
+      Assertions.assertNotNull(r.getVersionId(), "missing default after reload: " + id);
+      Assertions.assertNotNull(r.getDefaultVersion(), "missing inlined version after reload: " + id);
+      Assertions.assertEquals("v1", r.getDefaultVersion().getName());
+      Assertions.assertEquals("JSON", r.getDefaultVersion().getFormat());
+    }
+  }
+
+  // ---- helpers ----
+
+  private static XRegistrySchemaVersion jsonVersion(String name) {
+    XRegistrySchemaVersion v = new XRegistrySchemaVersion();
+    v.setName(name);
+    v.setFormat("JSON");
+    JsonObject schema = new JsonObject();
+    schema.addProperty("type", "object");
+    v.setSchema(schema);
+    OffsetDateTime now = OffsetDateTime.now();
+    v.setCreatedAt(now);
+    v.setModifiedAt(now);
+    return v;
+  }
+
+  private static void deleteDir(File dir) {
+    if (dir == null || !dir.exists()) return;
+    File[] files = dir.listFiles();
+    if (files != null) {
+      for (File f : files) {
+        if (f.isDirectory()) deleteDir(f);
+        else // best-effort
+          //noinspection ResultOfMethodCallIgnored
+          f.delete();
+      }
+    }
+    //noinspection ResultOfMethodCallIgnored
+    dir.delete();
   }
 }

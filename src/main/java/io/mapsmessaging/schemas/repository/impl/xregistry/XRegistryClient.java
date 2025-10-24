@@ -1,31 +1,12 @@
-/*
- *  Copyright [ 2020 - 2025 ] Matthew Buckton
- *  Copyright [ 2024 - 2025 ] MapsMessaging B.V.
- *
- *  Licensed under the Apache License, Version 2.0 with the Commons Clause
- *  (the "License"); you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at:
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *      https://commonsclause.com/
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package io.mapsmessaging.schemas.repository.impl.xregistry;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mapsmessaging.schemas.model.XRegistrySchema;
+import io.mapsmessaging.schemas.model.XRegistrySchemaResource;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
-import io.mapsmessaging.schemas.repository.impl.xregistry.model.XRegistryResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.NonNull;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -33,164 +14,245 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
+/**
+ * Lean xRegistry HTTP client matching the Resource/Version API we defined.
+ * - Flat JSON on the wire (spec style).
+ * - Small helpers for GET/POST/PUT/DELETE.
+ * - "safe*" variants return null on failure (cache can take over).
+ */
 public class XRegistryClient implements AutoCloseable {
 
-  private static final Logger log = LoggerFactory.getLogger(XRegistryClient.class);
+  private static final String JSON = "application/json";
+  private static final TypeReference<List<XRegistrySchemaResource>> RES_LIST = new TypeReference<>() {
+  };
+  private static final TypeReference<List<XRegistrySchemaVersion>> VER_LIST = new TypeReference<>() {
+  };
 
-  private final XRegistryConfig config;
-  private final HttpClient httpClient;
-  private final ObjectMapper objectMapper;
+  private final XRegistryConfig cfg;
+  private final HttpClient http;
+  private final ObjectMapper om;
 
-  public XRegistryClient(XRegistryConfig config) {
-    this.config = config;
-    this.httpClient = HttpClient.newBuilder()
+  public XRegistryClient(@NonNull XRegistryConfig cfg) {
+    this.cfg = cfg;
+    this.http = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(10))
         .followRedirects(HttpClient.Redirect.NORMAL)
         .version(HttpClient.Version.HTTP_1_1)
         .build();
-    this.objectMapper = new ObjectMapper();
+    this.om = new ObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   }
 
-  private HttpRequest.Builder baseBuilder(String url) {
-    HttpRequest.Builder builder = HttpRequest.newBuilder()
-        .uri(URI.create(url))
-        .timeout(Duration.ofSeconds(30));
-    if (config.getApiKey() != null) {
-      builder.header("Authorization", "Bearer " + config.getApiKey());
+  // ---------- Public API (hard-fail) ----------
+
+  private static String u(String s) {
+    return java.net.URLEncoder.encode(s, StandardCharsets.UTF_8);
+  }
+
+  public XRegistrySchemaResource createSchema(String schemaId, XRegistrySchemaVersion initialVersion) {
+    String path = String.format("/groups/%s/schemas/%s", cfg.getGroupName(), u(schemaId));
+    // Allow empty body; server may treat it as “create container only”
+    return doPost(path, initialVersion == null ? Map.of() : initialVersion, XRegistrySchemaResource.class);
+  }
+
+  public XRegistrySchemaResource getResource(String schemaId) {
+    String path = String.format("/groups/%s/schemas/%s", cfg.getGroupName(), u(schemaId));
+    return doGet(path, XRegistrySchemaResource.class);
+  }
+
+  public XRegistrySchemaVersion getVersion(String schemaId, String versionId) {
+    String path = String.format("/groups/%s/schemas/%s/versions/%s", cfg.getGroupName(), u(schemaId), u(versionId));
+    return doGet(path, XRegistrySchemaVersion.class);
+  }
+
+  public XRegistrySchemaVersion addVersion(String schemaId, XRegistrySchemaVersion version) {
+    String path = String.format("/groups/%s/schemas/%s/versions", cfg.getGroupName(), u(schemaId));
+    return doPost(path, version, XRegistrySchemaVersion.class);
+  }
+
+  public XRegistrySchemaResource setDefaultVersion(String schemaId, String versionId) {
+    String path = String.format("/groups/%s/schemas/%s/default", cfg.getGroupName(), u(schemaId));
+    return doPut(path, Map.of("versionId", versionId), XRegistrySchemaResource.class);
+  }
+
+  public List<XRegistrySchemaVersion> listVersions(String schemaId, int page, int size) {
+    String path = String.format("/groups/%s/schemas/%s/versions?page=%d&size=%d",
+        cfg.getGroupName(), u(schemaId), Math.max(0, page), Math.max(1, size));
+    return doGet(path, VER_LIST);
+  }
+
+  public List<XRegistrySchemaResource> search(String format, Map<String, String> labels, int page, int size) {
+    StringBuilder sb = new StringBuilder()
+        .append(String.format("/groups/%s/schemas?page=%d&size=%d", cfg.getGroupName(), Math.max(0, page), Math.max(1, size)));
+    if (format != null && !format.isBlank()) sb.append("&format=").append(u(format));
+    if (labels != null) {
+      for (var e : labels.entrySet()) {
+        sb.append("&label=").append(u(e.getKey())).append("%3D").append(u(String.valueOf(e.getValue())));
+      }
     }
-    return builder;
+    return doGet(sb.toString(), RES_LIST);
   }
 
-  public XRegistrySchemaVersion registerSchema(String schemaId, String schemaFormat, String schemaContent, String description)
-      throws IOException {
+  public XRegistrySchemaResource updateMetadata(String schemaId,
+                                                String documentation,
+                                                Map<String, String> labels,
+                                                Map<String, Object> meta) {
+    String path = String.format("/groups/%s/schemas/%s/meta", cfg.getGroupName(), u(schemaId));
+    return doPatch(path, Map.of(
+        "documentation", documentation,
+        "labels", labels,
+        "meta", meta
+    ), XRegistrySchemaResource.class);
+  }
 
-    String url = String.format("%s/groups/%s/schemas", config.getBaseUrl(), config.getGroupName());
+  public boolean deleteVersion(String schemaId, String versionId, boolean force) {
+    String path = String.format("/groups/%s/schemas/%s/versions/%s?force=%s",
+        cfg.getGroupName(), u(schemaId), u(versionId), force);
+    doDelete(path);
+    return true;
+  }
 
-    XRegistrySchema body = new XRegistrySchema();
-    body.setSchemaId(schemaId);
-    body.setFormat(schemaFormat);
-    body.setSchema(schemaContent);
-    body.setDescription(description);
+  // ---------- Safe wrappers (return null on failure) ----------
 
-    String jsonBody = objectMapper.writeValueAsString(body);
+  public boolean deleteSchema(String schemaId, boolean force) {
+    String path = String.format("/groups/%s/schemas/%s?force=%s", cfg.getGroupName(), u(schemaId), force);
+    doDelete(path);
+    return true;
+  }
 
-    HttpRequest request = baseBuilder(url)
-        .header("Content-Type", "application/json")
-        .header("xRegistry-id", schemaId)
-        .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
+  public XRegistrySchemaResource safeGetResource(String schemaId) {
+    try {
+      return getResource(schemaId);
+    } catch (Exception ignore) {
+      return null;
+    }
+  }
+
+  public XRegistrySchemaVersion safeGetVersion(String schemaId, String versionId) {
+    try {
+      return getVersion(schemaId, versionId);
+    } catch (Exception ignore) {
+      return null;
+    }
+  }
+
+  public List<XRegistrySchemaVersion> safeListVersions(String schemaId, int page, int size) {
+    try {
+      return listVersions(schemaId, page, size);
+    } catch (Exception ignore) {
+      return null;
+    }
+  }
+
+  // ---------- HTTP helpers ----------
+
+  public List<XRegistrySchemaResource> safeSearch(String format, Map<String, String> labels, int page, int size) {
+    try {
+      return search(format, labels, page, size);
+    } catch (Exception ignore) {
+      return null;
+    }
+  }
+
+  private <T> T doGet(String path, Class<T> type) {
+    HttpRequest req = base(path).GET().build();
+    return exec(req, type);
+  }
+
+  private <T> T doGet(String path, TypeReference<T> type) {
+    HttpRequest req = base(path).GET().build();
+    return exec(req, type);
+  }
+
+  private <T> T doPost(String path, Object body, Class<T> type) {
+    HttpRequest req = base(path)
+        .POST(HttpRequest.BodyPublishers.ofString(write(body), StandardCharsets.UTF_8))
         .build();
-
-    try {
-      HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-      int statusCode = response.statusCode();
-      String responseBody = response.body();
-      if (statusCode >= 200 && statusCode < 300) {
-        log.info("Schema registered: {}", schemaId);
-        return objectMapper.readValue(responseBody, XRegistrySchemaVersion.class);
-      }
-      throw new IOException("Failed to register schema: " + statusCode + " - " + responseBody);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted during registerSchema", e);
-    }
+    return exec(req, type);
   }
 
-  public XRegistrySchemaVersion getSchema(String schemaId, String version) throws IOException {
-    String url = (version != null)
-        ? String.format("%s/groups/%s/schemas/%s/versions/%s", config.getBaseUrl(), config.getGroupName(), schemaId, version)
-        : String.format("%s/groups/%s/schemas/%s", config.getBaseUrl(), config.getGroupName(), schemaId);
-
-    HttpRequest request = baseBuilder(url).GET().build();
-
-    try {
-      HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-      int statusCode = response.statusCode();
-      if (statusCode == 404) {
-        return null;
-      }
-      if (statusCode >= 200 && statusCode < 300) {
-        String responseBody = response.body();
-        return objectMapper.readValue(responseBody, XRegistrySchemaVersion.class);
-      }
-      throw new IOException("Failed to get schema: " + statusCode);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted during getSchema", e);
-    }
-  }
-
-  public List<XRegistrySchemaVersion> listSchemas() throws IOException {
-    String url = String.format("%s/groups/%s/schemas", config.getBaseUrl(), config.getGroupName());
-
-    HttpRequest request = baseBuilder(url).GET().build();
-
-    try {
-      HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-      int statusCode = response.statusCode();
-      if (statusCode >= 200 && statusCode < 300) {
-        String responseBody = response.body();
-        XRegistryResponse wrapper = objectMapper.readValue(responseBody, XRegistryResponse.class);
-        return wrapper.getSchemas();
-      }
-      throw new IOException("Failed to list schemas: " + statusCode);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted during listSchemas", e);
-    }
-  }
-
-  public void deleteSchema(String schemaId) throws IOException {
-    String url = String.format("%s/groups/%s/schemas/%s", config.getBaseUrl(), config.getGroupName(), schemaId);
-
-    HttpRequest request = baseBuilder(url).DELETE().build();
-
-    try {
-      HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
-      int statusCode = response.statusCode();
-      if (statusCode >= 200 && statusCode < 300) {
-        log.info("Schema deleted: {}", schemaId);
-        return;
-      }
-      throw new IOException("Failed to delete schema: " + statusCode);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted during deleteSchema", e);
-    }
-  }
-
-  public XRegistrySchema updateSchema(String schemaId, String schemaFormat, String schemaContent) throws IOException {
-    String url = String.format("%s/groups/%s/schemas/%s", config.getBaseUrl(), config.getGroupName(), schemaId);
-
-    XRegistrySchema body = new XRegistrySchema();
-    body.setSchemaId(schemaId);
-    body.setFormat(schemaFormat);
-    body.setSchema(schemaContent);
-
-    String jsonBody = objectMapper.writeValueAsString(body);
-
-    HttpRequest request = baseBuilder(url)
-        .header("Content-Type", "application/json")
-        .PUT(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
+  private <T> T doPut(String path, Object body, Class<T> type) {
+    HttpRequest req = base(path)
+        .PUT(HttpRequest.BodyPublishers.ofString(write(body), StandardCharsets.UTF_8))
         .build();
+    return exec(req, type);
+  }
 
+  private <T> T doPatch(String path, Object body, Class<T> type) {
+    HttpRequest req = base(path)
+        .method("PATCH", HttpRequest.BodyPublishers.ofString(write(body), StandardCharsets.UTF_8))
+        .build();
+    return exec(req, type);
+  }
+
+  private void doDelete(String path) {
+    HttpRequest req = base(path).DELETE().build();
+    exec(req, Void.class);
+  }
+
+  private HttpRequest.Builder base(String path) {
+    String base = cfg.getBaseUrl();
+    if (base.endsWith("/")) base = base.substring(0, base.length() - 1);
+    if (!path.startsWith("/")) path = "/" + path;
+    HttpRequest.Builder b = HttpRequest.newBuilder()
+        .uri(URI.create(base + path))
+        .timeout(Duration.ofSeconds(30))
+        .header("Accept", JSON)
+        .header("Content-Type", JSON);
+    String apiKey = cfg.getApiKey();
+    if (apiKey != null && !apiKey.isBlank()) {
+      b.header("Authorization", "Bearer " + apiKey);
+    }
+    return b;
+  }
+
+  private String write(Object o) {
     try {
-      HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-      int statusCode = response.statusCode();
-      String responseBody = response.body();
-      if (statusCode >= 200 && statusCode < 300) {
-        log.info("Schema updated: {}", schemaId);
-        return objectMapper.readValue(responseBody, XRegistrySchema.class);
+      return om.writeValueAsString(o == null ? Map.of() : o);
+    } catch (Exception e) {
+      throw new RuntimeException("serialize failed", e);
+    }
+  }
+
+  private <T> T exec(HttpRequest req, Class<T> type) {
+    try {
+      HttpResponse<String> r = http.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+      int code = r.statusCode();
+      if (code == 204 || type == Void.class) return null;
+      if (code >= 200 && code < 300) {
+        return om.readValue(r.body(), type);
       }
-      throw new IOException("Failed to update schema: " + statusCode + " - " + responseBody);
-    } catch (InterruptedException e) {
+      if (code == 404) throw new RuntimeException("not found: " + req.uri());
+      throw new RuntimeException("http " + code + " for " + req.uri() + " body: " + r.body());
+    } catch (InterruptedException ie) {
       Thread.currentThread().interrupt();
-      throw new IOException("Interrupted during updateSchema", e);
+      throw new RuntimeException("interrupted " + req.uri(), ie);
+    } catch (Exception e) {
+      throw new RuntimeException("request failed " + req.uri(), e);
+    }
+  }
+
+  private <T> T exec(HttpRequest req, TypeReference<T> type) {
+    try {
+      HttpResponse<String> r = http.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+      int code = r.statusCode();
+      if (code >= 200 && code < 300) {
+        return om.readValue(r.body(), type);
+      }
+      if (code == 404) throw new RuntimeException("not found: " + req.uri());
+      throw new RuntimeException("http " + code + " for " + req.uri() + " body: " + r.body());
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("interrupted " + req.uri(), ie);
+    } catch (Exception e) {
+      throw new RuntimeException("request failed " + req.uri(), e);
     }
   }
 
   @Override
   public void close() {
-    // JDK HttpClient has nothing to close. Leaving this for compatibility.
+    // nothing to close for JDK HttpClient
   }
 }

@@ -20,72 +20,110 @@
 
 package io.mapsmessaging.schemas.repository;
 
+import io.mapsmessaging.schemas.model.XRegistrySchemaResource;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * The interface Schema repository.
+ * Repository API for schema resources and their versions.
+ * Runtime bindings (context → schema) are handled elsewhere.
  */
 public interface SchemaRepository {
 
   /**
-   * Add schema schema config.
+   * Create a new schema resource with an optional initial default version.
    *
-   * @param context the context
-   * @param config  the config
-   * @return the schema config
+   * @param schemaId       the schema identifier
+   * @param initialVersion the initial version (nullable)
+   * @return the created resource
    */
-  XRegistrySchemaVersion addSchema(String context, XRegistrySchemaVersion config);
+  XRegistrySchemaResource createSchema(String schemaId, XRegistrySchemaVersion initialVersion);
 
   /**
-   * Gets schema.
+   * Get a schema resource with the default version inlined.
    *
-   * @param uuid the uuid
-   * @return the schema
+   * @param schemaId the schema identifier
+   * @return the resource or null if not found
    */
-  XRegistrySchemaVersion getSchema(String uuid);
+  XRegistrySchemaResource getResource(String schemaId);
 
   /**
-   * Gets schema by context.
+   * Get a specific version for a schema.
    *
-   * @param context the context
-   * @return the schema by context
+   * @param schemaId  the schema identifier
+   * @param versionId the version identifier
+   * @return the version or null if not found
    */
-  List<XRegistrySchemaVersion> getSchemaByContext(String context);
+  XRegistrySchemaVersion getVersion(String schemaId, String versionId);
 
   /**
-   * Gets schemas.
+   * Add a new version to an existing schema.
    *
-   * @param type the type
-   * @return the schemas
+   * @param schemaId the schema identifier
+   * @param version  the version payload
+   * @return the created version (with ids and timestamps)
    */
-  List<XRegistrySchemaVersion> getSchemas(String type);
+  XRegistrySchemaVersion addVersion(String schemaId, XRegistrySchemaVersion version);
 
   /**
-   * Gets all.
+   * Set the default version for a schema.
    *
-   * @return the all
+   * @param schemaId  the schema identifier
+   * @param versionId the version identifier to set as default
+   * @return the updated resource
    */
-  List<XRegistrySchemaVersion> getAll();
+  XRegistrySchemaResource setDefaultVersion(String schemaId, String versionId);
 
   /**
-   * get mapped schemas
+   * List versions for a schema.
    *
-   * @return a map of schema configurations keyed on a context, could be path name for example
+   * @param schemaId the schema identifier
+   * @param page     zero-based page index
+   * @param size     page size
+   * @return versions in the requested page
    */
-  Map<String, List<XRegistrySchemaVersion>> getMappedSchemas();
+  List<XRegistrySchemaVersion> listVersions(String schemaId, int page, int size);
 
   /**
-   * Remove schema.
+   * Search schemas by format and label predicates.
    *
-   * @param uuid the uuid
+   * @param format      optional format filter (e.g., AVRO, PROTOBUF)
+   * @param labelFilter optional exact-match labels filter
+   * @param page        zero-based page index
+   * @param size        page size
+   * @return matching resources (default version inlined)
    */
-  void removeSchema(String uuid);
+  List<XRegistrySchemaResource> search(String format, Map<String, String> labelFilter, int page, int size);
 
   /**
-   * Remove all schemas.
+   * Update resource-level metadata without changing schema bytes.
+   *
+   * @param schemaId      the schema identifier
+   * @param documentation optional documentation URL (nullable to leave unchanged)
+   * @param labels        optional labels to upsert (null to leave unchanged)
+   * @param meta          optional meta map to upsert (null to leave unchanged)
+   * @return the updated resource
    */
-  void removeAllSchemas();
+  XRegistrySchemaResource updateMetadata(String schemaId, String documentation, Map<String, String> labels, Map<String, Object> meta);
+
+  /**
+   * Delete a specific version.
+   *
+   * @param schemaId  the schema identifier
+   * @param versionId the version identifier
+   * @param force     if true, allow deleting the current default
+   * @return true if deleted
+   */
+  boolean deleteVersion(String schemaId, String versionId, boolean force);
+
+  /**
+   * Delete an entire schema resource.
+   *
+   * @param schemaId the schema identifier
+   * @param force    if true, delete even if versions exist
+   * @return true if deleted
+   */
+  boolean deleteSchema(String schemaId, boolean force);
 }

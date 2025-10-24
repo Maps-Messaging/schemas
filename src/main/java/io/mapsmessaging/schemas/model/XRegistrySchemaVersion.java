@@ -109,7 +109,8 @@ public class XRegistrySchemaVersion {
       throw new IOException("Schema or SchemaBase64 are required");
     }
     XRegistrySchemaVersion tmp = new XRegistrySchemaVersion(this);
-    return gson.toJson(tmp).getBytes(StandardCharsets.UTF_8);
+    String json = gson.toJson(tmp);
+    return json.getBytes(StandardCharsets.UTF_8);
   }
 
   public String getInterfaceDescription() {

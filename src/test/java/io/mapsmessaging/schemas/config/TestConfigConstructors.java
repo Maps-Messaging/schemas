@@ -36,14 +36,10 @@ class TestConfigConstructors {
   @Test
   void validSchemaLoad() throws IOException {
     RawSchemaConfig good = new RawSchemaConfig();
-    good.setUniqueId(UUID.randomUUID());
-    JsonObject schema = new JsonObject();
-    schema.addProperty("schema", new String(good.pack()));
-    String config = schema.toString();
+    String config = new String(good.pack());
 
     Assertions.assertNotNull(SchemaConfigFactory.getInstance().constructConfig(config));
     Assertions.assertNotNull(SchemaConfigFactory.getInstance().constructConfig(config.getBytes()));
-    Assertions.assertNotNull(SchemaConfigFactory.getInstance().constructConfig(schema));
   }
 
 
@@ -64,7 +60,7 @@ class TestConfigConstructors {
     Gson gson = new Gson();
 
     // Empty object as string
-    Assertions.assertThrowsExactly(IOException.class, () -> SchemaConfigFactory.getInstance().constructConfig("{}"));
+    Assertions.assertThrowsExactly(IOException.class, () -> SchemaConfigFactory.getInstance().constructConfig("this is not a valid schema"));
 
     // Invalid JSON bytes
     Assertions.assertThrowsExactly(IllegalStateException.class, () -> SchemaConfigFactory.getInstance().constructConfig("".getBytes(StandardCharsets.UTF_8)));

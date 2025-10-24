@@ -23,6 +23,7 @@ package io.mapsmessaging.schemas.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
 import io.mapsmessaging.schemas.config.impl.XRegistrySchemaVersionImpl;
@@ -84,7 +85,14 @@ public class SchemaConfigFactory {
    * @throws IOException the io exception
    */
   public XRegistrySchemaVersion constructConfig(byte[] rawPayload) throws IOException {
-    return constructConfig(new String(rawPayload));
+    if (rawPayload == null || rawPayload.length == 0) {
+      throw new IllegalStateException("Raw payload is null or empty");
+    }
+    try {
+      return constructConfig(new String(rawPayload));
+    } catch (Error e) {
+      throw new IOException(e);
+    }
   }
 
   /**
@@ -95,12 +103,22 @@ public class SchemaConfigFactory {
    * @throws IOException the io exception
    */
   public XRegistrySchemaVersion constructConfig(String payload) throws IOException {
-    XRegistrySchemaVersion version = gson.fromJson(payload, XRegistrySchemaVersion.class);
-    return constructConfig(version);
+    try {
+      XRegistrySchemaVersion version = gson.fromJson(payload, XRegistrySchemaVersion.class);
+      if (version == null || version.getFormat() == null) {
+        throw new IOException("Schema config is not valid");
+      }
+      return constructConfig(version);
+    } catch (JsonSyntaxException e) {
+      throw new IOException(e);
+    }
   }
 
   public XRegistrySchemaVersion constructConfig(JsonObject payload) throws IOException {
     XRegistrySchemaVersion version = gson.fromJson(payload, XRegistrySchemaVersion.class);
+    if (version == null || version.getFormat() == null) {
+      throw new IOException("Schema config is not valid");
+    }
     return constructConfig(version);
   }
 

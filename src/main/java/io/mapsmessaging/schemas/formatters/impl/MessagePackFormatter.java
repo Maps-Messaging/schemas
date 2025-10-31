@@ -25,10 +25,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.networknt.schema.JsonSchema;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.SpecVersion;
-import com.networknt.schema.ValidationMessage;
+import com.networknt.schema.Error;
+import com.networknt.schema.Schema;
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.dialect.Dialects;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
@@ -37,8 +37,8 @@ import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.JSON_PARSE_EXCEPTION;
@@ -46,7 +46,7 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.JSON_PARSE_EXCE
 public class MessagePackFormatter extends MessageFormatter {
 
   private final JsonNode schemaNode;
-  private final JsonSchema schema;
+  private final Schema schema;
 
   public MessagePackFormatter() {
     schemaNode = null;
@@ -56,7 +56,9 @@ public class MessagePackFormatter extends MessageFormatter {
   public MessagePackFormatter(JsonObject schemaString) throws IOException {
     ObjectMapper objectMapper = new ObjectMapper();
     schemaNode = objectMapper.readTree(schemaString.toString());
-    schema = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7).getSchema(schemaNode);
+    // Create JsonSchema instance
+    SchemaRegistry schemaRegistry = SchemaRegistry.withDialect(Dialects.getDraft7());
+    schema = schemaRegistry.getSchema(schemaNode);
   }
 
   @Override
@@ -67,7 +69,7 @@ public class MessagePackFormatter extends MessageFormatter {
 
       if (schema != null) {
         JsonNode node = messagePackMapper.readTree(payload);
-        Set<ValidationMessage> validationResult = schema.validate(node);
+        List<Error> validationResult = schema.validate(node);
         if (!validationResult.isEmpty()) {
           logger.log(JSON_PARSE_EXCEPTION, getName(), validationResult);
           return new DefaultParser(payload);

@@ -19,6 +19,7 @@
  */
 package io.mapsmessaging.schemas.config.impl;
 
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -29,7 +30,7 @@ import java.nio.charset.StandardCharsets;
  * The type Raw schema config.
  */
 @Schema(description = "Raw Schema Configuration")
-public class RawSchemaConfig extends XRegistrySchemaVersionImpl {
+public class RawSchemaConfig extends SchemaConfig {
 
   private static final String NAME = "RAW";
 
@@ -54,7 +55,7 @@ public class RawSchemaConfig extends XRegistrySchemaVersionImpl {
     return "application/octet-stream";
   }
 
-  public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
     return new RawSchemaConfig(config);
   }
 

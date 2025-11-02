@@ -108,9 +108,12 @@ public class XRegistrySchemaVersion {
     if (schema == null && schemaBase64 == null) {
       throw new IOException("Schema or SchemaBase64 are required");
     }
-    XRegistrySchemaVersion tmp = new XRegistrySchemaVersion(this);
-    String json = gson.toJson(tmp);
+    String json = gson.toJson(this);
     return json.getBytes(StandardCharsets.UTF_8);
+  }
+
+  public JsonObject packData() {
+    return gson.toJsonTree(this).getAsJsonObject();
   }
 
   public String getInterfaceDescription() {

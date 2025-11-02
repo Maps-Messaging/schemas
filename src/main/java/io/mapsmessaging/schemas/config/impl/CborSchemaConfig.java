@@ -20,9 +20,10 @@
 
 package io.mapsmessaging.schemas.config.impl;
 
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
-public class CborSchemaConfig extends XRegistrySchemaVersionImpl {
+public class CborSchemaConfig extends SchemaConfig {
 
   private static final String NAME = "CBOR";
 
@@ -41,7 +42,7 @@ public class CborSchemaConfig extends XRegistrySchemaVersionImpl {
   }
 
   @Override
-  public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
     return new CborSchemaConfig(config);
   }
 

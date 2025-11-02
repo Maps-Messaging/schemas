@@ -20,6 +20,7 @@
 
 package io.mapsmessaging.schemas.config.impl;
 
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -29,7 +30,7 @@ import lombok.Setter;
  * The type Csv schema config.
  */
 @Schema(description = "CVS Schema Configuration")
-public class CsvSchemaConfig extends XRegistrySchemaVersionImpl {
+public class CsvSchemaConfig extends SchemaConfig {
 
   @Getter
   private CsvConfig config;
@@ -72,7 +73,7 @@ public class CsvSchemaConfig extends XRegistrySchemaVersionImpl {
   }
 
   @Override
-  public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
     return new CsvSchemaConfig(config);
   }
 

@@ -21,12 +21,13 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import com.google.gson.JsonParser;
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class MessagePackSchemaConfig extends XRegistrySchemaVersionImpl {
+public class MessagePackSchemaConfig extends SchemaConfig {
 
   private static final String NAME = "MessagePack";
 
@@ -51,7 +52,7 @@ public class MessagePackSchemaConfig extends XRegistrySchemaVersionImpl {
   }
 
   @Override
-  public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
     return new MessagePackSchemaConfig(config);
   }
 

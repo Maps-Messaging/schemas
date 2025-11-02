@@ -19,6 +19,7 @@
  */
 package io.mapsmessaging.schemas.config.impl;
 
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -29,7 +30,7 @@ import lombok.Setter;
  * The type Xml schema config.
  */
 @Schema(description = "XML Schema Configuration")
-public class XmlSchemaConfig extends XRegistrySchemaVersionImpl {
+public class XmlSchemaConfig extends SchemaConfig {
 
   private static final String NAME = "XML";
 
@@ -44,7 +45,7 @@ public class XmlSchemaConfig extends XRegistrySchemaVersionImpl {
     super(config);
   }
 
-  public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
     return new XmlSchemaConfig(config);
   }
 

@@ -20,6 +20,7 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import com.google.gson.JsonParser;
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -27,7 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * The type Json schema config.
  */
 @Schema(description = "JSON Schema Configuration")
-public class JsonSchemaConfig extends XRegistrySchemaVersionImpl {
+public class JsonSchemaConfig extends SchemaConfig {
 
   private static final String EMPTY_SCHEMA = "{}";
   private static final String NAME = "JSON";
@@ -54,7 +55,7 @@ public class JsonSchemaConfig extends XRegistrySchemaVersionImpl {
     return "application/json";
   }
 
-  public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
     return new JsonSchemaConfig(config);
   }
 

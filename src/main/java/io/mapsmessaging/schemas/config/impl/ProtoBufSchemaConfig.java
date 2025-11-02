@@ -20,6 +20,7 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import com.google.gson.JsonObject;
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -32,7 +33,7 @@ import java.util.Base64;
  * The type Proto buf schema config.
  */
 @Schema(description = "Protobuf Schema Configuration")
-public class ProtoBufSchemaConfig extends XRegistrySchemaVersionImpl {
+public class ProtoBufSchemaConfig extends SchemaConfig {
 
   private static final String DESCRIPTOR = "descriptor";
   private static final String MESSAGE_NAME = "messageName";
@@ -83,7 +84,7 @@ public class ProtoBufSchemaConfig extends XRegistrySchemaVersionImpl {
     setSchema(obj);
   }
 
-  public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
     return new ProtoBufSchemaConfig(config);
   }
 

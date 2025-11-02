@@ -20,13 +20,9 @@
 
 package io.mapsmessaging.schemas.config;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
-import io.mapsmessaging.schemas.config.impl.XRegistrySchemaVersionImpl;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.IOException;
@@ -42,13 +38,13 @@ import java.util.ServiceLoader;
 @SuppressWarnings("java:S6548") // yes it is a singleton
 public class SchemaConfigFactory {
   public static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-  private final List<XRegistrySchemaVersion> schemaConfigs;
+  private final List<SchemaConfig> schemaConfigs;
   private final Logger logger;
 
   private SchemaConfigFactory() {
     schemaConfigs = new ArrayList<>();
-    ServiceLoader<XRegistrySchemaVersion> schemaConfigServiceLoader = ServiceLoader.load(XRegistrySchemaVersion.class);
-    for (XRegistrySchemaVersion config : schemaConfigServiceLoader) {
+    ServiceLoader<SchemaConfig> schemaConfigServiceLoader = ServiceLoader.load(SchemaConfig.class);
+    for (SchemaConfig config : schemaConfigServiceLoader) {
       schemaConfigs.add(config);
     }
     logger = LoggerFactory.getLogger(SchemaConfigFactory.class);
@@ -84,7 +80,7 @@ public class SchemaConfigFactory {
    * @return the schema config
    * @throws IOException the io exception
    */
-  public XRegistrySchemaVersion constructConfig(byte[] rawPayload) throws IOException {
+  public SchemaConfig constructConfig(byte[] rawPayload) throws IOException {
     if (rawPayload == null || rawPayload.length == 0) {
       throw new IllegalStateException("Raw payload is null or empty");
     }
@@ -102,7 +98,7 @@ public class SchemaConfigFactory {
    * @return the schema config
    * @throws IOException the io exception
    */
-  public XRegistrySchemaVersion constructConfig(String payload) throws IOException {
+  public SchemaConfig constructConfig(String payload) throws IOException {
     try {
       XRegistrySchemaVersion version = gson.fromJson(payload, XRegistrySchemaVersion.class);
       if (version == null || version.getFormat() == null) {
@@ -114,23 +110,27 @@ public class SchemaConfigFactory {
     }
   }
 
-  public XRegistrySchemaVersion constructConfig(JsonObject payload) throws IOException {
-    XRegistrySchemaVersion version = gson.fromJson(payload, XRegistrySchemaVersion.class);
-    if (version == null || version.getFormat() == null) {
-      throw new IOException("Schema config is not valid");
+  public SchemaConfig constructConfig(JsonObject payload) throws IOException {
+    try {
+      SchemaConfig version = gson.fromJson(payload, SchemaConfig.class);
+      if (version == null || version.getFormat() == null) {
+        throw new IOException("Schema config is not valid");
+      }
+      return constructConfig(version);
+    } catch (JsonIOException jsonIOException) {
+      throw new IOException(jsonIOException);
     }
-    return constructConfig(version);
   }
 
-  private XRegistrySchemaVersion constructConfig(XRegistrySchemaVersion config) throws IOException {
-    XRegistrySchemaVersion base = findSchemaConfig(config.getFormat());
-    if (base instanceof XRegistrySchemaVersionImpl impl) {
-      return impl.getInstance(config);
+  private SchemaConfig constructConfig(XRegistrySchemaVersion config) throws IOException {
+    SchemaConfig base = findSchemaConfig(config.getFormat());
+    if (base != null) {
+      return base.getInstance(config);
     }
     return null;
   }
 
-  private XRegistrySchemaVersion findSchemaConfig(String name) {
+  private SchemaConfig findSchemaConfig(String name) {
     return schemaConfigs.stream()
         .filter(c -> c.getFormat().equalsIgnoreCase(name))
         .findFirst()

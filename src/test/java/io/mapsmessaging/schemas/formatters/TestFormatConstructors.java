@@ -20,8 +20,8 @@
 
 package io.mapsmessaging.schemas.formatters;
 
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.RawSchemaConfig;
-import io.mapsmessaging.schemas.config.impl.XRegistrySchemaVersionImpl;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -46,7 +46,7 @@ class TestFormatConstructors {
     Assertions.assertThrowsExactly(IOException.class, () -> MessageFormatterFactory.getInstance().getFormatter(bad));
   }
 
-  static class BadSchema extends XRegistrySchemaVersionImpl {
+  static class BadSchema extends SchemaConfig {
 
     protected BadSchema() {
       super("BAD");
@@ -58,7 +58,7 @@ class TestFormatConstructors {
     }
 
     @Override
-    public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
+    public SchemaConfig getInstance(XRegistrySchemaVersion config) {
       return new BadSchema(config);
     }
 

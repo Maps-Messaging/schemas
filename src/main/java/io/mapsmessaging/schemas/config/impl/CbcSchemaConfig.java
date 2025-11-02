@@ -24,6 +24,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.cbc.CbcFormat;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -39,7 +40,7 @@ import java.util.List;
  * Type discriminator: "cbc"
  */
 @Schema(name = "CbcSchemaConfig", description = "Schema describing a bit-packed Compact Binary Codec layout")
-public class CbcSchemaConfig extends XRegistrySchemaVersionImpl {
+public class CbcSchemaConfig extends SchemaConfig {
 
   // ---- Constants ----
   public static final String FORMAT = "cbc";
@@ -93,7 +94,7 @@ public class CbcSchemaConfig extends XRegistrySchemaVersionImpl {
   }
 
   @Override
-  public XRegistrySchemaVersion getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
     return new CbcSchemaConfig(config);
   }
 

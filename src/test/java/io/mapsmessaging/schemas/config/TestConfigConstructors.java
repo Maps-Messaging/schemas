@@ -23,13 +23,13 @@ package io.mapsmessaging.schemas.config;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.impl.RawSchemaConfig;
+import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.UUID;
 
 class TestConfigConstructors {
 
@@ -83,31 +83,20 @@ class TestConfigConstructors {
 
     protected BadSchema() {
       super("BAD");
-      uniqueId = UUID.randomUUID().toString();
     }
 
     protected BadSchema(String format, Map<String, Object> config) {
-      super(format, config);
+      this();
     }
 
     @Override
-    public byte[] getSchemaDefinition() {
-      return new byte[0];
+    public SchemaConfig getInstance(XRegistrySchemaVersion config) {
+      return new BadSchema();
     }
 
     @Override
-    protected SchemaConfig getInstance(Map<String, Object> config) {
-      return this;
-    }
-
-    @Override
-    protected void unpackSpecific(Map<String, Object> data) {
-
-    }
-
-    @Override
-    protected void packSpecific(JsonObject jsonObject) throws IOException {
-
+    public String getMimeType() {
+      return "text/bad";
     }
   }
 

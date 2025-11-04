@@ -29,7 +29,7 @@ import java.nio.charset.StandardCharsets;
 
 public class MessagePackSchemaConfig extends SchemaConfig {
 
-  private static final String NAME = "MessagePack";
+  private static final String NAME = "messagepack";
 
   public MessagePackSchemaConfig() {
     super(NAME);

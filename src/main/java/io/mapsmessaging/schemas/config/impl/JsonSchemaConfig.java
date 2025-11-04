@@ -31,7 +31,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class JsonSchemaConfig extends SchemaConfig {
 
   private static final String EMPTY_SCHEMA = "{}";
-  private static final String NAME = "JSON";
+  private static final String NAME = "json";
 
   /**
    * Instantiates a new Json schema config.

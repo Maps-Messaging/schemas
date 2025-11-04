@@ -20,7 +20,8 @@
 
 package io.mapsmessaging.schemas.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,8 +35,7 @@ import java.util.Map;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class XRegistrySchemaResource {
+public class SchemaResource {
   private String schemaId;
   private String versionId;
   private String self;
@@ -46,8 +46,8 @@ public class XRegistrySchemaResource {
 
   private String versionsUrl;
   private Integer versionsCount;
-  private Map<String, XRegistrySchemaVersion> versions = new LinkedHashMap<>();
+  private Map<String, SchemaConfig> versions = new LinkedHashMap<>();
 
-  private XRegistrySchemaVersion defaultVersion;
+  private SchemaConfig defaultVersion;
 
 }

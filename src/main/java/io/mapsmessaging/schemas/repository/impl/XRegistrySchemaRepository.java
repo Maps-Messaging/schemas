@@ -1,6 +1,8 @@
 package io.mapsmessaging.schemas.repository.impl;
 
-import io.mapsmessaging.schemas.model.XRegistrySchemaResource;
+import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.config.SchemaConfigFactory;
+import io.mapsmessaging.schemas.model.SchemaResource;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.mapsmessaging.schemas.repository.SchemaRepository;
 import io.mapsmessaging.schemas.repository.impl.xregistry.XRegistryClient;
@@ -9,6 +11,7 @@ import lombok.NonNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,17 +32,17 @@ public class XRegistrySchemaRepository extends FileSchemaRepository implements S
   // ---------------------------- API ----------------------------
 
   @Override
-  public XRegistrySchemaResource createSchema(@NonNull String schemaId, XRegistrySchemaVersion initialVersion) {
-    XRegistrySchemaResource remote = client.createSchema(schemaId, initialVersion);
+  public SchemaResource createSchema(@NonNull String schemaId, SchemaConfig initialVersion) {
+    SchemaResource remote = client.createSchema(schemaId, initialVersion);
     // hydrate cache from remote canonical state
     cacheFromRemote(remote);
     return super.getResource(schemaId);
   }
 
   @Override
-  public XRegistrySchemaResource getResource(@NonNull String schemaId) {
+  public SchemaResource getResource(@NonNull String schemaId) {
     // try remote first; if unavailable, serve from cache
-    XRegistrySchemaResource remote = client.safeGetResource(schemaId);
+    SchemaResource remote = client.safeGetResource(schemaId);
     if (remote != null) {
       cacheFromRemote(remote);
       return remote;
@@ -48,59 +51,61 @@ public class XRegistrySchemaRepository extends FileSchemaRepository implements S
   }
 
   @Override
-  public XRegistrySchemaVersion getVersion(@NonNull String schemaId, @NonNull String versionId) {
+  public SchemaConfig getVersion(@NonNull String schemaId, @NonNull String versionId) {
     XRegistrySchemaVersion remote = client.safeGetVersion(schemaId, versionId);
     if (remote != null) {
       // write-through to cache
-      super.addVersion(schemaId, remote);
-      return remote;
+      SchemaConfig schemaConfig = SchemaConfigFactory.getInstance().constructConfig(remote);
+      super.addVersion(schemaId, schemaConfig);
+      return schemaConfig;
     }
     return super.getVersion(schemaId, versionId);
   }
 
   @Override
-  public XRegistrySchemaVersion addVersion(@NonNull String schemaId, @NonNull XRegistrySchemaVersion version) {
+  public SchemaResource addVersion(@NonNull String schemaId, @NonNull SchemaConfig version) {
     XRegistrySchemaVersion created = client.addVersion(schemaId, version);
-    // write-through to cache
-    return super.addVersion(schemaId, created);
+    return super.addVersion(schemaId, SchemaConfigFactory.getInstance().constructConfig(created));
   }
 
   @Override
-  public XRegistrySchemaResource setDefaultVersion(@NonNull String schemaId, @NonNull String versionId) {
-    XRegistrySchemaResource remote = client.setDefaultVersion(schemaId, versionId);
+  public SchemaResource setDefaultVersion(@NonNull String schemaId, @NonNull String versionId) {
+    SchemaResource remote = client.setDefaultVersion(schemaId, versionId);
     cacheFromRemote(remote);
     return super.getResource(schemaId);
   }
 
   @Override
-  public List<XRegistrySchemaVersion> listVersions(@NonNull String schemaId, int page, int size) {
+  public List<SchemaConfig> listVersions(@NonNull String schemaId, int page, int size) {
+    List<SchemaConfig> result = new ArrayList<>();
     List<XRegistrySchemaVersion> remote = client.safeListVersions(schemaId, page, size);
     if (remote != null) {
       for (XRegistrySchemaVersion v : remote) {
-        super.addVersion(schemaId, v);
+        super.addVersion(schemaId, SchemaConfigFactory.getInstance().constructConfig(v));
       }
-      return remote;
+      return result;
     }
     return super.listVersions(schemaId, page, size);
   }
 
   @Override
-  public List<XRegistrySchemaResource> search(String format, Map<String, String> labelFilter, int page, int size) {
-    List<XRegistrySchemaResource> remote = client.safeSearch(format, labelFilter, page, size);
+  public List<SchemaResource> search(String format, Map<String, String> labelFilter, int page, int size) {
+    List<SchemaResource> remote = client.safeSearch(format, labelFilter, page, size);
     if (remote != null) {
       // gently refresh cache with rows’ defaults
-      for (XRegistrySchemaResource r : remote) cacheFromRemote(r);
+      for (SchemaResource r : remote) cacheFromRemote(r);
       return remote;
     }
     return super.search(format, labelFilter, page, size);
   }
 
   @Override
-  public XRegistrySchemaResource updateMetadata(@NonNull String schemaId,
-                                                String documentation,
-                                                Map<String, String> labels,
-                                                Map<String, Object> meta) {
-    XRegistrySchemaResource remote = client.updateMetadata(schemaId, documentation, labels, meta);
+  public SchemaResource updateMetadata(@NonNull String schemaId,
+                                       String version,
+                                       String documentation,
+                                       Map<String, String> labels,
+                                       Map<String, Object> meta) {
+    SchemaResource remote = client.updateMetadata(schemaId, documentation, labels, meta);
     cacheFromRemote(remote);
     return super.getResource(schemaId);
   }
@@ -121,17 +126,17 @@ public class XRegistrySchemaRepository extends FileSchemaRepository implements S
 
   // ---------------------------- Cache helpers ----------------------------
 
-  private void cacheFromRemote(XRegistrySchemaResource remote) {
+  private void cacheFromRemote(SchemaResource remote) {
     if (remote == null) return;
     // ensure local resource exists
-    XRegistrySchemaResource local = super.getResource(remote.getSchemaId());
+    SchemaResource local = super.getResource(remote.getSchemaId());
     if (local == null) {
       super.createSchema(remote.getSchemaId(), null);
     }
     // versions map
     if (remote.getVersions() != null && !remote.getVersions().isEmpty()) {
-      for (Map.Entry<String, XRegistrySchemaVersion> e : remote.getVersions().entrySet()) {
-        super.addVersion(remote.getSchemaId(), e.getValue());
+      for (Map.Entry<String, SchemaConfig> e : remote.getVersions().entrySet()) {
+        super.addVersion(remote.getSchemaId(), SchemaConfigFactory.getInstance().constructConfig(e.getValue()));
       }
     }
     // default pointer
@@ -143,11 +148,12 @@ public class XRegistrySchemaRepository extends FileSchemaRepository implements S
       Map<String, String> labels = remote.getDefaultVersion().getLabels();
       super.updateMetadata(
           remote.getSchemaId(),
+          remote.getVersionId(),
           remote.getDefaultVersion().getDocumentation(),
           labels != null ? new LinkedHashMap<>(labels) : null,
           remote.getMeta());
     } else if (remote.getMeta() != null) {
-      super.updateMetadata(remote.getSchemaId(), null, null, remote.getMeta());
+      super.updateMetadata(remote.getSchemaId(), remote.getVersionId(), null, null, remote.getMeta());
     }
   }
 }

@@ -32,7 +32,7 @@ import lombok.Setter;
 @Schema(description = "XML Schema Configuration")
 public class XmlSchemaConfig extends SchemaConfig {
 
-  private static final String NAME = "XML";
+  private static final String NAME = "xml";
 
   /**
    * Instantiates a new Xml schema config.

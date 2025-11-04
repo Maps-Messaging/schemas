@@ -25,7 +25,7 @@ import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 public class CborSchemaConfig extends SchemaConfig {
 
-  private static final String NAME = "CBOR";
+  private static final String NAME = "cbor";
 
   public CborSchemaConfig() {
     super(NAME);

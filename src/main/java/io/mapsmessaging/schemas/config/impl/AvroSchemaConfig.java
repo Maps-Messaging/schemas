@@ -33,7 +33,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class AvroSchemaConfig extends SchemaConfig {
 
   public AvroSchemaConfig() {
-    super("AVRO");
+    super("avro");
   }
 
   protected AvroSchemaConfig(XRegistrySchemaVersion config) {

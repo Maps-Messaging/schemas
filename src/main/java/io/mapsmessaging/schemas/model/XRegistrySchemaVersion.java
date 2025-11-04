@@ -21,10 +21,10 @@
 package io.mapsmessaging.schemas.model;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import io.mapsmessaging.schemas.config.GsonFactory;
 import lombok.*;
 
 import java.io.IOException;
@@ -42,10 +42,7 @@ import java.util.UUID;
 @ToString
 public class XRegistrySchemaVersion {
 
-  public static final Gson gson = new GsonBuilder()
-      .setPrettyPrinting()
-      .disableHtmlEscaping()
-      .create();
+  public static final Gson gson = GsonFactory.buildGson();
 
   private String versionId;
   private Long epoch;
@@ -92,16 +89,16 @@ public class XRegistrySchemaVersion {
 
   public void setFormat(String format) {
     if (this.format == null && format != null) {
-      this.format = format.toUpperCase();
+      this.format = format.toLowerCase();
     }
   }
 
   public String getUniqueId() {
-    return getVersionId();
+    return getFromLabels("uniqueId");
   }
 
   public void setUniqueId(UUID uuid) {
-    setVersionId(uuid.toString());
+    setInLables("uniqueId", uuid.toString());
   }
 
   public byte[] pack() throws IOException {
@@ -186,10 +183,10 @@ public class XRegistrySchemaVersion {
   }
 
   public String getVersion() {
-    return getFromLabels("version");
+    return versionId;
   }
 
   public void setVersion(String number) {
-    setInLables("version", number);
+    versionId = number;
   }
 }

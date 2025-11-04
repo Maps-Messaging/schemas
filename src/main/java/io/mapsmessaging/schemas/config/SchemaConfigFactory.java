@@ -122,7 +122,7 @@ public class SchemaConfigFactory {
     }
   }
 
-  private SchemaConfig constructConfig(XRegistrySchemaVersion config) throws IOException {
+  public SchemaConfig constructConfig(XRegistrySchemaVersion config) {
     SchemaConfig base = findSchemaConfig(config.getFormat());
     if (base != null) {
       return base.getInstance(config);

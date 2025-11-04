@@ -3,7 +3,7 @@ package io.mapsmessaging.schemas.repository.impl.xregistry;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mapsmessaging.schemas.model.XRegistrySchemaResource;
+import io.mapsmessaging.schemas.model.SchemaResource;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import lombok.NonNull;
 
@@ -25,7 +25,7 @@ import java.util.Map;
 public class XRegistryClient implements AutoCloseable {
 
   private static final String JSON = "application/json";
-  private static final TypeReference<List<XRegistrySchemaResource>> RES_LIST = new TypeReference<>() {
+  private static final TypeReference<List<SchemaResource>> RES_LIST = new TypeReference<>() {
   };
   private static final TypeReference<List<XRegistrySchemaVersion>> VER_LIST = new TypeReference<>() {
   };
@@ -51,15 +51,15 @@ public class XRegistryClient implements AutoCloseable {
     return java.net.URLEncoder.encode(s, StandardCharsets.UTF_8);
   }
 
-  public XRegistrySchemaResource createSchema(String schemaId, XRegistrySchemaVersion initialVersion) {
+  public SchemaResource createSchema(String schemaId, XRegistrySchemaVersion initialVersion) {
     String path = String.format("/groups/%s/schemas/%s", cfg.getGroupName(), u(schemaId));
     // Allow empty body; server may treat it as “create container only”
-    return doPost(path, initialVersion == null ? Map.of() : initialVersion, XRegistrySchemaResource.class);
+    return doPost(path, initialVersion == null ? Map.of() : initialVersion, SchemaResource.class);
   }
 
-  public XRegistrySchemaResource getResource(String schemaId) {
+  public SchemaResource getResource(String schemaId) {
     String path = String.format("/groups/%s/schemas/%s", cfg.getGroupName(), u(schemaId));
-    return doGet(path, XRegistrySchemaResource.class);
+    return doGet(path, SchemaResource.class);
   }
 
   public XRegistrySchemaVersion getVersion(String schemaId, String versionId) {
@@ -72,9 +72,9 @@ public class XRegistryClient implements AutoCloseable {
     return doPost(path, version, XRegistrySchemaVersion.class);
   }
 
-  public XRegistrySchemaResource setDefaultVersion(String schemaId, String versionId) {
+  public SchemaResource setDefaultVersion(String schemaId, String versionId) {
     String path = String.format("/groups/%s/schemas/%s/default", cfg.getGroupName(), u(schemaId));
-    return doPut(path, Map.of("versionId", versionId), XRegistrySchemaResource.class);
+    return doPut(path, Map.of("versionId", versionId), SchemaResource.class);
   }
 
   public List<XRegistrySchemaVersion> listVersions(String schemaId, int page, int size) {
@@ -83,7 +83,7 @@ public class XRegistryClient implements AutoCloseable {
     return doGet(path, VER_LIST);
   }
 
-  public List<XRegistrySchemaResource> search(String format, Map<String, String> labels, int page, int size) {
+  public List<SchemaResource> search(String format, Map<String, String> labels, int page, int size) {
     StringBuilder sb = new StringBuilder()
         .append(String.format("/groups/%s/schemas?page=%d&size=%d", cfg.getGroupName(), Math.max(0, page), Math.max(1, size)));
     if (format != null && !format.isBlank()) sb.append("&format=").append(u(format));
@@ -95,16 +95,16 @@ public class XRegistryClient implements AutoCloseable {
     return doGet(sb.toString(), RES_LIST);
   }
 
-  public XRegistrySchemaResource updateMetadata(String schemaId,
-                                                String documentation,
-                                                Map<String, String> labels,
-                                                Map<String, Object> meta) {
+  public SchemaResource updateMetadata(String schemaId,
+                                       String documentation,
+                                       Map<String, String> labels,
+                                       Map<String, Object> meta) {
     String path = String.format("/groups/%s/schemas/%s/meta", cfg.getGroupName(), u(schemaId));
     return doPatch(path, Map.of(
         "documentation", documentation,
         "labels", labels,
         "meta", meta
-    ), XRegistrySchemaResource.class);
+    ), SchemaResource.class);
   }
 
   public boolean deleteVersion(String schemaId, String versionId, boolean force) {
@@ -122,7 +122,7 @@ public class XRegistryClient implements AutoCloseable {
     return true;
   }
 
-  public XRegistrySchemaResource safeGetResource(String schemaId) {
+  public SchemaResource safeGetResource(String schemaId) {
     try {
       return getResource(schemaId);
     } catch (Exception ignore) {
@@ -148,7 +148,7 @@ public class XRegistryClient implements AutoCloseable {
 
   // ---------- HTTP helpers ----------
 
-  public List<XRegistrySchemaResource> safeSearch(String format, Map<String, String> labels, int page, int size) {
+  public List<SchemaResource> safeSearch(String format, Map<String, String> labels, int page, int size) {
     try {
       return search(format, labels, page, size);
     } catch (Exception ignore) {

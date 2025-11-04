@@ -31,7 +31,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Native Schema Configuration")
 public class NativeSchemaConfig extends SchemaConfig {
 
-  private static final String NAME = "Native";
+  private static final String NAME = "native";
 
   /**
    * Instantiates a new Native schema config.

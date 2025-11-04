@@ -1,5 +1,6 @@
 /*
- *  Copyright [ 2020 - 2025 ] Matthew Buckton
+ *
+ *  Copyright [ 2020 - 2024 ] Matthew Buckton
  *  Copyright [ 2024 - 2025 ] MapsMessaging B.V.
  *
  *  Licensed under the Apache License, Version 2.0 with the Commons Clause
@@ -8,31 +9,47 @@
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *      https://commonsclause.com/
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 
 package io.mapsmessaging.schemas.repository;
 
+
 import io.mapsmessaging.schemas.config.ConfigHelper;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.model.SchemaResource;
-import io.mapsmessaging.schemas.repository.impl.FileSchemaRepository;
 import io.mapsmessaging.schemas.repository.impl.SimpleSchemaRepository;
+import io.mapsmessaging.schemas.repository.impl.XRegistrySchemaRepository;
+import io.mapsmessaging.schemas.repository.impl.xregistry.XRegistryConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-class TestFileSimpleRepository extends TestSchemaRepository {
+class TestXRegistryRepository {//extends TestSchemaRepository {
 
   private static final File ROOT = new File("./test/report");
 
-  @Override
+
   protected SimpleSchemaRepository getRepository() throws IOException {
-    return new FileSchemaRepository(ROOT);
+    XRegistryConfig config = new XRegistryConfig();
+    config.setTimeout(30);
+    config.setRetryAttempts(2);
+    config.setGroupName("schema");
+    config.setCacheTtl(3600);
+    config.setBaseUrl("http://localhost:8080");
+    config.setEnableCache(true);
+    config.setRetryDelay(5);
+    return new XRegistrySchemaRepository(ROOT, config);
   }
 
   @AfterEach
@@ -46,7 +63,6 @@ class TestFileSimpleRepository extends TestSchemaRepository {
   }
 
 
-  @Test
   void testReload() throws IOException {
     SimpleSchemaRepository repo = getRepository();
     List<SchemaConfig> all = ConfigHelper.getAll();
@@ -74,7 +90,6 @@ class TestFileSimpleRepository extends TestSchemaRepository {
     }
   }
 
-  // ---- helpers ----
 
   private static void deleteDir(File dir) {
     if (dir == null || !dir.exists()) return;

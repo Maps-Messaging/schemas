@@ -39,7 +39,7 @@ public class CsvSchemaConfig extends SchemaConfig {
    * Instantiates a new Csv schema config.
    */
   public CsvSchemaConfig() {
-    super("CSV");
+    super("csv");
   }
 
   /**

@@ -19,6 +19,7 @@
  */
 package io.mapsmessaging.schemas.config.impl;
 
+import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -32,13 +33,14 @@ import java.nio.charset.StandardCharsets;
 @Schema(description = "Raw Schema Configuration")
 public class RawSchemaConfig extends SchemaConfig {
 
-  private static final String NAME = "RAW";
+  private static final String NAME = "raw";
 
   /**
    * Instantiates a new Raw schema config.
    */
   public RawSchemaConfig() {
     super(NAME);
+    setSchema(new JsonObject());
   }
 
   /**

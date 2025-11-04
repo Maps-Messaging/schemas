@@ -2,9 +2,10 @@
 package io.mapsmessaging.schemas.repository.impl;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import io.mapsmessaging.schemas.model.XRegistrySchemaResource;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
+import io.mapsmessaging.schemas.config.GsonFactory;
+import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.config.SchemaConfigFactory;
+import io.mapsmessaging.schemas.model.SchemaResource;
 import lombok.NonNull;
 
 import java.io.File;
@@ -19,7 +20,7 @@ import java.util.Map;
 
 public class RestSchemaRepository extends FileSchemaRepository {
 
-  private static final Gson GSON = new GsonBuilder().create();
+  private static final Gson GSON = GsonFactory.buildGson();
   private static final String JSON = "application/json";
 
   private final String baseUrl;
@@ -79,19 +80,19 @@ public class RestSchemaRepository extends FileSchemaRepository {
   // ---------------------------- API overrides ----------------------------
 
   @Override
-  public XRegistrySchemaResource createSchema(@NonNull String schemaId, XRegistrySchemaVersion initialVersion) {
+  public SchemaResource createSchema(@NonNull String schemaId, SchemaConfig initialVersion) {
     boolean ok = tryRemotePost("/schemas/" + schemaId, initialVersion == null ? new Object() : initialVersion);
     // Even if remote fails, we still create locally (cache-first resilience)
     return super.createSchema(schemaId, initialVersion);
   }
 
   @Override
-  public XRegistrySchemaResource getResource(@NonNull String schemaId) {
-    XRegistrySchemaResource remote = tryRemoteGet("/schemas/" + schemaId, XRegistrySchemaResource.class);
+  public SchemaResource getResource(@NonNull String schemaId) {
+    SchemaResource remote = tryRemoteGet("/schemas/" + schemaId, SchemaResource.class);
     if (remote != null) {
       // hydrate local cache
       if (remote.getVersions() != null) {
-        remote.getVersions().values().forEach(v -> super.addVersion(schemaId, v));
+        remote.getVersions().values().forEach(v -> super.addVersion(schemaId, SchemaConfigFactory.getInstance().constructConfig(v)));
       }
       if (remote.getVersionId() != null) super.setDefaultVersion(schemaId, remote.getVersionId());
       return remote;
@@ -100,8 +101,8 @@ public class RestSchemaRepository extends FileSchemaRepository {
   }
 
   @Override
-  public XRegistrySchemaVersion getVersion(@NonNull String schemaId, @NonNull String versionId) {
-    XRegistrySchemaVersion remote = tryRemoteGet("/schemas/" + schemaId + "/versions/" + versionId, XRegistrySchemaVersion.class);
+  public SchemaConfig getVersion(@NonNull String schemaId, @NonNull String versionId) {
+    SchemaConfig remote = tryRemoteGet("/schemas/" + schemaId + "/versions/" + versionId, SchemaConfig.class);
     if (remote != null) {
       super.addVersion(schemaId, remote);
       return remote;
@@ -110,41 +111,42 @@ public class RestSchemaRepository extends FileSchemaRepository {
   }
 
   @Override
-  public XRegistrySchemaVersion addVersion(@NonNull String schemaId, @NonNull XRegistrySchemaVersion version) {
+  public SchemaResource addVersion(@NonNull String schemaId, @NonNull SchemaConfig version) {
     boolean ok = tryRemotePost("/schemas/" + schemaId + "/versions", version);
     // write-through to cache regardless, we’re the runtime source of truth
     return super.addVersion(schemaId, version);
   }
 
   @Override
-  public XRegistrySchemaResource setDefaultVersion(@NonNull String schemaId, @NonNull String versionId) {
+  public SchemaResource setDefaultVersion(@NonNull String schemaId, @NonNull String versionId) {
     boolean ok = tryRemotePut("/schemas/" + schemaId + "/default", Map.of("versionId", versionId));
     return super.setDefaultVersion(schemaId, versionId);
   }
 
   @Override
-  public List<XRegistrySchemaVersion> listVersions(@NonNull String schemaId, int page, int size) {
+  public List<SchemaConfig> listVersions(@NonNull String schemaId, int page, int size) {
     // keep local paging, remote optional
     return super.listVersions(schemaId, page, size);
   }
 
   @Override
-  public List<XRegistrySchemaResource> search(String format, Map<String, String> labelFilter, int page, int size) {
+  public List<SchemaResource> search(String format, Map<String, String> labelFilter, int page, int size) {
     // You can call remote if you want, but cache is fine for now
     return super.search(format, labelFilter, page, size);
   }
 
   @Override
-  public XRegistrySchemaResource updateMetadata(@NonNull String schemaId,
-                                                String documentation,
-                                                Map<String, String> labels,
-                                                Map<String, Object> meta) {
+  public SchemaResource updateMetadata(@NonNull String schemaId,
+                                       String version,
+                                       String documentation,
+                                       Map<String, String> labels,
+                                       Map<String, Object> meta) {
     tryRemotePut("/schemas/" + schemaId + "/meta", Map.of(
         "documentation", documentation,
         "labels", labels,
         "meta", meta
     ));
-    return super.updateMetadata(schemaId, documentation, labels, meta);
+    return super.updateMetadata(schemaId, version, documentation, labels, meta);
   }
 
   @Override

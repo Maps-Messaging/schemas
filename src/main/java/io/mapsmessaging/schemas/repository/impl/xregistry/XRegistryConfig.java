@@ -1,33 +1,15 @@
 package io.mapsmessaging.schemas.repository.impl.xregistry;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class XRegistryConfig {
-  @JsonProperty("baseUrl")
   private String baseUrl;
-
-  @JsonProperty("apiKey")
   private String apiKey;
-
-  @JsonProperty("groupName")
   private String groupName = "schemas";
-
-  @JsonProperty("timeout")
   private int timeout = 30000; // ms
-
-  @JsonProperty("retryAttempts")
   private int retryAttempts = 3;
-
-  @JsonProperty("retryDelay")
   private int retryDelay = 1000; // ms
-
-  @JsonProperty("enableCache")
   private boolean enableCache = true;
-
-  @JsonProperty("cacheSize")
   private int cacheSize = 100;
-
-  @JsonProperty("cacheTtl")
   private long cacheTtl = 3600000; // 1 hour in ms
 
   // Getters

@@ -20,8 +20,9 @@
 
 package io.mapsmessaging.schemas.repository;
 
-import io.mapsmessaging.schemas.model.XRegistrySchemaResource;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
+import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.model.SchemaResource;
+import lombok.NonNull;
 
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,7 @@ public interface SchemaRepository {
    * @param initialVersion the initial version (nullable)
    * @return the created resource
    */
-  XRegistrySchemaResource createSchema(String schemaId, XRegistrySchemaVersion initialVersion);
+  SchemaResource createSchema(String schemaId, SchemaConfig initialVersion);
 
   /**
    * Get a schema resource with the default version inlined.
@@ -47,7 +48,7 @@ public interface SchemaRepository {
    * @param schemaId the schema identifier
    * @return the resource or null if not found
    */
-  XRegistrySchemaResource getResource(String schemaId);
+  SchemaResource getResource(String schemaId);
 
   /**
    * Get a specific version for a schema.
@@ -56,7 +57,7 @@ public interface SchemaRepository {
    * @param versionId the version identifier
    * @return the version or null if not found
    */
-  XRegistrySchemaVersion getVersion(String schemaId, String versionId);
+  SchemaConfig getVersion(String schemaId, String versionId);
 
   /**
    * Add a new version to an existing schema.
@@ -65,7 +66,7 @@ public interface SchemaRepository {
    * @param version  the version payload
    * @return the created version (with ids and timestamps)
    */
-  XRegistrySchemaVersion addVersion(String schemaId, XRegistrySchemaVersion version);
+  SchemaResource addVersion(String schemaId, SchemaConfig version);
 
   /**
    * Set the default version for a schema.
@@ -74,7 +75,7 @@ public interface SchemaRepository {
    * @param versionId the version identifier to set as default
    * @return the updated resource
    */
-  XRegistrySchemaResource setDefaultVersion(String schemaId, String versionId);
+  SchemaResource setDefaultVersion(String schemaId, String versionId);
 
   /**
    * List versions for a schema.
@@ -84,7 +85,7 @@ public interface SchemaRepository {
    * @param size     page size
    * @return versions in the requested page
    */
-  List<XRegistrySchemaVersion> listVersions(String schemaId, int page, int size);
+  List<SchemaConfig> listVersions(String schemaId, int page, int size);
 
   /**
    * Search schemas by format and label predicates.
@@ -95,7 +96,7 @@ public interface SchemaRepository {
    * @param size        page size
    * @return matching resources (default version inlined)
    */
-  List<XRegistrySchemaResource> search(String format, Map<String, String> labelFilter, int page, int size);
+  List<SchemaResource> search(String format, Map<String, String> labelFilter, int page, int size);
 
   /**
    * Update resource-level metadata without changing schema bytes.
@@ -106,7 +107,11 @@ public interface SchemaRepository {
    * @param meta          optional meta map to upsert (null to leave unchanged)
    * @return the updated resource
    */
-  XRegistrySchemaResource updateMetadata(String schemaId, String documentation, Map<String, String> labels, Map<String, Object> meta);
+  public SchemaResource updateMetadata(@NonNull String schemaId,
+                                       String version,
+                                       String documentation,
+                                       Map<String, String> labels,
+                                       Map<String, Object> meta);
 
   /**
    * Delete a specific version.

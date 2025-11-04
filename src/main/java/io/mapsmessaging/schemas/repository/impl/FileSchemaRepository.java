@@ -1,16 +1,14 @@
 package io.mapsmessaging.schemas.repository.impl;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
-import io.mapsmessaging.schemas.config.SchemaConfigFactory;
-import io.mapsmessaging.schemas.model.XRegistrySchemaResource;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
+import io.mapsmessaging.schemas.config.GsonFactory;
+import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.model.SchemaResource;
 import lombok.NonNull;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
@@ -20,9 +18,7 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.*;
 
 public class FileSchemaRepository extends SimpleSchemaRepository {
 
-  private static final String DEFAULT_POINTER = "_default";
-  private static final String META_JSON = "_meta.json";
-  private static final String VERSION_SUFFIX = ".bin";
+  private static final String VERSION_SUFFIX = ".schema_resource";
 
   private final Logger logger = LoggerFactory.getLogger(FileSchemaRepository.class);
   private final File rootDirectory;
@@ -31,7 +27,7 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
   public FileSchemaRepository(@NonNull File rootDirectory) throws IOException {
     super();
     this.rootDirectory = rootDirectory;
-    this.gson = new GsonBuilder().create();
+    this.gson = GsonFactory.buildGson();
 
     if (!rootDirectory.exists() && !rootDirectory.mkdirs()) {
       logger.log(FILE_REPO_ROOT_CREATION_EXCEPTION, rootDirectory.getPath());
@@ -45,25 +41,19 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
   }
 
   @Override
-  public XRegistrySchemaResource createSchema(@NonNull String schemaId, XRegistrySchemaVersion initialVersion) {
-    XRegistrySchemaResource resource = super.createSchema(schemaId, initialVersion);
+  public SchemaResource createSchema(@NonNull String schemaId, SchemaConfig initialVersion) {
+    SchemaResource resource = super.createSchema(schemaId, initialVersion);
     File schemaDir = new File(rootDirectory, schemaId);
     if (!schemaDir.exists() && !schemaDir.mkdirs()) {
       logger.log(FILE_REPO_UNABLE_TO_SAVE_EXCEPTION, "Unable to create dir " + schemaDir.getAbsolutePath());
     }
-    if (initialVersion != null) {
-      writeVersion(schemaDir, resource.getVersionId(), resource.getDefaultVersion());
-      writeDefault(schemaDir, resource.getVersionId());
-      writeMeta(schemaDir, resource.getMeta());
-    } else {
-      writeMeta(schemaDir, resource.getMeta());
-    }
+    writeVersion(schemaDir, resource.getVersionId(), resource);
     return resource;
   }
 
   @Override
-  public XRegistrySchemaVersion addVersion(@NonNull String schemaId, @NonNull XRegistrySchemaVersion version) {
-    XRegistrySchemaVersion created = super.addVersion(schemaId, version);
+  public SchemaResource addVersion(@NonNull String schemaId, @NonNull SchemaConfig version) {
+    SchemaResource created = super.addVersion(schemaId, version);
     File schemaDir = new File(rootDirectory, schemaId);
     if (!schemaDir.exists() && !schemaDir.mkdirs()) {
       logger.log(FILE_REPO_UNABLE_TO_SAVE_EXCEPTION, "Unable to create dir " + schemaDir.getAbsolutePath());
@@ -74,28 +64,25 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
   }
 
   @Override
-  public XRegistrySchemaResource setDefaultVersion(@NonNull String schemaId, @NonNull String versionId) {
-    XRegistrySchemaResource resource = super.setDefaultVersion(schemaId, versionId);
+  public SchemaResource setDefaultVersion(@NonNull String schemaId, @NonNull String versionId) {
+    SchemaResource resource = super.setDefaultVersion(schemaId, versionId);
     if (resource == null) {
       return null;
     }
-    File schemaDir = new File(rootDirectory, schemaId);
-    writeDefault(schemaDir, versionId);
+    writeVersion(rootDirectory, resource.getVersionId(), resource);
     return resource;
   }
 
   @Override
-  public XRegistrySchemaResource updateMetadata(@NonNull String schemaId,
-                                                String documentation,
-                                                Map<String, String> labels,
-                                                Map<String, Object> meta) {
-    XRegistrySchemaResource resource = super.updateMetadata(schemaId, documentation, labels, meta);
+  public SchemaResource updateMetadata(@NonNull String schemaId,
+                                       String version,
+                                       String documentation,
+                                       Map<String, String> labels,
+                                       Map<String, Object> meta) {
+    SchemaResource resource = super.updateMetadata(schemaId, version, documentation, labels, meta);
     if (resource != null) {
       File schemaDir = new File(rootDirectory, schemaId);
-      writeMeta(schemaDir, resource.getMeta());
-      if (resource.getDefaultVersion() != null) {
-        writeVersion(schemaDir, resource.getDefaultVersion().getVersionId(), resource.getDefaultVersion());
-      }
+      writeVersion(schemaDir, resource.getVersionId(), resource);
     }
     return resource;
   }
@@ -135,124 +122,65 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
     for (File schemaDir : schemaDirs) {
       String schemaId = schemaDir.getName();
 
-      XRegistrySchemaResource resource = new XRegistrySchemaResource();
+      SchemaResource resource = new SchemaResource();
       resource.setSchemaId(schemaId);
       resource.setXid(schemaId);
       resource.setVersions(new LinkedHashMap<>());
-
-      Map<String, Object> meta = readMeta(schemaDir);
-      if (meta != null && !meta.isEmpty()) {
-        resource.setMeta(new LinkedHashMap<>(meta));
-      }
 
       File[] versionFiles = schemaDir.listFiles(pathname -> pathname.isFile() && pathname.getName().endsWith(VERSION_SUFFIX));
 
       if (versionFiles != null) {
         for (File vf : versionFiles) {
-          XRegistrySchemaVersion version = readVersion(vf);
-          if (version != null) {
-            resource.getVersions().put(version.getVersionId(), version);
-          }
+          SchemaResource resource1 = readVersion(vf);
+          resourcesBySchemaId.put(resource1.getSchemaId(), resource1);
         }
       }
       resource.setVersionsCount(resource.getVersions().size());
-
-      String defaultVersionId = readDefault(schemaDir);
-      if (defaultVersionId != null && resource.getVersions().containsKey(defaultVersionId)) {
-        resource.setVersionId(defaultVersionId);
-        resource.setDefaultVersion(copyVersion(resource.getVersions().get(defaultVersionId)));
-      }
-
-      resourcesBySchemaId.put(schemaId, resource);
     }
   }
 
-  private void writeVersion(File schemaDir, String versionId, XRegistrySchemaVersion version) {
-    if (versionId == null || version == null) {
+  private void writeVersion(File schemaDir, String versionId, SchemaResource resource) {
+    if (versionId == null || resource == null) {
       return;
     }
     File file = new File(schemaDir, versionId + VERSION_SUFFIX);
     try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
-      byte[] payload = version.pack();
-      out.write(payload);
+      String str = gson.toJson(resource);
+      out.write(str.getBytes());
       out.flush();
-    } catch (IOException e) {
+    } catch (Exception e) {
+      e.printStackTrace();
       logger.log(FILE_REPO_UNABLE_TO_SAVE_EXCEPTION, e);
     }
   }
 
-  private XRegistrySchemaVersion readVersion(File versionFile) throws IOException {
+  private SchemaResource readVersion(File versionFile) throws IOException {
     try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(versionFile))) {
       byte[] bytes = in.readAllBytes();
       if (bytes.length == 0) {
         throw new EOFException("Empty version file: " + versionFile.getAbsolutePath());
       }
-      XRegistrySchemaVersion version = SchemaConfigFactory.getInstance().constructConfig(bytes);
-      if (version.getCreatedAt() == null) {
-        version.setCreatedAt(OffsetDateTime.now());
+      SchemaResource version = gson.fromJson(new String(bytes), SchemaResource.class);
+      for (Map.Entry<String, SchemaConfig> entry : version.getVersions().entrySet()) {
+        if (entry.getValue().getCreatedAt() == null) {
+          entry.getValue().setCreatedAt(OffsetDateTime.now());
+        }
+        if (entry.getValue().getModifiedAt() == null) {
+          entry.getValue().setModifiedAt(entry.getValue().getCreatedAt());
+        }
       }
-      if (version.getModifiedAt() == null) {
-        version.setModifiedAt(version.getCreatedAt());
+      if (version.getDefaultVersion() != null) {
+        if (version.getDefaultVersion().getCreatedAt() == null) {
+          version.getDefaultVersion().setCreatedAt(OffsetDateTime.now());
+        }
+        if (version.getDefaultVersion().getModifiedAt() == null) {
+          version.getDefaultVersion().setModifiedAt(version.getDefaultVersion().getCreatedAt());
+        }
       }
       return version;
     }
   }
 
-  private void writeDefault(File schemaDir, String versionId) {
-    if (versionId == null) {
-      return;
-    }
-    File file = new File(schemaDir, DEFAULT_POINTER);
-    try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
-      out.write(versionId.getBytes(StandardCharsets.UTF_8));
-      out.flush();
-    } catch (IOException e) {
-      logger.log(FILE_REPO_UNABLE_TO_SAVE_EXCEPTION, e);
-    }
-  }
-
-  private String readDefault(File schemaDir) throws IOException {
-    File file = new File(schemaDir, DEFAULT_POINTER);
-    if (!file.exists()) {
-      return null;
-    }
-    byte[] bytes = Files.readAllBytes(file.toPath());
-    String s = new String(bytes, StandardCharsets.UTF_8).trim();
-    return s.isEmpty() ? null : s;
-  }
-
-  private void writeMeta(File schemaDir, Map<String, Object> meta) {
-    if (meta == null) {
-      return;
-    }
-    File file = new File(schemaDir, META_JSON);
-    try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
-      byte[] json = gson.toJson(meta).getBytes(StandardCharsets.UTF_8);
-      out.write(json);
-      out.flush();
-    } catch (IOException e) {
-      logger.log(FILE_REPO_UNABLE_TO_SAVE_EXCEPTION, e);
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private Map<String, Object> readMeta(File schemaDir) throws IOException {
-    File file = new File(schemaDir, META_JSON);
-    if (!file.exists()) {
-      return new LinkedHashMap<>();
-    }
-    String json = Files.readString(file.toPath(), StandardCharsets.UTF_8);
-    Map<?, ?> parsed = gson.fromJson(json, Map.class);
-    Map<String, Object> result = new LinkedHashMap<>();
-    if (parsed != null) {
-      for (Map.Entry<?, ?> entry : parsed.entrySet()) {
-        if (entry.getKey() != null) {
-          result.put(String.valueOf(entry.getKey()), entry.getValue());
-        }
-      }
-    }
-    return result;
-  }
 
   private void deleteDirectory(File dir) {
     if (!dir.exists()) {
@@ -277,23 +205,5 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
     } catch (IOException e) {
       logger.log(FILE_REPO_UNABLE_TO_DELETE_EXCEPTION, e);
     }
-  }
-
-  private XRegistrySchemaVersion copyVersion(XRegistrySchemaVersion v) {
-    XRegistrySchemaVersion c = new XRegistrySchemaVersion();
-    c.setVersionId(v.getVersionId());
-    c.setEpoch(v.getEpoch());
-    c.setName(v.getName());
-    c.setDescription(v.getDescription());
-    c.setDocumentation(v.getDocumentation());
-    c.setLabels(v.getLabels() != null ? new LinkedHashMap<>(v.getLabels()) : null);
-    c.setAncestor(v.getAncestor());
-    c.setFormat(v.getFormat());
-    c.setSchemaUrl(v.getSchemaUrl());
-    c.setSchema(v.getSchema());
-    c.setSchemaBase64(v.getSchemaBase64());
-    c.setCreatedAt(v.getCreatedAt());
-    c.setModifiedAt(v.getModifiedAt());
-    return c;
   }
 }

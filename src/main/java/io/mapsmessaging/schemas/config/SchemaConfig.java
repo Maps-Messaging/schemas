@@ -19,48 +19,9 @@
  */
 package io.mapsmessaging.schemas.config;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.mapsmessaging.schemas.config.impl.*;
 import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
-import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
-import io.swagger.v3.oas.annotations.media.Schema;
 
-@SuppressWarnings("javaarchitecture:S7091")
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "type"
-)
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = AvroSchemaConfig.class, name = "avro"),
-    @JsonSubTypes.Type(value = CbcSchemaConfig.class, name = "cbc"),
-    @JsonSubTypes.Type(value = CborSchemaConfig.class, name = "cbor"),
-    @JsonSubTypes.Type(value = CsvSchemaConfig.class, name = "csv"),
-    @JsonSubTypes.Type(value = JsonSchemaConfig.class, name = "json"),
-    @JsonSubTypes.Type(value = MessagePackSchemaConfig.class, name = "messagePack"),
-    @JsonSubTypes.Type(value = NativeSchemaConfig.class, name = "native"),
-    @JsonSubTypes.Type(value = ProtoBufSchemaConfig.class, name = "protobuf"),
-    @JsonSubTypes.Type(value = RawSchemaConfig.class, name = "raw"),
-    @JsonSubTypes.Type(value = XmlSchemaConfig.class, name = "xml")
-})
-
-@Schema(description = "Abstract base class for all schema configurations",
-    discriminatorProperty = "type",
-    discriminatorMapping = {
-        @DiscriminatorMapping(value = "avro", schema = AvroSchemaConfig.class),
-        @DiscriminatorMapping(value = "cbc", schema = CbcSchemaConfig.class),
-        @DiscriminatorMapping(value = "cbor", schema = CborSchemaConfig.class),
-        @DiscriminatorMapping(value = "csv", schema = CsvSchemaConfig.class),
-        @DiscriminatorMapping(value = "json", schema = JsonSchemaConfig.class),
-        @DiscriminatorMapping(value = "messagePack", schema = MessagePackSchemaConfig.class),
-        @DiscriminatorMapping(value = "native", schema = NativeSchemaConfig.class),
-        @DiscriminatorMapping(value = "protobuf", schema = ProtoBufSchemaConfig.class),
-        @DiscriminatorMapping(value = "raw", schema = RawSchemaConfig.class),
-        @DiscriminatorMapping(value = "xml", schema = XmlSchemaConfig.class),
-    })
-
-public abstract class SchemaConfig extends XRegistrySchemaVersion {
+public class SchemaConfig extends XRegistrySchemaVersion {
   protected SchemaConfig(String format) {
     super(format);
   }
@@ -81,8 +42,12 @@ public abstract class SchemaConfig extends XRegistrySchemaVersion {
     return getName();
   }
 
-  public abstract SchemaConfig getInstance(XRegistrySchemaVersion config);
+  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
+    return null;
+  }
 
-  public abstract String getMimeType();
+  public String getMimeType() {
+    return null;
+  }
 
 }

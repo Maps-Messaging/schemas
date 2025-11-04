@@ -47,7 +47,6 @@ public abstract class GeneralBaseTest {
     config.setExpiresAfter(OffsetDateTime.now().plusDays(10));
     config.setNotBefore(OffsetDateTime.now().minusDays(10));
     config.setSource("tcp://localhost:1883/topic2");
-
   }
 
   void validateSchema(XRegistrySchemaVersion schemaConfig) throws IOException {

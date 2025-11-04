@@ -43,7 +43,7 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
    * Instantiates a new Proto buf schema config.
    */
   public ProtoBufSchemaConfig() {
-    super("ProtoBuf");
+    super("protobuf");
   }
 
   /**

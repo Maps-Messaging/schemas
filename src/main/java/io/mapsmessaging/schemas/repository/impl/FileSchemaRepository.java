@@ -5,7 +5,7 @@ import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
 import io.mapsmessaging.schemas.config.GsonFactory;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.model.SchemaResource;
+import io.mapsmessaging.schemas.config.SchemaResource;
 import lombok.NonNull;
 
 import java.io.*;
@@ -47,7 +47,7 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
     if (!schemaDir.exists() && !schemaDir.mkdirs()) {
       logger.log(FILE_REPO_UNABLE_TO_SAVE_EXCEPTION, "Unable to create dir " + schemaDir.getAbsolutePath());
     }
-    writeVersion(schemaDir, resource.getVersionId(), resource);
+    writeVersion(schemaDir, resource);
     return resource;
   }
 
@@ -59,7 +59,7 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
       logger.log(FILE_REPO_UNABLE_TO_SAVE_EXCEPTION, "Unable to create dir " + schemaDir.getAbsolutePath());
       return created;
     }
-    writeVersion(schemaDir, created.getVersionId(), created);
+    writeVersion(schemaDir, created);
     return created;
   }
 
@@ -69,7 +69,7 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
     if (resource == null) {
       return null;
     }
-    writeVersion(rootDirectory, resource.getVersionId(), resource);
+    writeVersion(rootDirectory, resource);
     return resource;
   }
 
@@ -77,12 +77,11 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
   public SchemaResource updateMetadata(@NonNull String schemaId,
                                        String version,
                                        String documentation,
-                                       Map<String, String> labels,
-                                       Map<String, Object> meta) {
-    SchemaResource resource = super.updateMetadata(schemaId, version, documentation, labels, meta);
+                                       Map<String, String> labels) {
+    SchemaResource resource = super.updateMetadata(schemaId, version, documentation, labels);
     if (resource != null) {
       File schemaDir = new File(rootDirectory, schemaId);
-      writeVersion(schemaDir, resource.getVersionId(), resource);
+      writeVersion(schemaDir, resource);
     }
     return resource;
   }
@@ -101,6 +100,16 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
       logger.log(FILE_REPO_UNABLE_TO_DELETE_EXCEPTION, e);
     }
     return true;
+  }
+
+  @Override
+  public boolean deleteResource(String schemaId) {
+    if (super.deleteResource(schemaId)) {
+      File schemaDir = new File(rootDirectory, schemaId);
+      deleteDirectory(schemaDir);
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -124,7 +133,6 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
 
       SchemaResource resource = new SchemaResource();
       resource.setSchemaId(schemaId);
-      resource.setXid(schemaId);
       resource.setVersions(new LinkedHashMap<>());
 
       File[] versionFiles = schemaDir.listFiles(pathname -> pathname.isFile() && pathname.getName().endsWith(VERSION_SUFFIX));
@@ -135,15 +143,14 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
           resourcesBySchemaId.put(resource1.getSchemaId(), resource1);
         }
       }
-      resource.setVersionsCount(resource.getVersions().size());
     }
   }
 
-  private void writeVersion(File schemaDir, String versionId, SchemaResource resource) {
-    if (versionId == null || resource == null) {
+  private void writeVersion(File schemaDir, SchemaResource resource) {
+    if (resource == null) {
       return;
     }
-    File file = new File(schemaDir, versionId + VERSION_SUFFIX);
+    File file = new File(schemaDir, resource.getSchemaId() + VERSION_SUFFIX);
     try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
       String str = gson.toJson(resource);
       out.write(str.getBytes());

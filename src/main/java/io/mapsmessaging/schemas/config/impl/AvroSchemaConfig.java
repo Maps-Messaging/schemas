@@ -22,7 +22,6 @@ package io.mapsmessaging.schemas.config.impl;
 
 import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 
@@ -36,7 +35,7 @@ public class AvroSchemaConfig extends SchemaConfig {
     super("avro");
   }
 
-  protected AvroSchemaConfig(XRegistrySchemaVersion config) {
+  protected AvroSchemaConfig(SchemaConfig config) {
     super(config);
   }
 
@@ -57,7 +56,7 @@ public class AvroSchemaConfig extends SchemaConfig {
   }
 
   @Override
-  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(SchemaConfig config) {
     return new AvroSchemaConfig(config);
   }
 }

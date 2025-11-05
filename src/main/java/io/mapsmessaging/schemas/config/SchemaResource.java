@@ -18,16 +18,14 @@
  *
  */
 
-package io.mapsmessaging.schemas.model;
+package io.mapsmessaging.schemas.config;
 
 
-import io.mapsmessaging.schemas.config.SchemaConfig;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -37,17 +35,20 @@ import java.util.Map;
 @AllArgsConstructor
 public class SchemaResource {
   private String schemaId;
-  private String versionId;
-  private String self;
-  private String xid;
-
-  private String metaUrl;
-  private Map<String, Object> meta = new HashMap<>();
-
-  private String versionsUrl;
-  private Integer versionsCount;
   private Map<String, SchemaConfig> versions = new LinkedHashMap<>();
+  private String defaultVersion;
 
-  private SchemaConfig defaultVersion;
+  public void setDefaultVersion(SchemaConfig schemaConfig) {
+    if (!versions.containsKey(schemaConfig.getVersionId())) {
+      versions.put(schemaConfig.getVersionId(), schemaConfig);
+    }
+    defaultVersion = schemaConfig.getVersionId();
+  }
 
+  public SchemaConfig getDefaultVersion() {
+    if (defaultVersion == null && !versions.isEmpty()) {
+      return versions.values().iterator().next();
+    }
+    return versions.get(defaultVersion);
+  }
 }

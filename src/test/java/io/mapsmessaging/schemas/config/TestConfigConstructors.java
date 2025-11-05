@@ -23,7 +23,6 @@ package io.mapsmessaging.schemas.config;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.impl.RawSchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -90,7 +89,7 @@ class TestConfigConstructors {
     }
 
     @Override
-    public SchemaConfig getInstance(XRegistrySchemaVersion config) {
+    public SchemaConfig getInstance(SchemaConfig config) {
       return new BadSchema();
     }
 

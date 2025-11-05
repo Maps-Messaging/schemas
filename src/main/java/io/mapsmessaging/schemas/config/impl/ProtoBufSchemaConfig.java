@@ -21,7 +21,6 @@ package io.mapsmessaging.schemas.config.impl;
 
 import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -51,7 +50,7 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
    *
    * @param config the config
    */
-  protected ProtoBufSchemaConfig(XRegistrySchemaVersion config) {
+  protected ProtoBufSchemaConfig(SchemaConfig config) {
     super(config);
   }
 
@@ -84,7 +83,7 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
     setSchema(obj);
   }
 
-  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(SchemaConfig config) {
     return new ProtoBufSchemaConfig(config);
   }
 

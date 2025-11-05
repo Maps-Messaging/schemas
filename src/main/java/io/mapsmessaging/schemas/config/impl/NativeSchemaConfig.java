@@ -22,7 +22,6 @@ package io.mapsmessaging.schemas.config.impl;
 
 import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -45,7 +44,7 @@ public class NativeSchemaConfig extends SchemaConfig {
    *
    * @param config the config
    */
-  public NativeSchemaConfig(XRegistrySchemaVersion config) {
+  public NativeSchemaConfig(SchemaConfig config) {
     super(config);
   }
 
@@ -68,7 +67,7 @@ public class NativeSchemaConfig extends SchemaConfig {
     setSchema(json);
   }
 
-  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(SchemaConfig config) {
     return new NativeSchemaConfig(config);
   }
 

@@ -20,8 +20,6 @@
 
 package io.mapsmessaging.schemas.config;
 
-
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -32,13 +30,13 @@ import java.util.UUID;
 
 public abstract class GeneralBaseTest {
 
-  abstract XRegistrySchemaVersion getProperties() throws IOException;
+  abstract SchemaConfig getProperties() throws IOException;
 
-  abstract XRegistrySchemaVersion buildConfig() throws IOException;
+  abstract SchemaConfig buildConfig() throws IOException;
 
-  abstract void validate(XRegistrySchemaVersion schemaConfig) throws IOException;
+  abstract void validate(SchemaConfig schemaConfig) throws IOException;
 
-  void setBaseConfig(XRegistrySchemaVersion config) {
+  void setBaseConfig(SchemaConfig config) {
     config.setUniqueId(UUID.randomUUID());
     config.setComments("Unit Tests");
     config.setResourceType("sensor");
@@ -49,7 +47,7 @@ public abstract class GeneralBaseTest {
     config.setSource("tcp://localhost:1883/topic2");
   }
 
-  void validateSchema(XRegistrySchemaVersion schemaConfig) throws IOException {
+  void validateSchema(SchemaConfig schemaConfig) throws IOException {
     validate(schemaConfig);
     Assertions.assertEquals("Unit Tests", schemaConfig.getComments());
     Assertions.assertEquals("Temperature C", schemaConfig.getInterfaceDescription());
@@ -63,8 +61,8 @@ public abstract class GeneralBaseTest {
 
   }
 
-  XRegistrySchemaVersion getSchemaProperties() throws IOException {
-    XRegistrySchemaVersion properties = getProperties();
+  SchemaConfig getSchemaProperties() throws IOException {
+    SchemaConfig properties = getProperties();
     // --- Root-level metadata ---
     String uid = UUID.randomUUID().toString();
     properties.setVersionId(uid);
@@ -81,7 +79,7 @@ public abstract class GeneralBaseTest {
 
   @Test
   void validateBaseConstructor() throws IOException {
-    XRegistrySchemaVersion schemaConfig = buildConfig();
+    SchemaConfig schemaConfig = buildConfig();
     validate(schemaConfig);
     validateSchema(schemaConfig);
   }
@@ -89,7 +87,7 @@ public abstract class GeneralBaseTest {
 
   @Test
   void validateConstructors() throws IOException {
-    XRegistrySchemaVersion schemaProps = buildConfig();
+    SchemaConfig schemaProps = buildConfig();
     Assertions.assertNotNull(schemaProps);
     validate(schemaProps);
     validateSchema(schemaProps);
@@ -97,8 +95,8 @@ public abstract class GeneralBaseTest {
 
   @Test
   void validateStreamConstructors() throws IOException {
-    XRegistrySchemaVersion schemaProps = buildConfig();
-    XRegistrySchemaVersion schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaProps.pack());
+    SchemaConfig schemaProps = buildConfig();
+    SchemaConfig schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaProps.pack());
     validate(schemaConfig);
     Assertions.assertEquals(schemaProps.getClass().getName(), schemaConfig.getClass().getName());
     validate(schemaConfig);
@@ -107,11 +105,11 @@ public abstract class GeneralBaseTest {
 
   @Test
   void validateConstructorFromMap() throws IOException {
-    XRegistrySchemaVersion schemaConfig = buildConfig();
+    SchemaConfig schemaConfig = buildConfig();
     validate(schemaConfig);
     validateSchema(schemaConfig);
     byte[] schemaProps = schemaConfig.pack();
-    XRegistrySchemaVersion schemaConfigCheck = SchemaConfigFactory.getInstance().constructConfig(schemaProps);
+    SchemaConfig schemaConfigCheck = SchemaConfigFactory.getInstance().constructConfig(schemaProps);
     Assertions.assertNotNull(schemaConfigCheck);
     validate(schemaConfigCheck);
     validateSchema(schemaConfigCheck);

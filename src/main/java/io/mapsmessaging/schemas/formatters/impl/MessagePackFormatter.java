@@ -29,11 +29,11 @@ import com.networknt.schema.Error;
 import com.networknt.schema.Schema;
 import com.networknt.schema.SchemaRegistry;
 import com.networknt.schema.dialect.Dialects;
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
 
 import java.io.IOException;
@@ -93,7 +93,7 @@ public class MessagePackFormatter extends MessageFormatter {
   }
 
   @Override
-  public MessageFormatter getInstance(XRegistrySchemaVersion config) throws IOException {
+  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     return new MessagePackFormatter(config.getSchema());
   }
 

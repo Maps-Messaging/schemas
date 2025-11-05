@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import io.mapsmessaging.schemas.config.GsonFactory;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
-import io.mapsmessaging.schemas.model.SchemaResource;
+import io.mapsmessaging.schemas.config.SchemaResource;
 import lombok.NonNull;
 
 import java.io.File;
@@ -94,7 +94,6 @@ public class RestSchemaRepository extends FileSchemaRepository {
       if (remote.getVersions() != null) {
         remote.getVersions().values().forEach(v -> super.addVersion(schemaId, SchemaConfigFactory.getInstance().constructConfig(v)));
       }
-      if (remote.getVersionId() != null) super.setDefaultVersion(schemaId, remote.getVersionId());
       return remote;
     }
     return super.getResource(schemaId);
@@ -139,14 +138,11 @@ public class RestSchemaRepository extends FileSchemaRepository {
   public SchemaResource updateMetadata(@NonNull String schemaId,
                                        String version,
                                        String documentation,
-                                       Map<String, String> labels,
-                                       Map<String, Object> meta) {
+                                       Map<String, String> labels) {
     tryRemotePut("/schemas/" + schemaId + "/meta", Map.of(
         "documentation", documentation,
-        "labels", labels,
-        "meta", meta
-    ));
-    return super.updateMetadata(schemaId, version, documentation, labels, meta);
+        "labels", labels));
+    return super.updateMetadata(schemaId, version, documentation, labels);
   }
 
   @Override

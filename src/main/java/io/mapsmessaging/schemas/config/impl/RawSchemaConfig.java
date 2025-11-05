@@ -21,7 +21,6 @@ package io.mapsmessaging.schemas.config.impl;
 
 import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.IOException;
@@ -48,7 +47,7 @@ public class RawSchemaConfig extends SchemaConfig {
    *
    * @param config the config
    */
-  protected RawSchemaConfig(XRegistrySchemaVersion config) {
+  protected RawSchemaConfig(SchemaConfig config) {
     super(config);
   }
 
@@ -57,12 +56,12 @@ public class RawSchemaConfig extends SchemaConfig {
     return "application/octet-stream";
   }
 
-  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(SchemaConfig config) {
     return new RawSchemaConfig(config);
   }
 
   public byte[] pack() throws IOException {
-    XRegistrySchemaVersion tmp = new XRegistrySchemaVersion(this);
+    SchemaConfig tmp = new SchemaConfig(this);
     return gson.toJson(tmp).getBytes(StandardCharsets.UTF_8);
   }
 }

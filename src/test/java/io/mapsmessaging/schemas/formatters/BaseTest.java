@@ -19,7 +19,7 @@ package io.mapsmessaging.schemas.formatters;
 
 import com.github.javafaker.Faker;
 import com.google.gson.JsonObject;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.selector.ParseException;
 import io.mapsmessaging.selector.SelectorParser;
 import io.mapsmessaging.selector.operators.ParserExecutor;
@@ -84,11 +84,11 @@ public abstract class BaseTest {
 
   abstract List<byte[]> packList(List<Person> list) throws IOException;
 
-  abstract XRegistrySchemaVersion getSchema() throws IOException;
+  abstract SchemaConfig getSchema() throws IOException;
 
   @Test
   void testInvalidData() throws IOException {
-    XRegistrySchemaVersion schemaConfig = getSchema();
+    SchemaConfig schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     Assertions.assertNotNull(formatter.parse("This should not be parsable".getBytes()));
     Assertions.assertNull(formatter.parse("This should not be parsable".getBytes()).get("value"));
@@ -103,7 +103,7 @@ public abstract class BaseTest {
   @Test
   void testFormatterToJSON() throws IOException {
     List<byte[]> packed = packList(data);
-    XRegistrySchemaVersion schemaConfig = getSchema();
+    SchemaConfig schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     for (int x = 0; x < data.size(); x++) {
       Person p = data.get(x);
@@ -119,7 +119,7 @@ public abstract class BaseTest {
 
   @Test
   void testGetFormatMap() throws IOException {
-    XRegistrySchemaVersion schemaConfig = getSchema();
+    SchemaConfig schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     Map<String, Object> format = formatter.getFormat();
     Assertions.assertTrue(format.containsKey("stringId"));
@@ -137,7 +137,7 @@ public abstract class BaseTest {
     List<byte[]> packed = packList(data);
     System.err.println("Time to Pack:" + (System.currentTimeMillis() - start) + "ms");
     start = System.currentTimeMillis();
-    XRegistrySchemaVersion schemaConfig = getSchema();
+    SchemaConfig schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     for (int x = 0; x < data.size(); x++) {
       ParsedObject parsedObject = formatter.parse(packed.get(x));
@@ -170,7 +170,7 @@ public abstract class BaseTest {
       dataSet.add(new DataSet(data.get(x), packed.get(x)));
     }
     start = System.currentTimeMillis();
-    XRegistrySchemaVersion schemaConfig = getSchema();
+    SchemaConfig schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     dataSet.parallelStream().forEach(set -> {
       ParsedObject parsedObject = formatter.parse(set.packed);
@@ -204,7 +204,7 @@ public abstract class BaseTest {
       dataSet.add(new DataSet(data.get(x), packed.get(x)));
     }
     start = System.currentTimeMillis();
-    XRegistrySchemaVersion schemaConfig = getSchema();
+    SchemaConfig schemaConfig = getSchema();
     String selector = "stringId = '" + data.get(faker.random().nextInt(0, data.size() -1)).getStringId() + "' OR " +
         "longId = " + data.get(faker.random().nextInt(0, data.size() -1)).getLongId() + " OR " +
         "intId = " + data.get(faker.random().nextInt(0, data.size() -1)).getIntId() + " OR " +
@@ -235,7 +235,7 @@ public abstract class BaseTest {
     for (int x = 0; x < data.size(); x++) {
       dataSet.add(new DataSet(data.get(x), packed.get(x)));
     }
-    XRegistrySchemaVersion schemaConfig = getSchema();
+    SchemaConfig schemaConfig = getSchema();
     Faker faker = new Faker();
     int index = faker.random().nextInt(0, data.size() -1);
 

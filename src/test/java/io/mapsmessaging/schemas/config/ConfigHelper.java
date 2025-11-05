@@ -23,7 +23,6 @@ package io.mapsmessaging.schemas.config;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.impl.*;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -162,7 +161,7 @@ public class ConfigHelper {
       "}";
 
 
-  static private void setBaseConfig(XRegistrySchemaVersion config) {
+  static private void setBaseConfig(SchemaConfig config) {
     config.setUniqueId(UUID.randomUUID());
     config.setComments("Unit Tests");
     config.setResourceType("sensor");

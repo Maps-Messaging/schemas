@@ -22,7 +22,6 @@ package io.mapsmessaging.schemas.config;
 
 
 import io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -34,7 +33,7 @@ import java.util.UUID;
 
 class TestProtobufConfig extends GeneralBaseTest {
 
-  XRegistrySchemaVersion getProperties() throws IOException {
+  SchemaConfig getProperties() throws IOException {
     ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
     ProtoBufSchemaConfig.ProtobufConfig protobufSchema = new ProtoBufSchemaConfig.ProtobufConfig();
     protobufSchema.setMessageName("Person");
@@ -44,7 +43,7 @@ class TestProtobufConfig extends GeneralBaseTest {
   }
 
   @Override
-  XRegistrySchemaVersion buildConfig() throws IOException {
+  SchemaConfig buildConfig() throws IOException {
     ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
     ProtoBufSchemaConfig.ProtobufConfig protobufSchema = new ProtoBufSchemaConfig.ProtobufConfig();
     protobufSchema.setMessageName("Person");
@@ -55,7 +54,7 @@ class TestProtobufConfig extends GeneralBaseTest {
   }
 
   @Override
-  void validate(XRegistrySchemaVersion schemaConfig) throws IOException {
+  void validate(SchemaConfig schemaConfig) throws IOException {
     Assertions.assertInstanceOf(ProtoBufSchemaConfig.class, schemaConfig);
     ProtoBufSchemaConfig config = (ProtoBufSchemaConfig) schemaConfig;
     ProtoBufSchemaConfig.ProtobufConfig protobufSchema = config.getProtobufConfig();

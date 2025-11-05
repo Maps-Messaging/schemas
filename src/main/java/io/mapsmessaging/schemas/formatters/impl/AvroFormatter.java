@@ -22,11 +22,11 @@ package io.mapsmessaging.schemas.formatters.impl;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -97,7 +97,7 @@ public class AvroFormatter extends MessageFormatter {
   }
 
   @Override
-  public MessageFormatter getInstance(XRegistrySchemaVersion config) throws IOException {
+  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     AvroSchemaConfig avroSchemaConfig = (AvroSchemaConfig) config;
     if (avroSchemaConfig.getSchema() != null) {
       return new AvroFormatter(avroSchemaConfig.getSchema().toString());

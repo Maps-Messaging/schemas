@@ -21,7 +21,6 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.CsvSchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +30,7 @@ import java.util.UUID;
 
 class TestCsvConfig extends GeneralBaseTest {
 
-  XRegistrySchemaVersion getProperties() {
+  SchemaConfig getProperties() {
     CsvSchemaConfig config = new CsvSchemaConfig();
     CsvSchemaConfig.CsvConfig csvConfig = new CsvSchemaConfig.CsvConfig();
     csvConfig.setHeaderValues("name, id, email");
@@ -39,7 +38,7 @@ class TestCsvConfig extends GeneralBaseTest {
   }
 
   @Override
-  XRegistrySchemaVersion buildConfig() {
+  SchemaConfig buildConfig() {
     CsvSchemaConfig config = new CsvSchemaConfig();
     CsvSchemaConfig.CsvConfig csvConfig = new CsvSchemaConfig.CsvConfig();
     csvConfig.setHeaderValues("name, id, email");
@@ -49,7 +48,7 @@ class TestCsvConfig extends GeneralBaseTest {
   }
 
   @Override
-  void validate(XRegistrySchemaVersion schemaConfig) {
+  void validate(SchemaConfig schemaConfig) {
     Assertions.assertInstanceOf(CsvSchemaConfig.class, schemaConfig);
     CsvSchemaConfig config = (CsvSchemaConfig) schemaConfig;
     Assertions.assertEquals("name, id, email", config.getConfig().getHeaderValues());

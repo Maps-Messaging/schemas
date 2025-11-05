@@ -22,7 +22,6 @@ package io.mapsmessaging.schemas.formatters;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.RawSchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +32,7 @@ class TestFormatConstructors {
 
   @Test
   void validSchemaLoad() throws IOException {
-    XRegistrySchemaVersion good = new RawSchemaConfig();
+    SchemaConfig good = new RawSchemaConfig();
     good.setUniqueId(UUID.randomUUID());
     Assertions.assertNotNull(MessageFormatterFactory.getInstance().getFormatter(good));
   }
@@ -41,7 +40,7 @@ class TestFormatConstructors {
 
   @Test
   void invalidSchemaLoad() {
-    XRegistrySchemaVersion bad = new BadSchema();
+    SchemaConfig bad = new BadSchema();
     bad.setUniqueId(UUID.randomUUID());
     Assertions.assertThrowsExactly(IOException.class, () -> MessageFormatterFactory.getInstance().getFormatter(bad));
   }
@@ -53,12 +52,12 @@ class TestFormatConstructors {
       setVersionId(UUID.randomUUID().toString());
     }
 
-    protected BadSchema(XRegistrySchemaVersion config) {
+    protected BadSchema(SchemaConfig config) {
       super(config);
     }
 
     @Override
-    public SchemaConfig getInstance(XRegistrySchemaVersion config) {
+    public SchemaConfig getInstance(SchemaConfig config) {
       return new BadSchema(config);
     }
 

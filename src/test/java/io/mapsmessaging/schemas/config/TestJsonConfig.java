@@ -21,24 +21,23 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 
 class TestJsonConfig extends GeneralBaseTest {
 
-  XRegistrySchemaVersion getProperties() {
+  SchemaConfig getProperties() {
     return new JsonSchemaConfig();
   }
 
   @Override
-  XRegistrySchemaVersion buildConfig() {
+  SchemaConfig buildConfig() {
     JsonSchemaConfig config = new JsonSchemaConfig();
     setBaseConfig(config);
     return config;
   }
 
   @Override
-  void validate(XRegistrySchemaVersion schemaConfig) {
+  void validate(SchemaConfig schemaConfig) {
     Assertions.assertInstanceOf(JsonSchemaConfig.class, schemaConfig);
   }
 

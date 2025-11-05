@@ -14,7 +14,7 @@ package io.mapsmessaging.schemas.repository;
 
 import io.mapsmessaging.schemas.config.ConfigHelper;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.model.SchemaResource;
+import io.mapsmessaging.schemas.config.SchemaResource;
 import io.mapsmessaging.schemas.repository.impl.FileSchemaRepository;
 import io.mapsmessaging.schemas.repository.impl.SimpleSchemaRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -45,7 +45,6 @@ class TestFileSimpleRepository extends TestSchemaRepository {
     deleteDir(ROOT);
   }
 
-
   @Test
   void testReload() throws IOException {
     SimpleSchemaRepository repo = getRepository();
@@ -55,9 +54,8 @@ class TestFileSimpleRepository extends TestSchemaRepository {
       repo.createSchema(c.getVersion(), c);
       SchemaResource r = repo.getResource(c.getVersion());
       Assertions.assertNotNull(r);
-      Assertions.assertEquals(c.getVersionId(), r.getVersionId());
       Assertions.assertNotNull(r.getVersions().get(c.getVersionId()));
-      schemaIds.add(r.getVersionId());
+      schemaIds.add(r.getSchemaId());
     }
 
     // reload from disk into a fresh repo
@@ -67,7 +65,7 @@ class TestFileSimpleRepository extends TestSchemaRepository {
     for (String id : schemaIds) {
       SchemaResource r = reloaded.getResource(id);
       Assertions.assertNotNull(r, "missing resource after reload: " + id);
-      Assertions.assertNotNull(r.getVersionId(), "missing default after reload: " + id);
+      Assertions.assertNotNull(r.getSchemaId(), "missing default after reload: " + id);
       Assertions.assertNotNull(r.getDefaultVersion(), "missing inlined version after reload: " + id);
       String className = r.getDefaultVersion().getClass().getSimpleName().toLowerCase();
       Assertions.assertTrue(className.startsWith(r.getDefaultVersion().getFormat()), "Incorrect load detected: " + className);

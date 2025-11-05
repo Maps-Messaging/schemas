@@ -22,7 +22,6 @@ package io.mapsmessaging.schemas.config.impl;
 
 import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -42,7 +41,7 @@ public class MessagePackSchemaConfig extends SchemaConfig {
     setSchema(JsonParser.parseString(schema).getAsJsonObject());
   }
 
-  private MessagePackSchemaConfig(XRegistrySchemaVersion config) {
+  private MessagePackSchemaConfig(SchemaConfig config) {
     super(config);
   }
 
@@ -52,12 +51,12 @@ public class MessagePackSchemaConfig extends SchemaConfig {
   }
 
   @Override
-  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(SchemaConfig config) {
     return new MessagePackSchemaConfig(config);
   }
 
   public byte[] pack() throws IOException {
-    XRegistrySchemaVersion tmp = new XRegistrySchemaVersion(this);
+    SchemaConfig tmp = new SchemaConfig(this);
     return gson.toJson(tmp).getBytes(StandardCharsets.UTF_8);
   }
 }

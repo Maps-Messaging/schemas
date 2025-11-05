@@ -23,8 +23,8 @@ package io.mapsmessaging.schemas.formatters;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -56,7 +56,7 @@ class TestJsonFormatter extends BaseTest {
   }
 
   @Override
-  XRegistrySchemaVersion getSchema() {
+  SchemaConfig getSchema() {
     String jsonSchema = "{\n" +
         "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n" +
         "  \"type\": \"object\",\n" +
@@ -75,7 +75,7 @@ class TestJsonFormatter extends BaseTest {
 
   @Test
   void invalidJson() throws IOException {
-    XRegistrySchemaVersion config = getSchema();
+    SchemaConfig config = getSchema();
     config.setUniqueId(UUID.randomUUID());
     config.setSource("test");
     config.setVersion("1");
@@ -88,7 +88,7 @@ class TestJsonFormatter extends BaseTest {
 
   @Test
   void testStructuredLookups() throws IOException {
-    XRegistrySchemaVersion config = new JsonSchemaConfig();
+    SchemaConfig config = new JsonSchemaConfig();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
     JsonObject top = new JsonObject();
@@ -108,7 +108,7 @@ class TestJsonFormatter extends BaseTest {
 
   @Test
   void testArrayLookups() throws IOException {
-    XRegistrySchemaVersion config = new JsonSchemaConfig();
+    SchemaConfig config = new JsonSchemaConfig();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
     JsonArray jsonArray = new JsonArray();

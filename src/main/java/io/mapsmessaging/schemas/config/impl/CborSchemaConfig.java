@@ -21,7 +21,6 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 public class CborSchemaConfig extends SchemaConfig {
 
@@ -32,7 +31,7 @@ public class CborSchemaConfig extends SchemaConfig {
   }
 
 
-  public CborSchemaConfig(XRegistrySchemaVersion config) {
+  public CborSchemaConfig(SchemaConfig config) {
     super(config);
   }
 
@@ -42,7 +41,7 @@ public class CborSchemaConfig extends SchemaConfig {
   }
 
   @Override
-  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(SchemaConfig config) {
     return new CborSchemaConfig(config);
   }
 

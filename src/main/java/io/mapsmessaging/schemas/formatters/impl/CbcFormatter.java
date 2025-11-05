@@ -22,6 +22,7 @@ package io.mapsmessaging.schemas.formatters.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.CbcSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.cbc.BitReader;
 import io.mapsmessaging.schemas.config.impl.cbc.BitWriter;
@@ -31,7 +32,6 @@ import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -186,7 +186,7 @@ public class CbcFormatter extends MessageFormatter {
   }
 
   @Override
-  public MessageFormatter getInstance(XRegistrySchemaVersion config) throws IOException {
+  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     if (!(config instanceof CbcSchemaConfig c)) {
       throw new IllegalArgumentException("Expected CbcSchemaConfig");
     }

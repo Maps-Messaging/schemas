@@ -20,9 +20,9 @@
  */
 package io.mapsmessaging.schemas.formatters;
 
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig;
 import io.mapsmessaging.schemas.formatters.PersonProto.Person.Builder;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -55,7 +55,7 @@ class TestProtobufFormatter extends BaseTest {
   }
 
   @Override
-  XRegistrySchemaVersion getSchema() throws IOException {
+  SchemaConfig getSchema() throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
     byte[] tmp = new byte[10240];
     try (InputStream fis = getClass().getClassLoader().getResourceAsStream("Person.desc")) {

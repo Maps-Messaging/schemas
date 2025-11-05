@@ -26,7 +26,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.cbc.CbcFormat;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -54,7 +53,7 @@ public class CbcSchemaConfig extends SchemaConfig {
     super(FORMAT);
   }
 
-  public CbcSchemaConfig(XRegistrySchemaVersion config) {
+  public CbcSchemaConfig(SchemaConfig config) {
     super(config);
     if (config.getSchema() != null) {
       cbcFormat = gson.fromJson(config.getSchema(), CbcFormat.class);
@@ -94,7 +93,7 @@ public class CbcSchemaConfig extends SchemaConfig {
   }
 
   @Override
-  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(SchemaConfig config) {
     return new CbcSchemaConfig(config);
   }
 

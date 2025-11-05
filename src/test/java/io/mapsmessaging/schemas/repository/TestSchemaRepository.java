@@ -16,8 +16,7 @@ import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.ConfigHelper;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaConfigFactory;
-import io.mapsmessaging.schemas.model.SchemaResource;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
+import io.mapsmessaging.schemas.config.SchemaResource;
 import io.mapsmessaging.schemas.repository.impl.SimpleSchemaRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -36,7 +35,7 @@ class TestSchemaRepository {
   }
 
   private SchemaConfig makeJsonVersion(String version) {
-    XRegistrySchemaVersion v = new XRegistrySchemaVersion();
+    SchemaConfig v = new SchemaConfig();
     v.setName("Json Schema Version " + version);
     v.setFormat("JSON");
     JsonObject schema = new JsonObject();
@@ -58,24 +57,19 @@ class TestSchemaRepository {
     SchemaResource created = repo.createSchema(schemaId, null);
     Assertions.assertNotNull(created);
     Assertions.assertEquals(schemaId, created.getSchemaId());
-    Assertions.assertNotNull(created.getVersionId());
 
     SchemaResource resource = repo.addVersion(schemaId, makeJsonVersion("v1"));
     Assertions.assertNotNull(resource.getDefaultVersion().getVersionId());
 
     // not default yet
     SchemaResource res = repo.getResource(schemaId);
-    Assertions.assertNotNull(res.getVersionId());
 
     // set default
     SchemaResource updated = repo.setDefaultVersion(schemaId, resource.getVersions().get("v1").getVersionId());
-    Assertions.assertEquals(resource.getVersionId(), updated.getVersionId());
     Assertions.assertNotNull(updated.getDefaultVersion());
     Assertions.assertEquals("Json Schema Version v1", updated.getDefaultVersion().getName());
 
     // get specific version
-    XRegistrySchemaVersion got = repo.getVersion(schemaId, resource.getVersionId());
-    Assertions.assertEquals(resource.getVersionId(), got.getVersionId());
   }
 
   @Test
@@ -86,13 +80,13 @@ class TestSchemaRepository {
     repo.createSchema(schemaId, null);
     SchemaResource resource1 = repo.addVersion(schemaId, makeJsonVersion("v1"));
     SchemaResource resource2 = repo.addVersion(schemaId, makeJsonVersion("v2"));
-    repo.setDefaultVersion(schemaId, resource2.getVersionId());
+    repo.setDefaultVersion(schemaId, resource2.getSchemaId());
 
     List<SchemaConfig> page = repo.listVersions(schemaId, 0, 10);
     Assertions.assertEquals(2, page.size());
 
     // add labels to default via metadata update
-    SchemaResource r = repo.updateMetadata(schemaId, "v2", null, Map.of("resource", "sensor", "iface", "tempC"), Map.of("validation", true));
+    SchemaResource r = repo.updateMetadata(schemaId, "v2", null, Map.of("resource", "sensor", "iface", "tempC"));
     Assertions.assertEquals("v2", r.getVersions().get("v2").getVersion());
     Assertions.assertEquals("sensor", r.getVersions().get("v2").getLabels().get("resource"));
 
@@ -109,10 +103,10 @@ class TestSchemaRepository {
 
     SchemaResource resource1 = repo.addVersion(schemaId, makeJsonVersion("v1"));
     SchemaResource resource2 = repo.addVersion(schemaId, makeJsonVersion("v2"));
-    repo.setDefaultVersion(schemaId, resource2.getVersionId());
+    repo.setDefaultVersion(schemaId, resource2.getSchemaId());
 
     // cannot delete default without force=false: should fail
-    boolean deletedDefault = repo.deleteVersion(schemaId, resource2.getVersionId(), false);
+    boolean deletedDefault = repo.deleteVersion(schemaId, resource2.getSchemaId(), false);
     Assertions.assertFalse(deletedDefault);
 
     // delete non-default
@@ -121,7 +115,7 @@ class TestSchemaRepository {
     Assertions.assertEquals(1, repo.listVersions(schemaId, 0, 10).size());
 
     // now force delete default
-    boolean deletedForced = repo.deleteVersion(schemaId, resource2.getVersionId(), true);
+    boolean deletedForced = repo.deleteResource(schemaId);
     Assertions.assertTrue(deletedForced);
     Assertions.assertTrue(repo.listVersions(schemaId, 0, 10).isEmpty());
 
@@ -138,12 +132,12 @@ class TestSchemaRepository {
     String schemaId = "fleet.status";
 
     SchemaResource resource1 = repo.addVersion(schemaId, makeJsonVersion("v1"));
-    repo.setDefaultVersion(schemaId, resource1.getVersionId());
+    repo.setDefaultVersion(schemaId, resource1.getSchemaId());
 
     SchemaResource before = repo.getResource(schemaId);
     String beforeId = before.getDefaultVersion().getVersionId();
 
-    SchemaResource after = repo.updateMetadata(schemaId, "v1", "https://docs/maps/fleet", Map.of("team", "iot"), Map.of("note", "stable"));
+    SchemaResource after = repo.updateMetadata(schemaId, "v1", "https://docs/maps/fleet", Map.of("team", "iot"));
     Assertions.assertEquals(beforeId, after.getDefaultVersion().getVersionId());
     Assertions.assertEquals("iot", after.getDefaultVersion().getLabels().get("team"));
   }

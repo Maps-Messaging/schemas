@@ -20,7 +20,7 @@
 
 package io.mapsmessaging.schemas.formatters;
 
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
+import io.mapsmessaging.schemas.config.SchemaConfig;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -62,7 +62,7 @@ public class MessageFormatterFactory {
    * @return the formatter
    * @throws IOException the io exception
    */
-  public MessageFormatter getFormatter(XRegistrySchemaVersion config) throws IOException {
+  public MessageFormatter getFormatter(SchemaConfig config) throws IOException {
     for (MessageFormatter formatter : messageFormatters) {
       if (formatter.getName().equalsIgnoreCase(config.getFormat())) {
         return formatter.getInstance(config);

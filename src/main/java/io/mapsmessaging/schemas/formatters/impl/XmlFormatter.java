@@ -26,12 +26,12 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.w3c.dom.Document;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
@@ -161,7 +161,7 @@ public class XmlFormatter extends MessageFormatter implements ErrorHandler {
 
 
   @Override
-  public MessageFormatter getInstance(XRegistrySchemaVersion config) throws IOException {
+  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     return new XmlFormatter(((XmlSchemaConfig) config).getConfig());
   }
 

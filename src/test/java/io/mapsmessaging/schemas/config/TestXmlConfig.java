@@ -20,12 +20,11 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 
 class TestXmlConfig extends GeneralBaseTest {
 
-  XRegistrySchemaVersion getProperties() {
+  SchemaConfig getProperties() {
     XmlSchemaConfig props = new XmlSchemaConfig();
     XmlSchemaConfig.XmlConfig xmlConfig = new XmlSchemaConfig.XmlConfig();
     xmlConfig.setValidating(true);
@@ -36,7 +35,7 @@ class TestXmlConfig extends GeneralBaseTest {
   }
 
   @Override
-  XRegistrySchemaVersion buildConfig() {
+  SchemaConfig buildConfig() {
     XmlSchemaConfig config = new XmlSchemaConfig();
     XmlSchemaConfig.XmlConfig xmlConfig = new XmlSchemaConfig.XmlConfig();
     xmlConfig.setValidating(true);
@@ -49,7 +48,7 @@ class TestXmlConfig extends GeneralBaseTest {
 
 
   @Override
-  void validate(XRegistrySchemaVersion schemaConfig) {
+  void validate(SchemaConfig schemaConfig) {
     Assertions.assertTrue(schemaConfig instanceof XmlSchemaConfig);
     XmlSchemaConfig config = (XmlSchemaConfig) schemaConfig;
     XmlSchemaConfig.XmlConfig xmlConfig = config.getConfig();

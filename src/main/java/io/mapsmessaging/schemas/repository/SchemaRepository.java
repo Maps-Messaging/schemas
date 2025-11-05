@@ -21,7 +21,7 @@
 package io.mapsmessaging.schemas.repository;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.model.SchemaResource;
+import io.mapsmessaging.schemas.config.SchemaResource;
 import lombok.NonNull;
 
 import java.util.List;
@@ -49,6 +49,14 @@ public interface SchemaRepository {
    * @return the resource or null if not found
    */
   SchemaResource getResource(String schemaId);
+
+  /**
+   * Deletes the resource and all versions bound to it
+   *
+   * @param schemaId
+   * @return true if successful
+   */
+  boolean deleteResource(String schemaId);
 
   /**
    * Get a specific version for a schema.
@@ -104,14 +112,12 @@ public interface SchemaRepository {
    * @param schemaId      the schema identifier
    * @param documentation optional documentation URL (nullable to leave unchanged)
    * @param labels        optional labels to upsert (null to leave unchanged)
-   * @param meta          optional meta map to upsert (null to leave unchanged)
    * @return the updated resource
    */
   public SchemaResource updateMetadata(@NonNull String schemaId,
                                        String version,
                                        String documentation,
-                                       Map<String, String> labels,
-                                       Map<String, Object> meta);
+                                       Map<String, String> labels);
 
   /**
    * Delete a specific version.

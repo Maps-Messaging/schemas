@@ -23,7 +23,6 @@ package io.mapsmessaging.schemas.config;
 import com.google.gson.*;
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -100,7 +99,7 @@ public class SchemaConfigFactory {
    */
   public SchemaConfig constructConfig(String payload) throws IOException {
     try {
-      XRegistrySchemaVersion version = gson.fromJson(payload, XRegistrySchemaVersion.class);
+      SchemaConfig version = gson.fromJson(payload, SchemaConfig.class);
       if (version == null || version.getFormat() == null) {
         throw new IOException("Schema config is not valid");
       }
@@ -122,7 +121,7 @@ public class SchemaConfigFactory {
     }
   }
 
-  public SchemaConfig constructConfig(XRegistrySchemaVersion config) {
+  public SchemaConfig constructConfig(SchemaConfig config) {
     SchemaConfig base = findSchemaConfig(config.getFormat());
     if (base != null) {
       return base.getInstance(config);

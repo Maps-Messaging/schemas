@@ -24,7 +24,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig.TYPE;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -34,14 +33,14 @@ import java.util.UUID;
 
 class TestNativeConfig extends GeneralBaseTest {
 
-  XRegistrySchemaVersion getProperties() {
+  SchemaConfig getProperties() {
     NativeSchemaConfig props = new NativeSchemaConfig();
     props.setType(TYPE.DOUBLE);
     return props;
   }
 
   @Override
-  XRegistrySchemaVersion buildConfig() {
+  SchemaConfig buildConfig() {
     NativeSchemaConfig props = new NativeSchemaConfig();
     props.setType(TYPE.DOUBLE);
     setBaseConfig(props);
@@ -49,7 +48,7 @@ class TestNativeConfig extends GeneralBaseTest {
   }
 
   @Override
-  void validate(XRegistrySchemaVersion schemaConfig) {
+  void validate(SchemaConfig schemaConfig) {
     Assertions.assertInstanceOf(NativeSchemaConfig.class, schemaConfig);
     NativeSchemaConfig config = (NativeSchemaConfig) schemaConfig;
     Assertions.assertEquals(TYPE.DOUBLE, config.getType());

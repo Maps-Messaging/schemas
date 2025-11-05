@@ -21,26 +21,25 @@
 package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.MessagePackSchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 
 
 public class TestMessagePackConfig extends GeneralBaseTest {
 
-  XRegistrySchemaVersion getProperties() {
+  SchemaConfig getProperties() {
     MessagePackSchemaConfig config = new MessagePackSchemaConfig();
     return config;
   }
 
   @Override
-  XRegistrySchemaVersion buildConfig() {
+  SchemaConfig buildConfig() {
     MessagePackSchemaConfig config = new MessagePackSchemaConfig();
     setBaseConfig(config);
     return config;
   }
 
   @Override
-  void validate(XRegistrySchemaVersion schemaConfig) {
+  void validate(SchemaConfig schemaConfig) {
     Assertions.assertInstanceOf(MessagePackSchemaConfig.class, schemaConfig);
   }
 

@@ -23,12 +23,11 @@ package io.mapsmessaging.schemas.config;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.impl.CborSchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 
 public class TestCborConfig extends GeneralBaseTest {
 
-  XRegistrySchemaVersion getProperties() {
+  SchemaConfig getProperties() {
     CborSchemaConfig props = new CborSchemaConfig();
     JsonObject obj = JsonParser.parseString(cborSchema).getAsJsonObject();
     props.setSchema(obj);
@@ -36,7 +35,7 @@ public class TestCborConfig extends GeneralBaseTest {
   }
 
   @Override
-  XRegistrySchemaVersion buildConfig() {
+  SchemaConfig buildConfig() {
     CborSchemaConfig config = new CborSchemaConfig();
     setBaseConfig(config);
     JsonObject obj = JsonParser.parseString(cborSchema).getAsJsonObject();
@@ -45,7 +44,7 @@ public class TestCborConfig extends GeneralBaseTest {
   }
 
   @Override
-  void validate(XRegistrySchemaVersion schemaConfig) {
+  void validate(SchemaConfig schemaConfig) {
     Assertions.assertInstanceOf(CborSchemaConfig.class, schemaConfig);
   }
 

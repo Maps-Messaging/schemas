@@ -23,11 +23,11 @@ package io.mapsmessaging.schemas.formatters.impl;
 import com.google.gson.JsonObject;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.CsvSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 
 import java.io.IOException;
 import java.util.*;
@@ -89,7 +89,7 @@ public class CsvFormatter extends MessageFormatter {
   }
 
   @Override
-  public MessageFormatter getInstance(XRegistrySchemaVersion config) throws IOException {
+  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     CsvSchemaConfig csvSchemaConfig = (CsvSchemaConfig) config;
     CsvSchemaConfig.CsvConfig csvConfig = csvSchemaConfig.getConfig();
     if (csvConfig != null) {

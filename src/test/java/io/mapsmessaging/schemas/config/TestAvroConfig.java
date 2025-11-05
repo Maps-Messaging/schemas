@@ -23,7 +23,6 @@ package io.mapsmessaging.schemas.config;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -45,14 +44,14 @@ public class TestAvroConfig extends GeneralBaseTest {
     return JsonParser.parseString(baos.toString()).getAsJsonObject();
   }
 
-  XRegistrySchemaVersion getProperties() throws IOException {
+  SchemaConfig getProperties() throws IOException {
     AvroSchemaConfig config = new AvroSchemaConfig();
     config.setSchema(getSchema());
     return config;
   }
 
   @Override
-  XRegistrySchemaVersion buildConfig() throws IOException {
+  SchemaConfig buildConfig() throws IOException {
     AvroSchemaConfig config = new AvroSchemaConfig();
     config.setSchema(getSchema());
     setBaseConfig(config);
@@ -60,7 +59,7 @@ public class TestAvroConfig extends GeneralBaseTest {
   }
 
   @Override
-  void validate(XRegistrySchemaVersion schemaConfig) throws IOException {
+  void validate(SchemaConfig schemaConfig) throws IOException {
     Assertions.assertInstanceOf(AvroSchemaConfig.class, schemaConfig);
     AvroSchemaConfig config = (AvroSchemaConfig) schemaConfig;
     Assertions.assertEquals(getSchema(), config.getSchema());

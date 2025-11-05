@@ -22,7 +22,6 @@ package io.mapsmessaging.schemas.config;
 
 import io.mapsmessaging.schemas.config.impl.CbcSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.cbc.CbcFormat;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -37,14 +36,14 @@ import static io.mapsmessaging.schemas.formatters.cbc.TestCbcHeartbeatConformanc
 class TestCbcConfig extends GeneralBaseTest {
 
   @Override
-  XRegistrySchemaVersion getProperties() {
+  SchemaConfig getProperties() {
     CbcSchemaConfig cbcSchemaConfig = new CbcSchemaConfig();
     cbcSchemaConfig.setSchema(cbcSchema);
     return cbcSchemaConfig;
   }
 
   @Override
-  XRegistrySchemaVersion buildConfig() throws IOException {
+  SchemaConfig buildConfig() throws IOException {
     CbcSchemaConfig cbcSchemaConfig = new CbcSchemaConfig();
     cbcSchemaConfig.setSchema(cbcSchema);
     setBaseConfig(cbcSchemaConfig);
@@ -52,7 +51,7 @@ class TestCbcConfig extends GeneralBaseTest {
   }
 
   @Override
-  void validate(XRegistrySchemaVersion schemaConfig) {
+  void validate(SchemaConfig schemaConfig) {
     Assertions.assertInstanceOf(CbcSchemaConfig.class, schemaConfig);
     CbcSchemaConfig c = (CbcSchemaConfig) schemaConfig;
     Assertions.assertEquals("application/x-cbc", c.getMimeType());
@@ -70,7 +69,7 @@ class TestCbcConfig extends GeneralBaseTest {
     for (CbcSchemaConfig config : configList) {
       String packed = new String(config.pack());
       Assertions.assertNotNull(packed);
-      XRegistrySchemaVersion reloaded = SchemaConfigFactory.getInstance().constructConfig(packed);
+      SchemaConfig reloaded = SchemaConfigFactory.getInstance().constructConfig(packed);
       Assertions.assertNotNull(reloaded);
       Assertions.assertInstanceOf(CbcSchemaConfig.class, reloaded);
     }

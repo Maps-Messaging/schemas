@@ -25,8 +25,8 @@ import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.CborSchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -60,7 +60,7 @@ class TestCborFormatter extends BaseTest {
   }
 
   @Override
-  XRegistrySchemaVersion getSchema() {
+  SchemaConfig getSchema() {
     String jsonSchema = "{\n" +
         "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n" +
         "  \"type\": \"object\",\n" +
@@ -86,7 +86,7 @@ class TestCborFormatter extends BaseTest {
 
   @Test
   void invalidCbor() throws IOException {
-    XRegistrySchemaVersion config = getSchema();
+    SchemaConfig config = getSchema();
     config.setUniqueId(UUID.randomUUID());
     config.setSource("test");
     config.setVersion("1");
@@ -101,7 +101,7 @@ class TestCborFormatter extends BaseTest {
 
   @Test
   void testStructuredLookups() throws IOException {
-    XRegistrySchemaVersion config = new CborSchemaConfig();
+    SchemaConfig config = new CborSchemaConfig();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
     Map<String, Object> map = new HashMap<>();
@@ -121,7 +121,7 @@ class TestCborFormatter extends BaseTest {
 
   @Test
   void testArrayLookups() throws IOException {
-    XRegistrySchemaVersion config = new CborSchemaConfig();
+    SchemaConfig config = new CborSchemaConfig();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
     Map<String, Object> map = new HashMap<>();

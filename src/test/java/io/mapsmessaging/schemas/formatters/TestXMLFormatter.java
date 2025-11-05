@@ -23,9 +23,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
 import io.mapsmessaging.schemas.formatters.impl.XmlFormatter;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -67,7 +67,7 @@ class TestXMLFormatter extends BaseTest {
   @Override
   @Test
   void testGetFormatMap() throws IOException {
-    XRegistrySchemaVersion schemaConfig = getSchema();
+    SchemaConfig schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     Map<String, Object> format = formatter.getFormat();
     Assertions.assertEquals(1, format.size(), "Expected empty format map for XML formatter");
@@ -82,7 +82,7 @@ class TestXMLFormatter extends BaseTest {
   }
 
   @Override
-  XRegistrySchemaVersion getSchema() {
+  SchemaConfig getSchema() {
     XmlSchemaConfig xmlSchemaConfig = new XmlSchemaConfig();
     XmlSchemaConfig.XmlConfig xmlConfig = new XmlSchemaConfig.XmlConfig();
     xmlConfig.setValidating(true);

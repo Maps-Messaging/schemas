@@ -21,7 +21,6 @@
 package io.mapsmessaging.schemas.config.impl;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.model.XRegistrySchemaVersion;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -60,7 +59,7 @@ public class CsvSchemaConfig extends SchemaConfig {
    *
    * @param config the config
    */
-  protected CsvSchemaConfig(XRegistrySchemaVersion config) {
+  protected CsvSchemaConfig(SchemaConfig config) {
     super(config);
     if (config.getSchema() != null) {
       this.config = gson.fromJson(config.getSchema(), CsvConfig.class);
@@ -73,7 +72,7 @@ public class CsvSchemaConfig extends SchemaConfig {
   }
 
   @Override
-  public SchemaConfig getInstance(XRegistrySchemaVersion config) {
+  public SchemaConfig getInstance(SchemaConfig config) {
     return new CsvSchemaConfig(config);
   }
 

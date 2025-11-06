@@ -78,7 +78,7 @@ public class AvroFormatter extends MessageFormatter {
       decoder = DecoderFactory.get().binaryDecoder(payload, decoder);
       GenericRecord genericRecord = datumReader.read(null, decoder);
       return new AvroResolver(genericRecord);
-    } catch (IOException e) {
+    } catch (Exception e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
       return new DefaultParser(payload);
     }
@@ -95,6 +95,28 @@ public class AvroFormatter extends MessageFormatter {
     String jsonString = stream.toString(StandardCharsets.UTF_8);
     return JsonParser.parseString(jsonString).getAsJsonObject();
   }
+
+  @Override
+  public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
+    if (schema == null) {
+      return new byte[0];
+    }
+
+    String jsonString = gson.toJson(jsonObject);
+
+    GenericDatumReader<GenericRecord> jsonReader = new GenericDatumReader<>(schema);
+    Decoder jsonDecoder = DecoderFactory.get().jsonDecoder(schema, jsonString);
+    GenericRecord genericRecord = jsonReader.read(null, jsonDecoder);
+
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream(1024);
+    BinaryEncoder binaryEncoder = EncoderFactory.get().binaryEncoder(outputStream, null);
+    GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
+    writer.write(genericRecord, binaryEncoder);
+    binaryEncoder.flush();
+
+    return outputStream.toByteArray();
+  }
+
 
   @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {

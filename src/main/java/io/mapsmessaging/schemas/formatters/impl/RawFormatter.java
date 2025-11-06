@@ -55,6 +55,12 @@ public class RawFormatter extends MessageFormatter {
   }
 
   @Override
+  public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
+    String payload = jsonObject.get("payload").getAsString();
+    return Base64.getDecoder().decode(payload);
+  }
+
+  @Override
   public ParsedObject parse(byte[] payload) {
     return new ParsedObject() {
       @Override

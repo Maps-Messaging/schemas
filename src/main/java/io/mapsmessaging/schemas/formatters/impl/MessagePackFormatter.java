@@ -93,6 +93,13 @@ public class MessagePackFormatter extends MessageFormatter {
   }
 
   @Override
+  public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
+    ObjectMapper messagePackMapper = new ObjectMapper(new MessagePackFactory());
+    Map<String, Object> map = new Gson().fromJson(jsonObject, Map.class);
+    return messagePackMapper.writeValueAsBytes(map);
+  }
+
+  @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     return new MessagePackFormatter(config.getSchema());
   }

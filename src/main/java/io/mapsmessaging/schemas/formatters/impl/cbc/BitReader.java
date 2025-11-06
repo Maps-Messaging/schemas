@@ -18,15 +18,13 @@
  *
  */
 
-package io.mapsmessaging.schemas.config.impl.cbc;
+package io.mapsmessaging.schemas.formatters.impl.cbc;
 
+import io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification;
 import lombok.Getter;
-
-import java.util.Arrays;
 
 public class BitReader {
   private final byte[] backingArray;
-
   @Getter
   private int bitPosition;
 
@@ -43,14 +41,27 @@ public class BitReader {
     return "posBits=" + bitPosition + " posInByte=" + bitInByte + " len=" + backingArray.length + " curByte=0x" + Integer.toHexString(val);
   }
 
-  public long readUnsigned(int bitCount) {
-    if (bitCount < 1 || bitCount > 64) {
-      throw new IllegalArgumentException("bitCount " + bitCount);
+  // FIX: simpler signature; use instance methods
+  public String readString(FieldSpecification f) {
+    boolean fixed = Boolean.TRUE.equals(f.getFixed());
+    int size = f.getSize();
+    if (fixed) {
+      byte[] data = readBytes(size);
+      int end = size;
+      while (end > 0 && data[end - 1] == 0) end--;
+      return new String(data, 0, end, java.nio.charset.StandardCharsets.US_ASCII);
+    } else {
+      int len = (int) readUnsigned(8);
+      byte[] data = readBytes(len);
+      return new String(data, java.nio.charset.StandardCharsets.US_ASCII);
     }
-    ensureAvailable(bitCount);
+  }
 
+  public long readUnsigned(int bitCount) {
+    if (bitCount < 1 || bitCount > 64) throw new IllegalArgumentException("bitCount " + bitCount);
+    ensureAvailable(bitCount);
     long result = 0L;
-    // LSB-first fields: accumulate into increasing bit positions
+    // read serial bits (MSB-first within byte), accumulate LSB-first within the field
     for (int i = 0; i < bitCount; i++) {
       int bit = readNextBit();
       result |= ((long) bit) << i;
@@ -61,7 +72,7 @@ public class BitReader {
   public long readSigned(int bits) {
     if (bits < 1 || bits > 64) throw new IllegalArgumentException("bits " + bits);
     long u = readUnsigned(bits);
-    if (bits == 64) return u; // already full-width pattern
+    if (bits == 64) return u;
     long sign = 1L << (bits - 1);
     return (u & sign) != 0 ? u - (1L << bits) : u;
   }
@@ -74,7 +85,7 @@ public class BitReader {
     if (endByte > backingArray.length) {
       throw new IndexOutOfBoundsException("readBytes beyond end: need " + byteCount + " bytes at pos " + startByte + " of " + backingArray.length);
     }
-    byte[] slice = Arrays.copyOfRange(backingArray, startByte, endByte);
+    byte[] slice = java.util.Arrays.copyOfRange(backingArray, startByte, endByte);
     bitPosition += byteCount * 8;
     return slice;
   }
@@ -86,15 +97,14 @@ public class BitReader {
     }
   }
 
-  // ---- helpers ----
-
+  // helpers
   private int readNextBit() {
     int absoluteBitIndex = bitPosition++;
     int byteIndex = absoluteBitIndex / 8;
     if (byteIndex >= backingArray.length) {
       throw new IndexOutOfBoundsException("Read past end at bit " + absoluteBitIndex + " of " + (backingArray.length * 8));
     }
-    int bitOffset = 7 - (absoluteBitIndex % 8);     // next serial bit in stream (MSB first within stored byte)
+    int bitOffset = 7 - (absoluteBitIndex % 8); // MSB-first within each stored byte
     return ((backingArray[byteIndex] & 0xFF) >> bitOffset) & 1;
   }
 
@@ -105,3 +115,4 @@ public class BitReader {
     }
   }
 }
+

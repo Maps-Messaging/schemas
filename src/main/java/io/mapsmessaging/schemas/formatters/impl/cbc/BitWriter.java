@@ -17,9 +17,13 @@
  *  limitations under the License.
  *
  */
-package io.mapsmessaging.schemas.config.impl.cbc;
+package io.mapsmessaging.schemas.formatters.impl.cbc;
+
+import io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 public class BitWriter {
   private final ByteArrayOutputStream byteArrayOutputStream;
@@ -50,6 +54,27 @@ public class BitWriter {
       byteArrayOutputStream.write(currentByte & 0xFF);
       currentByte = 0;
       bitsFilled = 0;
+    }
+  }
+
+  // WRITE: variable-length string
+  public void writeString(FieldSpecification f, BitWriter w, Object value) {
+    boolean fixed = Boolean.TRUE.equals(f.getFixed());
+    int size = f.getSize();
+    String s = Objects.toString(value, "");
+    byte[] ascii = s.getBytes(StandardCharsets.US_ASCII);
+
+    if (fixed) {
+      byte[] out = new byte[size];
+      System.arraycopy(ascii, 0, out, 0, Math.min(ascii.length, size));
+      w.writeRawBytes(out);                               // raw bytes, writer aligns internally
+    } else {
+      int len = Math.min(ascii.length, size);
+      w.alignToNextByte();                                // force byte boundary
+      w.writeUnsigned(len, 8);                            // length byte
+      byte[] out = new byte[len];
+      System.arraycopy(ascii, 0, out, 0, len);
+      w.writeRawBytes(out);                               // raw bytes
     }
   }
 

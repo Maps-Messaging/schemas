@@ -119,6 +119,24 @@ public class XmlFormatter extends MessageFormatter implements ErrorHandler {
   }
 
   @Override
+  public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
+    XmlMapper xmlMapper = new XmlMapper();
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> map = gson.fromJson(jsonObject, Map.class);
+
+    Object toWrite = map;
+    if (root != null && !root.isEmpty()) {
+      Map<String, Object> wrapper = new LinkedHashMap<>();
+      wrapper.put(root, map);
+      toWrite = wrapper;
+    }
+
+    return xmlMapper.writeValueAsBytes(toWrite);
+  }
+
+
+  @Override
   public synchronized ParsedObject parse(byte[] payload) {
     try {
       Document document = parser.parse(new ByteArrayInputStream(payload));

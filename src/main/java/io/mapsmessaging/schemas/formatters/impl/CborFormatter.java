@@ -93,6 +93,17 @@ public class CborFormatter extends MessageFormatter {
   }
 
   @Override
+  public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
+    ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> map = new Gson().fromJson(jsonObject, Map.class);
+
+    return cborMapper.writeValueAsBytes(map);
+  }
+
+
+  @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     return new CborFormatter(SchemaConfig.gson.toJson(config.getSchema()));
   }

@@ -72,6 +72,16 @@ public abstract class MessageFormatter {
    */
   public abstract JsonObject parseToJson(byte[] payload) throws IOException;
 
+
+  /**
+   * Parse to json json object.
+   *
+   * @param jsonObject the payload
+   * @return the byte[] object
+   * @throws IOException the io exception
+   */
+  public abstract byte[] parseFromJson(JsonObject jsonObject) throws IOException;
+
   /**
    * Parse parsed object.
    *

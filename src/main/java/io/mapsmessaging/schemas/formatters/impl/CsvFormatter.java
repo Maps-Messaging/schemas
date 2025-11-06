@@ -89,6 +89,37 @@ public class CsvFormatter extends MessageFormatter {
   }
 
   @Override
+  public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < keys.length; i++) {
+      String k = keys[i];
+      String cell;
+      if (!jsonObject.has(k) || jsonObject.get(k).isJsonNull()) {
+        cell = "";
+      } else if (jsonObject.get(k).isJsonPrimitive()) {
+        // numbers/booleans/strings
+        cell = jsonObject.get(k).getAsString();
+      } else {
+        // objects/arrays -> JSON string
+        cell = gson.toJson(jsonObject.get(k));
+      }
+      sb.append(escapeCsv(cell));
+      if (i < keys.length - 1) sb.append(',');
+    }
+    sb.append('\n');
+    return sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+  }
+
+  private static String escapeCsv(String s) {
+    boolean needsQuotes = s.indexOf(',') >= 0 || s.indexOf('"') >= 0 || s.indexOf('\n') >= 0 || s.indexOf('\r') >= 0;
+    if (needsQuotes) {
+      return "\"" + s.replace("\"", "\"\"") + "\"";
+    }
+    return s;
+  }
+
+
+  @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {
     CsvSchemaConfig csvSchemaConfig = (CsvSchemaConfig) config;
     CsvSchemaConfig.CsvConfig csvConfig = csvSchemaConfig.getConfig();

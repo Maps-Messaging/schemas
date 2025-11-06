@@ -127,6 +127,11 @@ public class JsonFormatter extends MessageFormatter {
     return JsonParser.parseString(new String(payload, StandardCharsets.UTF_8)).getAsJsonObject();
   }
 
+  @Override
+  public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
+    return gson.toJson(jsonObject).getBytes(StandardCharsets.UTF_8);
+  }
+
 
   @Override
   public MessageFormatter getInstance(SchemaConfig config) {

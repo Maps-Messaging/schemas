@@ -22,7 +22,7 @@ package io.mapsmessaging.schemas.formatters.cbc;
 
 
 import io.mapsmessaging.schemas.config.impl.CbcSchemaConfig;
-import io.mapsmessaging.schemas.config.impl.cbc.BitWriter;
+import io.mapsmessaging.schemas.formatters.impl.cbc.BitWriter;
 
 public final class HeartBeatPacker {
   private HeartBeatPacker() {

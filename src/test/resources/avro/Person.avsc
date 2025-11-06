@@ -3,10 +3,59 @@
    "type": "record",
    "name": "PersonAvro",
    "fields": [
-      {"name": "stringId", "type": "string"},
-      {"name": "intId", "type": "int"},
-      {"name": "longId", "type": "long"},
-      {"name": "floatId", "type": "float"},
-      {"name": "doubleId", "type": "double"}
+      {
+         "name": "stringId",
+         "type": "string"
+      },
+      {
+         "name": "intId",
+         "type": "int"
+      },
+      {
+         "name": "longId",
+         "type": "long"
+      },
+      {
+         "name": "floatId",
+         "type": "float"
+      },
+      {
+         "name": "doubleId",
+         "type": "double"
+      },
+      {
+         "name": "booleanId",
+         "type": "boolean"
+      },
+      {
+         "name": "bytesId",
+         "type": "bytes"
+      },
+      {
+         "name": "arrayId",
+         "type": {
+            "type": "array",
+            "items": "int"
+         }
+      },
+      {
+         "name": "enumId",
+         "type": {
+            "type": "enum",
+            "name": "Color",
+            "symbols": [
+               "RED",
+               "GREEN",
+               "BLUE"
+            ]
+         }
+      },
+      {
+         "name": "timestampId",
+         "type": {
+            "type": "long",
+            "logicalType": "timestamp-millis"
+         }
+      }
    ]
 }

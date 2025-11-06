@@ -64,40 +64,15 @@ class TestJsonParsing {
     initialPerson.add("arrayId", jsonArray);
     initialPerson.addProperty("enumId", "GREEN");
     initialPerson.addProperty("timestampId", System.currentTimeMillis());
-    System.err.println(initialPerson.toString());
 
     List<MessageFormatter> messageFormatters = createMessageFormatters(schemas);
     for (MessageFormatter messageFormatter : messageFormatters) {
-
-      try {
-        byte[] buf = messageFormatter.parseFromJson(initialPerson);
-        Assertions.assertNotNull(buf);
-        JsonObject rebuilt = messageFormatter.parseToJson(buf);
-        Assertions.assertNotNull(rebuilt);
-        if (!JsonValidator.validateJson(initialPerson, rebuilt)) {
-          System.err.println("JSON validation failed for " + messageFormatter.getName());
-          System.err.println(rebuilt.toString());
-          System.err.println(initialPerson);
-          System.err.println("----------------------------");
-        }
-      } catch (Error | RuntimeException e) {
-        e.printStackTrace();
-      }
+      byte[] buf = messageFormatter.parseFromJson(initialPerson);
+      Assertions.assertNotNull(buf);
+      JsonObject rebuilt = messageFormatter.parseToJson(buf);
+      Assertions.assertNotNull(rebuilt);
+      Assertions.assertTrue(JsonValidator.validateJson(initialPerson, rebuilt));
     }
-  }
-
-  private void dump(byte[] buf) {
-    boolean first = true;
-    StringBuilder sb = new StringBuilder();
-    for (byte b : buf) {
-      if (!first) {
-        sb.append(", ");
-      }
-      first = false;
-      int val = (0xff & b);
-      sb.append(String.format("0x%02X", val));
-    }
-    System.err.println(sb.toString());
   }
 
   private List<MessageFormatter> createMessageFormatters(Map<String, Object> schemas) throws IOException {

@@ -20,7 +20,9 @@
 
 package io.mapsmessaging.schemas.formatters;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class JsonValidator {
 
@@ -43,6 +45,10 @@ public class JsonValidator {
     }
     if (a.isJsonPrimitive() && b.isJsonPrimitive()) {
       return equalsPrimitive(a.getAsJsonPrimitive(), b.getAsJsonPrimitive(), tolerance);
+    }
+    if (a.isJsonArray() && b.isJsonPrimitive()) { // CSV handling of arrays
+      JsonArray array = JsonParser.parseString(b.getAsString()).getAsJsonArray();
+      return equalsArray(array, a.getAsJsonArray(), tolerance);
     }
     return false;
   }

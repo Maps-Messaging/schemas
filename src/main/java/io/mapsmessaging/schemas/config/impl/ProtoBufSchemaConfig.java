@@ -88,7 +88,7 @@ public class ProtoBufSchemaConfig extends SchemaConfig {
   }
 
   @Override
-  public byte[] pack() throws IOException {
+  public String pack() throws IOException {
     ProtobufConfig cfg = getProtobufConfig();
     if (cfg != null) {
       if (cfg.getDescriptorValue() == null || cfg.getDescriptorValue().length == 0) {

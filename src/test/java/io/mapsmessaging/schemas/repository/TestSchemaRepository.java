@@ -65,7 +65,7 @@ class TestSchemaRepository {
     SchemaResource res = repo.getResource(schemaId);
 
     // set default
-    SchemaResource updated = repo.setDefaultVersion(schemaId, resource.getVersions().get("v1").getVersionId());
+    SchemaResource updated = repo.setDefaultVersion(schemaId, resource.get("v1").getVersionId());
     Assertions.assertNotNull(updated.getDefaultVersion());
     Assertions.assertEquals("Json Schema Version v1", updated.getDefaultVersion().getName());
 
@@ -80,15 +80,15 @@ class TestSchemaRepository {
     repo.createSchema(schemaId, null);
     SchemaResource resource1 = repo.addVersion(schemaId, makeJsonVersion("v1"));
     SchemaResource resource2 = repo.addVersion(schemaId, makeJsonVersion("v2"));
-    repo.setDefaultVersion(schemaId, resource2.getSchemaId());
+    repo.setDefaultVersion(schemaId, "v2");
 
     List<SchemaConfig> page = repo.listVersions(schemaId, 0, 10);
     Assertions.assertEquals(2, page.size());
 
     // add labels to default via metadata update
     SchemaResource r = repo.updateMetadata(schemaId, "v2", null, Map.of("resource", "sensor", "iface", "tempC"));
-    Assertions.assertEquals("v2", r.getVersions().get("v2").getVersion());
-    Assertions.assertEquals("sensor", r.getVersions().get("v2").getLabels().get("resource"));
+    Assertions.assertEquals("v2", r.get("v2").getVersion());
+    Assertions.assertEquals("sensor", r.get("v2").getLabels().get("resource"));
 
     // search by format and labels
     List<SchemaResource> found = repo.search("JSON", Map.of("resource", "sensor"), 0, 50);
@@ -121,7 +121,7 @@ class TestSchemaRepository {
 
     // create again and then delete schema
     repo.addVersion(schemaId, makeJsonVersion("v3"));
-    boolean schemaDeleted = repo.deleteSchema(schemaId, true);
+    boolean schemaDeleted = repo.deleteResource(schemaId);
     Assertions.assertTrue(schemaDeleted);
     Assertions.assertNull(repo.getResource(schemaId));
   }
@@ -152,7 +152,7 @@ class TestSchemaRepository {
     }
     SchemaResource resource = repo.getResource(schemaId);
     Assertions.assertNotNull(resource);
-    Assertions.assertEquals(all.size(), resource.getVersions().size());
-    repo.deleteSchema(schemaId, true);
+    Assertions.assertEquals(all.size(), resource.size());
+    repo.deleteResource(schemaId);
   }
 }

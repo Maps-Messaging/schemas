@@ -23,9 +23,6 @@ import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
 /**
  * The type Raw schema config.
  */
@@ -58,10 +55,5 @@ public class RawSchemaConfig extends SchemaConfig {
 
   public SchemaConfig getInstance(SchemaConfig config) {
     return new RawSchemaConfig(config);
-  }
-
-  public byte[] pack() throws IOException {
-    SchemaConfig tmp = new SchemaConfig(this);
-    return gson.toJson(tmp).getBytes(StandardCharsets.UTF_8);
   }
 }

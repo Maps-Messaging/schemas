@@ -20,23 +20,28 @@
 
 package io.mapsmessaging.schemas.config;
 
+import lombok.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
-@Getter
-@Setter
+
 @NoArgsConstructor
 @AllArgsConstructor
 public class SchemaResource {
+  @Getter
+  @Setter
   private String schemaId;
   private Map<String, SchemaConfig> versions = new LinkedHashMap<>();
   private String defaultVersion;
+
+  public SchemaResource(SchemaResource r) {
+    this.schemaId = r.getSchemaId();
+    versions = new LinkedHashMap<>(r.versions);
+    defaultVersion = r.defaultVersion;
+  }
 
   public void setDefaultVersion(SchemaConfig schemaConfig) {
     if (!versions.containsKey(schemaConfig.getVersionId())) {
@@ -50,5 +55,34 @@ public class SchemaResource {
       return versions.values().iterator().next();
     }
     return versions.get(defaultVersion);
+  }
+
+  public void put(String versionId, SchemaConfig created) {
+    created.setUniqueId(schemaId);
+    versions.put(versionId, created);
+  }
+
+  public SchemaConfig get(@NonNull String versionId) {
+    return versions.get(versionId);
+  }
+
+  public boolean containsKey(String versionId) {
+    return versions.containsKey(versionId);
+  }
+
+  public boolean isEmpty() {
+    return versions.isEmpty();
+  }
+
+  public List<SchemaConfig> getAll() {
+    return new ArrayList<>(versions.values());
+  }
+
+  public boolean remove(@NonNull String versionId) {
+    return versions.remove(versionId) != null;
+  }
+
+  public int size() {
+    return versions.size();
   }
 }

@@ -11,14 +11,13 @@ import lombok.NonNull;
 import java.io.*;
 import java.nio.file.Files;
 import java.time.OffsetDateTime;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.*;
 
 public class FileSchemaRepository extends SimpleSchemaRepository {
 
-  private static final String VERSION_SUFFIX = ".schema_resource";
+  private static final String VERSION_SUFFIX = ".schema";
 
   private final Logger logger = LoggerFactory.getLogger(FileSchemaRepository.class);
   private final File rootDirectory;
@@ -43,23 +42,14 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
   @Override
   public SchemaResource createSchema(@NonNull String schemaId, SchemaConfig initialVersion) {
     SchemaResource resource = super.createSchema(schemaId, initialVersion);
-    File schemaDir = new File(rootDirectory, schemaId);
-    if (!schemaDir.exists() && !schemaDir.mkdirs()) {
-      logger.log(FILE_REPO_UNABLE_TO_SAVE_EXCEPTION, "Unable to create dir " + schemaDir.getAbsolutePath());
-    }
-    writeVersion(schemaDir, resource);
+    writeVersion(rootDirectory, resource);
     return resource;
   }
 
   @Override
   public SchemaResource addVersion(@NonNull String schemaId, @NonNull SchemaConfig version) {
     SchemaResource created = super.addVersion(schemaId, version);
-    File schemaDir = new File(rootDirectory, schemaId);
-    if (!schemaDir.exists() && !schemaDir.mkdirs()) {
-      logger.log(FILE_REPO_UNABLE_TO_SAVE_EXCEPTION, "Unable to create dir " + schemaDir.getAbsolutePath());
-      return created;
-    }
-    writeVersion(schemaDir, created);
+    writeVersion(rootDirectory, created);
     return created;
   }
 
@@ -92,12 +82,9 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
     if (!removed) {
       return false;
     }
-    File schemaDir = new File(rootDirectory, schemaId);
-    File versionFile = new File(schemaDir, versionId + VERSION_SUFFIX);
-    try {
-      Files.deleteIfExists(versionFile.toPath());
-    } catch (IOException e) {
-      logger.log(FILE_REPO_UNABLE_TO_DELETE_EXCEPTION, e);
+    SchemaResource resource = super.getResource(schemaId);
+    if (resource == null || resource.isEmpty()) {
+      deleteResource(schemaId);
     }
     return true;
   }
@@ -105,26 +92,18 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
   @Override
   public boolean deleteResource(String schemaId) {
     if (super.deleteResource(schemaId)) {
-      File schemaDir = new File(rootDirectory, schemaId);
-      deleteDirectory(schemaDir);
-      return true;
+      File versionFile = new File(rootDirectory, schemaId + VERSION_SUFFIX);
+      try {
+        return Files.deleteIfExists(versionFile.toPath());
+      } catch (IOException e) {
+        logger.log(FILE_REPO_UNABLE_TO_DELETE_EXCEPTION, e);
+      }
     }
     return false;
   }
 
-  @Override
-  public boolean deleteSchema(@NonNull String schemaId, boolean force) {
-    boolean deleted = super.deleteSchema(schemaId, force);
-    if (!deleted) {
-      return false;
-    }
-    File schemaDir = new File(rootDirectory, schemaId);
-    deleteDirectory(schemaDir);
-    return true;
-  }
-
   private void loadAll() throws IOException {
-    File[] schemaDirs = rootDirectory.listFiles(File::isDirectory);
+    File[] schemaDirs = rootDirectory.listFiles(File::isFile);
     if (schemaDirs == null) {
       return;
     }
@@ -133,16 +112,8 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
 
       SchemaResource resource = new SchemaResource();
       resource.setSchemaId(schemaId);
-      resource.setVersions(new LinkedHashMap<>());
-
-      File[] versionFiles = schemaDir.listFiles(pathname -> pathname.isFile() && pathname.getName().endsWith(VERSION_SUFFIX));
-
-      if (versionFiles != null) {
-        for (File vf : versionFiles) {
-          SchemaResource resource1 = readVersion(vf);
-          resourcesBySchemaId.put(resource1.getSchemaId(), resource1);
-        }
-      }
+      SchemaResource resource1 = readVersion(schemaDir);
+      resourcesBySchemaId.put(resource1.getSchemaId(), resource1);
     }
   }
 
@@ -151,12 +122,12 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
       return;
     }
     File file = new File(schemaDir, resource.getSchemaId() + VERSION_SUFFIX);
+
     try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
       String str = gson.toJson(resource);
       out.write(str.getBytes());
       out.flush();
     } catch (Exception e) {
-      e.printStackTrace();
       logger.log(FILE_REPO_UNABLE_TO_SAVE_EXCEPTION, e);
     }
   }
@@ -168,12 +139,12 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
         throw new EOFException("Empty version file: " + versionFile.getAbsolutePath());
       }
       SchemaResource version = gson.fromJson(new String(bytes), SchemaResource.class);
-      for (Map.Entry<String, SchemaConfig> entry : version.getVersions().entrySet()) {
-        if (entry.getValue().getCreatedAt() == null) {
-          entry.getValue().setCreatedAt(OffsetDateTime.now());
+      for (SchemaConfig entry : version.getAll()) {
+        if (entry.getCreatedAt() == null) {
+          entry.setCreatedAt(OffsetDateTime.now());
         }
-        if (entry.getValue().getModifiedAt() == null) {
-          entry.getValue().setModifiedAt(entry.getValue().getCreatedAt());
+        if (entry.getModifiedAt() == null) {
+          entry.setModifiedAt(entry.getCreatedAt());
         }
       }
       if (version.getDefaultVersion() != null) {
@@ -185,32 +156,6 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
         }
       }
       return version;
-    }
-  }
-
-
-  private void deleteDirectory(File dir) {
-    if (!dir.exists()) {
-      return;
-    }
-    File[] files = dir.listFiles();
-    if (files != null) {
-      for (File f : files) {
-        if (f.isDirectory()) {
-          deleteDirectory(f);
-        } else {
-          try {
-            Files.deleteIfExists(f.toPath());
-          } catch (IOException e) {
-            logger.log(FILE_REPO_UNABLE_TO_DELETE_EXCEPTION, e);
-          }
-        }
-      }
-    }
-    try {
-      Files.deleteIfExists(dir.toPath());
-    } catch (IOException e) {
-      logger.log(FILE_REPO_UNABLE_TO_DELETE_EXCEPTION, e);
     }
   }
 }

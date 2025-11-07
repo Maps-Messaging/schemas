@@ -20,17 +20,19 @@
 package io.mapsmessaging.schemas.config;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.annotations.JsonAdapter;
 import io.mapsmessaging.schemas.model.OffsetDateTimeAdapter;
 import lombok.*;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.regex.Pattern;
 
 
 @Getter
@@ -98,6 +100,19 @@ public class SchemaConfig {
     }
   }
 
+  public String getMatchExpression() {
+    return getFromLabels("matchExpression");
+  }
+
+  public void setMatchExpression(String matchExpression) {
+    try {
+      Pattern.compile(matchExpression);
+      setInLables("matchExpression", matchExpression);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
   public String getUniqueId() {
     return getFromLabels("uniqueId");
   }
@@ -106,13 +121,75 @@ public class SchemaConfig {
     setInLables("uniqueId", uuid.toString());
   }
 
-  public byte[] pack() throws IOException {
+  public void setUniqueId(String schemaId) {
+    setInLables("uniqueId", schemaId);
+  }
+
+  public byte[] packAsBytes() throws IOException {
+    return pack().getBytes(StandardCharsets.UTF_8);
+  }
+
+  public String pack() throws IOException {
     if (schema == null && schemaBase64 == null) {
       throw new IOException("Schema or SchemaBase64 are required");
     }
-    String json = gson.toJson(this);
-    return json.getBytes(StandardCharsets.UTF_8);
+    return gson.toJson(this);
   }
+
+  @Deprecated /* Use the pack() function and not use the map */
+  public Map<String, Object> toMap() {
+    JsonObject jsonObject = gson.toJsonTree(this).getAsJsonObject();
+    @SuppressWarnings("unchecked")
+    Map<String, Object> result = (Map<String, Object>) toJava(jsonObject);
+    return result;
+  }
+
+  private Object toJava(JsonElement element) {
+    if (element == null || element.isJsonNull()) {
+      return null;
+    }
+    if (element.isJsonPrimitive()) {
+      JsonPrimitive primitive = element.getAsJsonPrimitive();
+      if (primitive.isBoolean()) {
+        return primitive.getAsBoolean();
+      }
+      if (primitive.isNumber()) {
+        return coerceNumber(primitive);
+      }
+      return primitive.getAsString();
+    }
+    if (element.isJsonArray()) {
+      List<Object> list = new ArrayList<>();
+      for (JsonElement e : element.getAsJsonArray()) {
+        list.add(toJava(e));
+      }
+      return list;
+    }
+    // JsonObject
+    Map<String, Object> map = new LinkedHashMap<>();
+    for (Map.Entry<String, JsonElement> e : element.getAsJsonObject().entrySet()) {
+      map.put(e.getKey(), toJava(e.getValue()));
+    }
+    return map;
+  }
+
+  private Number coerceNumber(JsonPrimitive primitive) {
+    BigDecimal value = primitive.getAsBigDecimal();
+    BigDecimal stripped = value.stripTrailingZeros();
+    if (stripped.scale() <= 0) {
+      try {
+        long l = stripped.longValueExact();
+        if (l >= Integer.MIN_VALUE && l <= Integer.MAX_VALUE) {
+          return (int) l;
+        }
+        return l;
+      } catch (ArithmeticException ignored) {
+        // falls through to double for very large integers
+      }
+    }
+    return value.doubleValue();
+  }
+
 
   public JsonObject packData() {
     return gson.toJsonTree(this).getAsJsonObject();
@@ -190,5 +267,6 @@ public class SchemaConfig {
   public String getMimeType() {
     return null;
   }
+
 
 }

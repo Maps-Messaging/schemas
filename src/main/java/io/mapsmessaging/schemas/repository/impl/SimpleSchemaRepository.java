@@ -26,11 +26,10 @@ public class SimpleSchemaRepository implements SchemaRepository {
     }
     SchemaResource resource = new SchemaResource();
     resource.setSchemaId(schemaId);
-    resource.setVersions(new LinkedHashMap<>());
 
     if (initialVersion != null) {
       SchemaConfig created = prepareVersionForInsert(initialVersion);
-      resource.getVersions().put(created.getVersionId(), created);
+      resource.put(created.getVersionId(), created);
       // inline default
       resource.setDefaultVersion(copyVersion(created));
     }
@@ -52,10 +51,7 @@ public class SimpleSchemaRepository implements SchemaRepository {
   @Override
   public SchemaConfig getVersion(@NonNull String schemaId, @NonNull String versionId) {
     SchemaResource resource = resourcesBySchemaId.get(schemaId);
-    if (resource == null || resource.getVersions() == null) {
-      return null;
-    }
-    SchemaConfig v = resource.getVersions().get(versionId);
+    SchemaConfig v = resource.get(versionId);
     if (v == null) {
       return null;
     }
@@ -69,11 +65,11 @@ public class SimpleSchemaRepository implements SchemaRepository {
       resource = createSchema(schemaId, null);
     }
     SchemaConfig created = prepareVersionForInsert(version);
-    if (resource.getVersions().containsKey(created.getVersionId())) {
+    if (resource.containsKey(created.getVersionId())) {
       // idempotent: return existing
       return resource;
     }
-    resource.getVersions().put(created.getVersionId(), created);
+    resource.put(created.getVersionId(), created);
     if (resource.getDefaultVersion() == null) {
       resource.setDefaultVersion(created);
     }
@@ -87,20 +83,20 @@ public class SimpleSchemaRepository implements SchemaRepository {
     if (resource == null) {
       return null;
     }
-    if (resource.getVersions() == null || !resource.getVersions().containsKey(versionId)) {
+    if (!resource.containsKey(versionId)) {
       return null;
     }
-    resource.setDefaultVersion(copyVersion(resource.getVersions().get(versionId)));
+    resource.setDefaultVersion(copyVersion(resource.get(versionId)));
     return resource;
   }
 
   @Override
   public List<SchemaConfig> listVersions(@NonNull String schemaId, int page, int size) {
     SchemaResource resource = resourcesBySchemaId.get(schemaId);
-    if (resource == null || resource.getVersions() == null || resource.getVersions().isEmpty()) {
+    if (resource == null || resource.isEmpty()) {
       return List.of();
     }
-    List<SchemaConfig> all = new ArrayList<>(resource.getVersions().values());
+    List<SchemaConfig> all = resource.getAll();
     int from = Math.max(0, page * Math.max(size, 0));
     int to = Math.min(all.size(), from + Math.max(size, 0));
     if (from >= to) {
@@ -119,7 +115,7 @@ public class SimpleSchemaRepository implements SchemaRepository {
     for (SchemaResource resource : resourcesBySchemaId.values()) {
       SchemaConfig dv = resolveDefault(resource);
       boolean isMatch = match(dv, format, labelFilter);
-      isMatch = resource.getVersions().values()
+      isMatch = resource.getAll()
           .stream()
           .anyMatch(v -> match(v, format, labelFilter)) || isMatch;
 
@@ -154,7 +150,7 @@ public class SimpleSchemaRepository implements SchemaRepository {
     if (resource == null) {
       return null;
     }
-    SchemaConfig dv = resource.getVersions().get(version);
+    SchemaConfig dv = resource.get(version);
     if (dv == null) {
       return resource;
     }
@@ -177,11 +173,7 @@ public class SimpleSchemaRepository implements SchemaRepository {
   @Override
   public boolean deleteVersion(@NonNull String schemaId, @NonNull String versionId, boolean force) {
     SchemaResource resource = resourcesBySchemaId.get(schemaId);
-    if (resource == null || resource.getVersions() == null) {
-      return false;
-    }
-
-    boolean removedFlag = resource.getVersions().remove(versionId) != null;
+    boolean removedFlag = resource.remove(versionId);
     if (!removedFlag) {
       return false;
     }
@@ -189,23 +181,15 @@ public class SimpleSchemaRepository implements SchemaRepository {
       resource.setDefaultVersion(null);
     }
 
-    if (resource.getVersions().isEmpty() && resource.getDefaultVersion() == null) {
+    if (resource.isEmpty() && resource.getDefaultVersion() == null) {
       resourcesBySchemaId.remove(schemaId);
     }
     return true;
   }
 
   @Override
-  public boolean deleteSchema(@NonNull String schemaId, boolean force) {
-    SchemaResource resource = resourcesBySchemaId.get(schemaId);
-    if (resource == null) {
-      return false;
-    }
-    if (!force && resource.getVersions() != null && !resource.getVersions().isEmpty()) {
-      return false;
-    }
-    resourcesBySchemaId.remove(schemaId);
-    return true;
+  public List<SchemaResource> getAllSchemas() {
+    return List.of(resourcesBySchemaId.values().toArray(new SchemaResource[0]));
   }
 
   private SchemaConfig prepareVersionForInsert(@NonNull SchemaConfig version) {
@@ -275,10 +259,6 @@ public class SimpleSchemaRepository implements SchemaRepository {
   }
 
   private SchemaResource shallowCopyResource(SchemaResource r) {
-    SchemaResource c = new SchemaResource();
-    c.setSchemaId(r.getSchemaId());
-    c.setVersions(r.getVersions());
-    // do not copy versions map for search rows
-    return c;
+    return new SchemaResource(r);
   }
 }

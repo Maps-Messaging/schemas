@@ -108,7 +108,7 @@ public abstract class GeneralBaseTest {
     SchemaConfig schemaConfig = buildConfig();
     validate(schemaConfig);
     validateSchema(schemaConfig);
-    byte[] schemaProps = schemaConfig.pack();
+    byte[] schemaProps = schemaConfig.packAsBytes();
     SchemaConfig schemaConfigCheck = SchemaConfigFactory.getInstance().constructConfig(schemaProps);
     Assertions.assertNotNull(schemaConfigCheck);
     validate(schemaConfigCheck);

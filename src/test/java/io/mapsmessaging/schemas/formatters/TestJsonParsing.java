@@ -46,6 +46,7 @@ class TestJsonParsing {
     Assertions.assertNotNull(schemas);
     Assertions.assertFalse(schemas.isEmpty());
 
+
     int[] array = {1, 2, 3, 4, 5};
 
     JsonArray jsonArray = new JsonArray();

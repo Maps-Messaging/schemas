@@ -130,11 +130,9 @@ public interface SchemaRepository {
   boolean deleteVersion(String schemaId, String versionId, boolean force);
 
   /**
-   * Delete an entire schema resource.
+   * Retrieves all registered schemas
    *
-   * @param schemaId the schema identifier
-   * @param force    if true, delete even if versions exist
-   * @return true if deleted
+   * @return list of known schemas
    */
-  boolean deleteSchema(String schemaId, boolean force);
+  List<SchemaResource> getAllSchemas();
 }

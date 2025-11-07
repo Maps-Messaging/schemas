@@ -98,11 +98,9 @@ public class CbcSchemaConfig extends SchemaConfig {
   }
 
   @Override
-  public byte[] pack() throws IOException {
-    if (cbcFormat != null) {
-      if (cbcFormat.getFields() == null || cbcFormat.getFields().isEmpty()) {
-        throw new IOException("CBC format fields are required");
-      }
+  public String pack() throws IOException {
+    if (cbcFormat != null && (cbcFormat.getFields() == null || cbcFormat.getFields().isEmpty())) {
+      throw new IOException("CBC format fields are required");
     }
     return super.pack();
   }

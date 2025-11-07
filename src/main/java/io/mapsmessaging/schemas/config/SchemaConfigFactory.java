@@ -109,6 +109,22 @@ public class SchemaConfigFactory {
     }
   }
 
+  @Deprecated
+  public SchemaConfig constructConfig(Map<String, Object> rawPayload) throws IOException {
+    if (rawPayload == null || rawPayload.isEmpty()) {
+      throw new IllegalStateException("Raw payload map is null or empty");
+    }
+    try {
+      JsonElement jsonElement = gson.toJsonTree(rawPayload);
+      if (!jsonElement.isJsonObject()) {
+        throw new IOException("Raw payload map did not convert to a JSON object");
+      }
+      return constructConfig(jsonElement.getAsJsonObject());
+    } catch (JsonIOException e) {
+      throw new IOException(e);
+    }
+  }
+
   public SchemaConfig constructConfig(JsonObject payload) throws IOException {
     try {
       SchemaConfig version = gson.fromJson(payload, SchemaConfig.class);

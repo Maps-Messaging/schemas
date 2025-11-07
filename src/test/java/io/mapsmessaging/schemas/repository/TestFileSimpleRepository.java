@@ -40,7 +40,7 @@ class TestFileSimpleRepository extends TestSchemaRepository {
     SimpleSchemaRepository repo = getRepository();
     for (SchemaResource r
         : repo.search(null, null, 0, Integer.MAX_VALUE)) {
-      repo.deleteSchema(r.getSchemaId(), true);
+      repo.deleteResource(r.getSchemaId());
     }
     deleteDir(ROOT);
   }
@@ -54,7 +54,7 @@ class TestFileSimpleRepository extends TestSchemaRepository {
       repo.createSchema(c.getVersion(), c);
       SchemaResource r = repo.getResource(c.getVersion());
       Assertions.assertNotNull(r);
-      Assertions.assertNotNull(r.getVersions().get(c.getVersionId()));
+      Assertions.assertNotNull(r.get(c.getVersionId()));
       schemaIds.add(r.getSchemaId());
     }
 

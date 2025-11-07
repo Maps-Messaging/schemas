@@ -91,9 +91,7 @@ public class RestSchemaRepository extends FileSchemaRepository {
     SchemaResource remote = tryRemoteGet("/schemas/" + schemaId, SchemaResource.class);
     if (remote != null) {
       // hydrate local cache
-      if (remote.getVersions() != null) {
-        remote.getVersions().values().forEach(v -> super.addVersion(schemaId, SchemaConfigFactory.getInstance().constructConfig(v)));
-      }
+      remote.getAll().forEach(v -> super.addVersion(schemaId, SchemaConfigFactory.getInstance().constructConfig(v)));
       return remote;
     }
     return super.getResource(schemaId);
@@ -151,9 +149,4 @@ public class RestSchemaRepository extends FileSchemaRepository {
     return super.deleteVersion(schemaId, versionId, force);
   }
 
-  @Override
-  public boolean deleteSchema(@NonNull String schemaId, boolean force) {
-    tryRemoteDelete("/schemas/" + schemaId + "?force=" + force);
-    return super.deleteSchema(schemaId, force);
-  }
 }

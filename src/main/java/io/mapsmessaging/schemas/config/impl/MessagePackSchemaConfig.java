@@ -23,9 +23,6 @@ package io.mapsmessaging.schemas.config.impl;
 import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
 public class MessagePackSchemaConfig extends SchemaConfig {
 
   private static final String NAME = "messagepack";
@@ -53,10 +50,5 @@ public class MessagePackSchemaConfig extends SchemaConfig {
   @Override
   public SchemaConfig getInstance(SchemaConfig config) {
     return new MessagePackSchemaConfig(config);
-  }
-
-  public byte[] pack() throws IOException {
-    SchemaConfig tmp = new SchemaConfig(this);
-    return gson.toJson(tmp).getBytes(StandardCharsets.UTF_8);
   }
 }

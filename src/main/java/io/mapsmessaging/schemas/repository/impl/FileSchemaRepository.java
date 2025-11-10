@@ -8,9 +8,13 @@ import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.SchemaResource;
 import lombok.NonNull;
 
-import java.io.*;
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Map;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.*;
@@ -40,21 +44,21 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
   }
 
   @Override
-  public SchemaResource createSchema(@NonNull String schemaId, SchemaConfig initialVersion) {
+  public synchronized SchemaResource createSchema(@NonNull String schemaId, SchemaConfig initialVersion) {
     SchemaResource resource = super.createSchema(schemaId, initialVersion);
     writeVersion(rootDirectory, resource);
     return resource;
   }
 
   @Override
-  public SchemaResource addVersion(@NonNull String schemaId, @NonNull SchemaConfig version) {
+  public synchronized SchemaResource addVersion(@NonNull String schemaId, @NonNull SchemaConfig version) {
     SchemaResource created = super.addVersion(schemaId, version);
     writeVersion(rootDirectory, created);
     return created;
   }
 
   @Override
-  public SchemaResource setDefaultVersion(@NonNull String schemaId, @NonNull String versionId) {
+  public synchronized SchemaResource setDefaultVersion(@NonNull String schemaId, @NonNull String versionId) {
     SchemaResource resource = super.setDefaultVersion(schemaId, versionId);
     if (resource == null) {
       return null;
@@ -64,7 +68,7 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
   }
 
   @Override
-  public SchemaResource updateMetadata(@NonNull String schemaId,
+  public synchronized SchemaResource updateMetadata(@NonNull String schemaId,
                                        String version,
                                        String documentation,
                                        Map<String, String> labels) {
@@ -77,7 +81,7 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
   }
 
   @Override
-  public boolean deleteVersion(@NonNull String schemaId, @NonNull String versionId, boolean force) {
+  public synchronized boolean deleteVersion(@NonNull String schemaId, @NonNull String versionId, boolean force) {
     boolean removed = super.deleteVersion(schemaId, versionId, force);
     if (!removed) {
       return false;
@@ -90,7 +94,7 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
   }
 
   @Override
-  public boolean deleteResource(String schemaId) {
+  public synchronized boolean deleteResource(String schemaId) {
     if (super.deleteResource(schemaId)) {
       File versionFile = new File(rootDirectory, schemaId + VERSION_SUFFIX);
       try {
@@ -102,16 +106,28 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
     return false;
   }
 
+
+  @Override
+  public synchronized List<SchemaConfig> listVersions(@NonNull String schemaId, int page, int size) {
+    return super.listVersions(schemaId, page, size);
+  }
+
+  @Override
+  public synchronized List<SchemaResource> search(String format, Map<String, String> labelFilter, int page, int size) {
+    return super.search(format, labelFilter, page, size);
+  }
+
+  @Override
+  public synchronized List<SchemaResource> getAllSchemas() {
+    return super.getAllSchemas();
+  }
+
   private void loadAll() throws IOException {
     File[] schemaDirs = rootDirectory.listFiles(File::isFile);
     if (schemaDirs == null) {
       return;
     }
     for (File schemaDir : schemaDirs) {
-      String schemaId = schemaDir.getName();
-
-      SchemaResource resource = new SchemaResource();
-      resource.setSchemaId(schemaId);
       SchemaResource resource1 = readVersion(schemaDir);
       resourcesBySchemaId.put(resource1.getSchemaId(), resource1);
     }
@@ -122,40 +138,35 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
       return;
     }
     File file = new File(schemaDir, resource.getSchemaId() + VERSION_SUFFIX);
-
-    try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
-      String str = gson.toJson(resource);
-      out.write(str.getBytes());
-      out.flush();
-    } catch (Exception e) {
+    try {
+      Files.write(file.toPath(), gson.toJson(resource).getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+    } catch (IOException e) {
       logger.log(FILE_REPO_UNABLE_TO_SAVE_EXCEPTION, e);
     }
   }
 
   private SchemaResource readVersion(File versionFile) throws IOException {
-    try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(versionFile))) {
-      byte[] bytes = in.readAllBytes();
-      if (bytes.length == 0) {
-        throw new EOFException("Empty version file: " + versionFile.getAbsolutePath());
-      }
-      SchemaResource version = gson.fromJson(new String(bytes), SchemaResource.class);
-      for (SchemaConfig entry : version.getAll()) {
-        if (entry.getCreatedAt() == null) {
-          entry.setCreatedAt(OffsetDateTime.now());
-        }
-        if (entry.getModifiedAt() == null) {
-          entry.setModifiedAt(entry.getCreatedAt());
-        }
-      }
-      if (version.getDefaultVersion() != null) {
-        if (version.getDefaultVersion().getCreatedAt() == null) {
-          version.getDefaultVersion().setCreatedAt(OffsetDateTime.now());
-        }
-        if (version.getDefaultVersion().getModifiedAt() == null) {
-          version.getDefaultVersion().setModifiedAt(version.getDefaultVersion().getCreatedAt());
-        }
-      }
-      return version;
+    byte[] bytes = Files.readAllBytes(versionFile.toPath());
+    if (bytes.length == 0) {
+      throw new EOFException("Empty version file: " + versionFile.getAbsolutePath());
     }
+    SchemaResource version = gson.fromJson(new String(bytes), SchemaResource.class);
+    for (SchemaConfig entry : version.getAll()) {
+      if (entry.getCreatedAt() == null) {
+        entry.setCreatedAt(OffsetDateTime.now());
+      }
+      if (entry.getModifiedAt() == null) {
+        entry.setModifiedAt(entry.getCreatedAt());
+      }
+    }
+    if (version.getDefaultVersion() != null) {
+      if (version.getDefaultVersion().getCreatedAt() == null) {
+        version.getDefaultVersion().setCreatedAt(OffsetDateTime.now());
+      }
+      if (version.getDefaultVersion().getModifiedAt() == null) {
+        version.getDefaultVersion().setModifiedAt(version.getDefaultVersion().getCreatedAt());
+      }
+    }
+    return version;
   }
 }

@@ -9,13 +9,14 @@ import lombok.NonNull;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SimpleSchemaRepository implements SchemaRepository {
 
   protected final Map<String, SchemaResource> resourcesBySchemaId;
 
   public SimpleSchemaRepository() {
-    resourcesBySchemaId = new LinkedHashMap<>();
+    resourcesBySchemaId = new ConcurrentHashMap<>();
   }
 
   @Override

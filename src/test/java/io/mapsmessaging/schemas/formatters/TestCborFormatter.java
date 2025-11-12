@@ -22,6 +22,9 @@ package io.mapsmessaging.schemas.formatters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.CborSchemaConfig;
 import org.junit.jupiter.api.Assertions;
@@ -71,7 +74,14 @@ class TestCborFormatter extends BaseTest {
         " \"required\": [\"stringId\", \"longId\", \"intId\", \"floatId\", \"doubleId\"],\n" +
         "  \"additionalProperties\": false\n" +
         "}";
-    return new CborSchemaConfig(jsonSchema);
+    CborSchemaConfig config = new CborSchemaConfig();
+
+    JsonElement element = JsonParser.parseString(jsonSchema);
+    if (element.isJsonObject()) {
+      JsonObject obj = element.getAsJsonObject();
+      config.setSchema(obj);
+    }
+    return config;
   }
 
   @Test
@@ -79,7 +89,7 @@ class TestCborFormatter extends BaseTest {
     SchemaConfig config = getSchema();
     config.setUniqueId(UUID.randomUUID());
     config.setSource("test");
-    config.setVersion(1);
+    config.setVersion("1");
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
     // This doesn't match the required fields in schema

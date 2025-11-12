@@ -33,14 +33,6 @@ import java.util.ServiceLoader;
 @SuppressWarnings("java:S6548") // yes it is a singleton
 public class MessageFormatterFactory {
 
-  private static class Holder {
-    static final MessageFormatterFactory INSTANCE = new MessageFormatterFactory();
-  }
-
-  public static MessageFormatterFactory getInstance() {
-    return MessageFormatterFactory.Holder.INSTANCE;
-  }
-
   private final List<MessageFormatter> messageFormatters;
 
   private MessageFormatterFactory() {
@@ -51,6 +43,10 @@ public class MessageFormatterFactory {
     }
   }
 
+  public static MessageFormatterFactory getInstance() {
+    return MessageFormatterFactory.Holder.INSTANCE;
+  }
+
   public List<String> getFormatters() {
     List<String> formatList = new ArrayList<>();
     for (MessageFormatter messageFormatter : messageFormatters) {
@@ -58,7 +54,6 @@ public class MessageFormatterFactory {
     }
     return formatList;
   }
-
 
   /**
    * Gets formatter.
@@ -74,6 +69,10 @@ public class MessageFormatterFactory {
       }
     }
     throw new IOException("Unknown format config received");
+  }
+
+  private static class Holder {
+    static final MessageFormatterFactory INSTANCE = new MessageFormatterFactory();
   }
 }
 

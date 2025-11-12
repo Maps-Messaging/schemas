@@ -20,17 +20,17 @@
 
 package io.mapsmessaging.schemas.config;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.impl.CborSchemaConfig;
 import org.junit.jupiter.api.Assertions;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 public class TestCborConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties() {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "CBOR");
+  SchemaConfig getProperties() {
+    CborSchemaConfig props = new CborSchemaConfig();
+    JsonObject obj = JsonParser.parseString(cborSchema).getAsJsonObject();
+    props.setSchema(obj);
     return props;
   }
 
@@ -38,6 +38,8 @@ public class TestCborConfig extends GeneralBaseTest {
   SchemaConfig buildConfig() {
     CborSchemaConfig config = new CborSchemaConfig();
     setBaseConfig(config);
+    JsonObject obj = JsonParser.parseString(cborSchema).getAsJsonObject();
+    config.setSchema(obj);
     return config;
   }
 
@@ -46,4 +48,17 @@ public class TestCborConfig extends GeneralBaseTest {
     Assertions.assertInstanceOf(CborSchemaConfig.class, schemaConfig);
   }
 
+  private static final String cborSchema = "{\n" +
+      "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n" +
+      "  \"type\": \"object\",\n" +
+      "  \"properties\": {\n" +
+      "    \"stringId\": { \"type\": \"string\" },\n" +
+      "    \"longId\": { \"type\": \"number\" },\n" +
+      "    \"intId\": { \"type\": \"number\" },\n" +
+      "    \"floatId\": { \"type\": \"number\" },\n" +
+      "    \"doubleId\": { \"type\": \"number\" }\n" +
+      "  },\n" +
+      " \"required\": [\"stringId\", \"longId\", \"intId\", \"floatId\", \"doubleId\"],\n" +
+      "  \"additionalProperties\": false\n" +
+      "}";
 }

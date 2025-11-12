@@ -33,7 +33,9 @@ import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 import org.w3c.dom.Document;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -51,7 +53,7 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.*;
 /**
  * The type Xml formatter.
  */
-public class XmlFormatter extends MessageFormatter {
+public class XmlFormatter extends MessageFormatter implements ErrorHandler {
 
   private static final String NAME = "XML";
 
@@ -72,13 +74,14 @@ public class XmlFormatter extends MessageFormatter {
    * @param config the config
    * @throws IOException the io exception
    */
-  XmlFormatter(XmlSchemaConfig config) throws IOException {
+  XmlFormatter(XmlSchemaConfig.XmlConfig config) throws IOException {
     try {
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
       dbf.setNamespaceAware(config.isNamespaceAware());
       dbf.setValidating(config.isValidating());
       dbf.setCoalescing(config.isCoalescing());
       parser = dbf.newDocumentBuilder();
+      parser.setErrorHandler(this);
       root = config.getRootEntry();
     } catch (ParserConfigurationException e) {
       logger.log(XML_CONFIGURATION_EXCEPTION, e);
@@ -114,6 +117,24 @@ public class XmlFormatter extends MessageFormatter {
       return new JsonObject();
     }
   }
+
+  @Override
+  public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
+    XmlMapper xmlMapper = new XmlMapper();
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> map = gson.fromJson(jsonObject, Map.class);
+
+    Object toWrite = map;
+    if (root != null && !root.isEmpty()) {
+      Map<String, Object> wrapper = new LinkedHashMap<>();
+      wrapper.put(root, map);
+      toWrite = wrapper;
+    }
+
+    return xmlMapper.writeValueAsBytes(toWrite);
+  }
+
 
   @Override
   public synchronized ParsedObject parse(byte[] payload) {
@@ -159,7 +180,7 @@ public class XmlFormatter extends MessageFormatter {
 
   @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {
-    return new XmlFormatter((XmlSchemaConfig) config);
+    return new XmlFormatter(((XmlSchemaConfig) config).getConfig());
   }
 
   private Object coerceTypes(Object value) {
@@ -177,8 +198,7 @@ public class XmlFormatter extends MessageFormatter {
       return list;
     }
 
-    if (value instanceof String) {
-      String s = (String) value;
+    if (value instanceof String s) {
       // Try parsing to Integer, Long, or Double
       try {
         return Integer.parseInt(s);
@@ -200,4 +220,18 @@ public class XmlFormatter extends MessageFormatter {
     return value;
   }
 
+  @Override
+  public void warning(SAXParseException exception) throws SAXException {
+    logger.log(XML_PARSE_EXCEPTION, exception.getMessage(), exception);
+  }
+
+  @Override
+  public void error(SAXParseException exception) throws SAXException {
+    logger.log(XML_PARSE_EXCEPTION, exception.getMessage(), exception);
+  }
+
+  @Override
+  public void fatalError(SAXParseException exception) throws SAXException {
+    logger.log(XML_PARSE_EXCEPTION, exception.getMessage(), exception);
+  }
 }

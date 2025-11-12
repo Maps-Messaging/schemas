@@ -24,14 +24,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.networknt.schema.JsonSchema;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.SpecVersion;
-import com.networknt.schema.ValidationMessage;
+import com.networknt.schema.Error;
+import com.networknt.schema.Schema;
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.dialect.Dialects;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
@@ -39,8 +39,8 @@ import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.JSON_PARSE_EXCEPTION;
@@ -51,8 +51,7 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.JSON_PARSE_EXCE
 public class JsonFormatter extends MessageFormatter {
 
   private final JsonNode schemaNode;
-  private final JsonSchema schema;
-  private final JsonSchemaFactory schemaFactory;
+  private final Schema schema;
 
   /**
    * Instantiates a new Json formatter.
@@ -60,7 +59,6 @@ public class JsonFormatter extends MessageFormatter {
   public JsonFormatter() {
     schemaNode = null;
     schema = null;
-    schemaFactory = null;
   }
 
 
@@ -71,8 +69,8 @@ public class JsonFormatter extends MessageFormatter {
     schemaNode = objectMapper.readTree(schemaString);
 
     // Create JsonSchema instance
-    schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7);
-    schema = schemaFactory.getSchema(schemaNode);
+    SchemaRegistry schemaRegistry = SchemaRegistry.withDialect(Dialects.getDraft7());
+    schema = schemaRegistry.getSchema(schemaNode);
   }
 
   @Override
@@ -84,10 +82,9 @@ public class JsonFormatter extends MessageFormatter {
       if (schema != null) {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(jsonString);
-        Set<ValidationMessage> validationResult = schema.validate(jsonNode);
+        List<Error> validationResult = schema.validate(jsonNode);
         if (!validationResult.isEmpty()) {
           logger.log(JSON_PARSE_EXCEPTION, getName(), validationResult);
-          // return new DefaultParser(payload);
         }
       }
 
@@ -106,7 +103,6 @@ public class JsonFormatter extends MessageFormatter {
     if (schemaNode == null || !schemaNode.has("properties")) {
       return Map.of();
     }
-
     try {
       ObjectMapper objectMapper = new ObjectMapper();
       JsonNode propertiesNode = schemaNode.get("properties");
@@ -125,16 +121,32 @@ public class JsonFormatter extends MessageFormatter {
       return Map.of();
     }
   }
+
   @Override
   public JsonObject parseToJson(byte[] payload) throws IOException {
     return JsonParser.parseString(new String(payload, StandardCharsets.UTF_8)).getAsJsonObject();
   }
 
+  @Override
+  public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
+    return gson.toJson(jsonObject).getBytes(StandardCharsets.UTF_8);
+  }
+
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
-    JsonSchemaConfig jsonSchemaConfig = (JsonSchemaConfig) config;
-    return new JsonFormatter(jsonSchemaConfig.getSchema());
+  public MessageFormatter getInstance(SchemaConfig config) {
+    // Extract the JSON Schema string from the version’s schema field (JsonElement recommended)
+    String schemaString = null;
+    if (config.getSchema() != null) {
+      JsonElement el = config.getSchema();
+      schemaString = el.isJsonPrimitive() ? el.getAsString() : el.toString();
+    }
+    try {
+      return new JsonFormatter(schemaString);
+    } catch (JsonProcessingException e) {
+
+    }
+    return null;
   }
 
   @Override

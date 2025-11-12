@@ -1,0 +1,67 @@
+{
+  "type": "MessagePack",
+  "config": {
+    "title": "PersonMessagePack",
+    "description": "Schema definition for Person object encoded using MessagePack",
+    "required": [
+      "stringId",
+      "intId",
+      "longId",
+      "floatId",
+      "doubleId",
+      "booleanId",
+      "bytesId",
+      "arrayId",
+      "enumId",
+      "timestampId"
+    ],
+    "properties": {
+      "stringId": {
+        "type": "string",
+        "description": "ASCII string identifier"
+      },
+      "intId": {
+        "type": "integer",
+        "description": "32-bit integer value"
+      },
+      "longId": {
+        "type": "integer",
+        "description": "64-bit integer value"
+      },
+      "floatId": {
+        "type": "number",
+        "description": "Float precision value"
+      },
+      "doubleId": {
+        "type": "number",
+        "description": "Double precision value"
+      },
+      "booleanId": {
+        "type": "boolean",
+        "description": "Boolean true/false flag"
+      },
+      "bytesId": {
+        "type": "string",
+        "contentEncoding": "base64",
+        "description": "Base64-encoded binary data"
+      },
+      "arrayId": {
+        "type": "array",
+        "items": { "type": "integer" },
+        "minItems": 5,
+        "maxItems": 5,
+        "description": "Fixed-size integer array (5 elements)"
+      },
+      "enumId": {
+        "type": "string",
+        "enum": ["RED", "GREEN", "BLUE"],
+        "description": "Enumerated color value"
+      },
+      "timestampId": {
+        "type": "string",
+        "format": "date-time",
+        "description": "ISO 8601 timestamp"
+      }
+    }
+  }
+}

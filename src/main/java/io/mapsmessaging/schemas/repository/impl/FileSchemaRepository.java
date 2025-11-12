@@ -1,46 +1,37 @@
-/*
- *
- *  Copyright [ 2020 - 2024 ] Matthew Buckton
- *  Copyright [ 2024 - 2025 ] MapsMessaging B.V.
- *
- *  Licensed under the Apache License, Version 2.0 with the Commons Clause
- *  (the "License"); you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at:
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *      https://commonsclause.com/
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- */
-
 package io.mapsmessaging.schemas.repository.impl;
 
+import com.google.gson.Gson;
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
+import io.mapsmessaging.schemas.config.GsonFactory;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.config.SchemaConfigFactory;
+import io.mapsmessaging.schemas.config.SchemaResource;
 import lombok.NonNull;
 
-import java.io.*;
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
+import java.nio.file.StandardOpenOption;
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.*;
 
-public class FileSchemaRepository extends SimpleSchemaRepository{
+public class FileSchemaRepository extends SimpleSchemaRepository {
+
+  private static final String VERSION_SUFFIX = ".schema";
 
   private final Logger logger = LoggerFactory.getLogger(FileSchemaRepository.class);
-
   private final File rootDirectory;
+  private final Gson gson;
 
   public FileSchemaRepository(@NonNull File rootDirectory) throws IOException {
+    super();
     this.rootDirectory = rootDirectory;
+    this.gson = GsonFactory.buildGson();
+
     if (!rootDirectory.exists() && !rootDirectory.mkdirs()) {
       logger.log(FILE_REPO_ROOT_CREATION_EXCEPTION, rootDirectory.getPath());
       throw new IOException("Unable to create root directory " + rootDirectory.getPath());
@@ -49,88 +40,133 @@ public class FileSchemaRepository extends SimpleSchemaRepository{
       logger.log(FILE_REPO_ROOT_NOT_DIRECTORY_EXCEPTION, rootDirectory.getPath());
       throw new IOException("Root directory must be a directory");
     }
-    loadData();
+    loadAll();
   }
 
-  private void loadData() throws IOException {
-    File[] children = rootDirectory.listFiles();
-    if(children != null) {
-      for (File child : children) {
-        loadFile(child);
-      }
-    }
+  @Override
+  public synchronized SchemaResource createSchema(@NonNull String schemaId, SchemaConfig initialVersion) {
+    SchemaResource resource = super.createSchema(schemaId, initialVersion);
+    writeVersion(rootDirectory, resource);
+    return resource;
   }
 
-  private void loadFile(File child) throws IOException {
-    try (FileInputStream fileInputStream = new FileInputStream(child)) {
-      int byte1 = fileInputStream.read();
-      int byte2 = fileInputStream.read();
-      if (byte1 == -1 || byte2 == -1) {
-        throw new EOFException("Unexpected end of file while reading length bytes.");
-      }
+  @Override
+  public synchronized SchemaResource addVersion(@NonNull String schemaId, @NonNull SchemaConfig version) {
+    SchemaResource created = super.addVersion(schemaId, version);
+    writeVersion(rootDirectory, created);
+    return created;
+  }
 
-      int len = byte1 & 0xff | (byte2 & 0xff) << 8;
-      byte[] contextBytes = new byte[len];
-      int read = 0;
-      while (read < len) {
-        int res = fileInputStream.read(contextBytes, read, len - read);
-        if (res < 0) {
-          throw new EOFException("End of file reached before reading expected context data.");
-        }
-        read += res;
-      }
-
-      String context = new String(contextBytes);
-      int remaining = (int) (child.length() - 2 - len); // Subtract 2 for the length bytes
-      byte[] schemaBytes = new byte[remaining];
-      int totalRead = 0;
-      while (totalRead < remaining) {
-        int res = fileInputStream.read(schemaBytes, totalRead, remaining - totalRead);
-        if (res < 0) {
-          throw new EOFException("End of file reached before reading expected schema data.");
-        }
-        totalRead += res;
-      }
-
-      SchemaConfig schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaBytes);
-      addSchema(context, schemaConfig);
+  @Override
+  public synchronized SchemaResource setDefaultVersion(@NonNull String schemaId, @NonNull String versionId) {
+    SchemaResource resource = super.setDefaultVersion(schemaId, versionId);
+    if (resource == null) {
+      return null;
     }
+    writeVersion(rootDirectory, resource);
+    return resource;
+  }
+
+  @Override
+  public synchronized SchemaResource updateMetadata(@NonNull String schemaId,
+                                       String version,
+                                       String documentation,
+                                       Map<String, String> labels) {
+    SchemaResource resource = super.updateMetadata(schemaId, version, documentation, labels);
+    if (resource != null) {
+      File schemaDir = new File(rootDirectory, schemaId);
+      writeVersion(schemaDir, resource);
+    }
+    return resource;
+  }
+
+  @Override
+  public synchronized boolean deleteVersion(@NonNull String schemaId, @NonNull String versionId, boolean force) {
+    boolean removed = super.deleteVersion(schemaId, versionId, force);
+    if (!removed) {
+      return false;
+    }
+    SchemaResource resource = super.getResource(schemaId);
+    if (resource == null || resource.isEmpty()) {
+      deleteResource(schemaId);
+    }
+    return true;
+  }
+
+  @Override
+  public synchronized boolean deleteResource(String schemaId) {
+    if (super.deleteResource(schemaId)) {
+      File versionFile = new File(rootDirectory, schemaId + VERSION_SUFFIX);
+      try {
+        return Files.deleteIfExists(versionFile.toPath());
+      } catch (IOException e) {
+        logger.log(FILE_REPO_UNABLE_TO_DELETE_EXCEPTION, e);
+      }
+    }
+    return false;
   }
 
 
   @Override
-  public SchemaConfig addSchema(@NonNull String context, @NonNull SchemaConfig config) {
-    File schemafile = new File(rootDirectory, config.getUniqueId());
-    try (FileOutputStream fileOutputStream = new FileOutputStream(schemafile)) {
-      byte[] contextBytes = context.getBytes();
-      int len = contextBytes.length;
-      fileOutputStream.write(((byte) len & 0xff));
-      fileOutputStream.write(((byte) (len >> 8) & 0xff));
-      fileOutputStream.write(contextBytes);
-      fileOutputStream.write(config.pack().getBytes());
-      fileOutputStream.flush();
-    }
-    catch (IOException ex){
-      logger.log(FILE_REPO_UNABLE_TO_SAVE_EXCEPTION, ex);
-    }
-    return super.addSchema(context, config);
+  public synchronized List<SchemaConfig> listVersions(@NonNull String schemaId, int page, int size) {
+    return super.listVersions(schemaId, page, size);
   }
 
   @Override
-  public void removeSchema(@NonNull String uuid) {
-    super.removeSchema(uuid);
+  public synchronized List<SchemaResource> search(String format, Map<String, String> labelFilter, int page, int size) {
+    return super.search(format, labelFilter, page, size);
+  }
+
+  @Override
+  public synchronized List<SchemaResource> getAllSchemas() {
+    return super.getAllSchemas();
+  }
+
+  private void loadAll() throws IOException {
+    File[] schemaDirs = rootDirectory.listFiles(File::isFile);
+    if (schemaDirs == null) {
+      return;
+    }
+    for (File schemaDir : schemaDirs) {
+      SchemaResource resource1 = readVersion(schemaDir);
+      resourcesBySchemaId.put(resource1.getSchemaId(), resource1);
+    }
+  }
+
+  private void writeVersion(File schemaDir, SchemaResource resource) {
+    if (resource == null) {
+      return;
+    }
+    File file = new File(schemaDir, resource.getSchemaId() + VERSION_SUFFIX);
     try {
-      Files.delete(new File(rootDirectory, uuid).toPath());
+      Files.write(file.toPath(), gson.toJson(resource).getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     } catch (IOException e) {
-      logger.log(FILE_REPO_UNABLE_TO_DELETE_EXCEPTION, e);
+      logger.log(FILE_REPO_UNABLE_TO_SAVE_EXCEPTION, e);
     }
   }
 
-  @Override
-  public void removeAllSchemas() {
-    List<String> uniqueIds = new ArrayList<>(super.mapByUUID.keySet());
-    for(String uniqueId:uniqueIds){
-      removeSchema(uniqueId);
+  private SchemaResource readVersion(File versionFile) throws IOException {
+    byte[] bytes = Files.readAllBytes(versionFile.toPath());
+    if (bytes.length == 0) {
+      throw new EOFException("Empty version file: " + versionFile.getAbsolutePath());
     }
+    SchemaResource version = gson.fromJson(new String(bytes), SchemaResource.class);
+    for (SchemaConfig entry : version.getAll()) {
+      if (entry.getCreatedAt() == null) {
+        entry.setCreatedAt(OffsetDateTime.now());
+      }
+      if (entry.getModifiedAt() == null) {
+        entry.setModifiedAt(entry.getCreatedAt());
+      }
+    }
+    if (version.getDefaultVersion() != null) {
+      if (version.getDefaultVersion().getCreatedAt() == null) {
+        version.getDefaultVersion().setCreatedAt(OffsetDateTime.now());
+      }
+      if (version.getDefaultVersion().getModifiedAt() == null) {
+        version.getDefaultVersion().setModifiedAt(version.getDefaultVersion().getCreatedAt());
+      }
+    }
+    return version;
   }
 }

@@ -1,0 +1,79 @@
+{
+  "messageKey": 0,
+  "fields": [
+    {
+      "name": "stringId",
+      "type": "string",
+      "fixed": false,
+      "size": 64,
+      "description": "ASCII string up to 64 chars"
+    },
+    {
+      "name": "intId",
+      "type": "int",
+      "size": 32
+    },
+    {
+      "name": "longId",
+      "type": "int",
+      "size": 64
+    },
+    {
+      "name": "floatId",
+      "type": "int",
+      "size": 32,
+      "encalc": "v*1000",
+      "decalc": "v/1000",
+      "description": "float scaled ×1000"
+    },
+    {
+      "name": "doubleId",
+      "type": "int",
+      "size": 64,
+      "encalc": "v*1000000",
+      "decalc": "v/1000000",
+      "description": "double scaled ×1e6"
+    },
+    {
+      "name": "booleanId",
+      "type": "uint",
+      "size": 1,
+      "description": "boolean flag (0=false, 1=true)"
+    },
+    {
+      "name": "bytesId",
+      "type": "data",
+      "fixed": true,
+      "size": 64,
+      "description": "binary block (base64-encoded)"
+    },
+    {
+      "name": "arrayId",
+      "type": "struct",
+      "description": "fixed 5-element int array",
+      "fields": [
+        { "name": "a0", "type": "int", "size": 32 },
+        { "name": "a1", "type": "int", "size": 32 },
+        { "name": "a2", "type": "int", "size": 32 },
+        { "name": "a3", "type": "int", "size": 32 },
+        { "name": "a4", "type": "int", "size": 32 }
+      ]
+    },
+    {
+      "name": "enumId",
+      "type": "uint",
+      "size": 8,
+      "enumTable": {
+        "0": "RED",
+        "1": "GREEN",
+        "2": "BLUE"
+      }
+    },
+    {
+      "name": "timestampId",
+      "type": "int",
+      "size": 64,
+      "description": "epoch millis scaled down ×1000"
+    }
+  ]
+}

@@ -26,20 +26,19 @@ import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.networknt.schema.JsonSchema;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.SpecVersion;
-import com.networknt.schema.ValidationMessage;
+import com.networknt.schema.Error;
+import com.networknt.schema.Schema;
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.dialect.Dialects;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.config.impl.CborSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.JSON_PARSE_EXCEPTION;
@@ -47,7 +46,7 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.JSON_PARSE_EXCE
 public class CborFormatter extends MessageFormatter {
 
   private final JsonNode schemaNode;
-  private final JsonSchema schema;
+  private final Schema schema;
 
   public CborFormatter() {
     schemaNode = null;
@@ -57,7 +56,9 @@ public class CborFormatter extends MessageFormatter {
   public CborFormatter(String schemaString) throws IOException {
     ObjectMapper objectMapper = new ObjectMapper();
     schemaNode = objectMapper.readTree(schemaString);
-    schema = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7).getSchema(schemaNode);
+    // Create JsonSchema instance
+    SchemaRegistry schemaRegistry = SchemaRegistry.withDialect(Dialects.getDraft7());
+    schema = schemaRegistry.getSchema(schemaNode);
   }
 
   @Override
@@ -68,7 +69,7 @@ public class CborFormatter extends MessageFormatter {
 
       if (schema != null) {
         JsonNode node = cborMapper.readTree(payload);
-        Set<ValidationMessage> validationResult = schema.validate(node);
+        List<Error> validationResult = schema.validate(node);
         if (!validationResult.isEmpty()) {
           logger.log(JSON_PARSE_EXCEPTION, getName(), validationResult);
           return new DefaultParser(payload);
@@ -92,8 +93,19 @@ public class CborFormatter extends MessageFormatter {
   }
 
   @Override
+  public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
+    ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> map = new Gson().fromJson(jsonObject, Map.class);
+
+    return cborMapper.writeValueAsBytes(map);
+  }
+
+
+  @Override
   public MessageFormatter getInstance(SchemaConfig config) throws IOException {
-    return new CborFormatter(((CborSchemaConfig) config).getSchema());
+    return new CborFormatter(SchemaConfig.gson.toJson(config.getSchema()));
   }
 
   @Override

@@ -19,64 +19,43 @@
  */
 package io.mapsmessaging.schemas.config.impl;
 
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-
-import java.util.Map;
-
-import static io.mapsmessaging.schemas.config.SchemaConfigFactory.gson;
 
 /**
  * The type Json schema config.
  */
 @Schema(description = "JSON Schema Configuration")
-public class JsonSchemaConfig extends SimpleSchemaConfig {
+public class JsonSchemaConfig extends SchemaConfig {
 
   private static final String EMPTY_SCHEMA = "{}";
-  private static final String NAME = "JSON";
-
-  @Getter
-  private final String schema;
+  private static final String NAME = "json";
 
   /**
    * Instantiates a new Json schema config.
    */
   public JsonSchemaConfig() {
     super(NAME);
-    schema = EMPTY_SCHEMA;
-    setMimeType("application/json");
+    setSchema(JsonParser.parseString(EMPTY_SCHEMA).getAsJsonObject());
   }
 
   public JsonSchemaConfig(String schema) {
     super(NAME);
-    this.schema = schema;
-    setMimeType("application/json");
+    setSchema(JsonParser.parseString(schema).getAsJsonObject());
   }
 
-  private JsonSchemaConfig(Map<String, Object> config) {
-    super(NAME, config);
-    Object obj = config.get("jsonSchema");
-    if (obj instanceof Map) {
-      @SuppressWarnings("unchecked")
-      JsonObject jsonSchema = gson.toJsonTree((Map<String, Object>) obj).getAsJsonObject();
-      schema = gson.toJson(jsonSchema);
-    } else {
-      schema = EMPTY_SCHEMA;
-    }
-  }
-
-  protected SchemaConfig getInstance(Map<String, Object> config) {
-    return new JsonSchemaConfig(config);
+  private JsonSchemaConfig(SchemaConfig config) {
+    super(config);
   }
 
   @Override
-  protected void packData(JsonObject jsonObject) {
-    super.packData(jsonObject);
-    JsonObject schemaObject = JsonParser.parseString(schema).getAsJsonObject();
-    jsonObject.add("jsonSchema", schemaObject);
-
+  public String getMimeType() {
+    return "application/json";
   }
+
+  public SchemaConfig getInstance(SchemaConfig config) {
+    return new JsonSchemaConfig(config);
+  }
+
 }

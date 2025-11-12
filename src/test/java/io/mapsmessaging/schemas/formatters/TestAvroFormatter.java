@@ -30,6 +30,8 @@ import org.apache.avro.specific.SpecificDatumWriter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +44,11 @@ class TestAvroFormatter extends BaseTest {
     personA.setLongId(p.getLongId());
     personA.setFloatId(p.getFloatId());
     personA.setDoubleId(p.getDoubleId());
+    personA.setArrayId(List.of(1, 2, 3, 4, 5));
+    personA.setBooleanId(true);
+    personA.setEnumId(Color.BLUE);
+    personA.setTimestampId(Instant.now());
+    personA.setBytesId(ByteBuffer.allocate(10));
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     Encoder binaryEncoder = EncoderFactory.get().binaryEncoder(stream, null);
     DatumWriter<PersonAvro> writer = new SpecificDatumWriter<>(PersonAvro.class);

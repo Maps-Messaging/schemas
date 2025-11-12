@@ -20,14 +20,12 @@
 
 package io.mapsmessaging.schemas.formatters;
 
-import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.RawSchemaConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.UUID;
 
 class TestFormatConstructors {
@@ -51,23 +49,21 @@ class TestFormatConstructors {
 
     protected BadSchema() {
       super("BAD");
-      uniqueId = UUID.randomUUID().toString();
+      setVersionId(UUID.randomUUID().toString());
     }
 
-    protected BadSchema(String format, Map<String, Object> config) {
-      super(format, config);
-    }
-
-    @Override
-    protected JsonObject packData() {
-      JsonObject data = new JsonObject();
-      packData(data);
-      return data;
+    protected BadSchema(SchemaConfig config) {
+      super(config);
     }
 
     @Override
-    protected SchemaConfig getInstance(Map<String, Object> config) {
-      return this;
+    public SchemaConfig getInstance(SchemaConfig config) {
+      return new BadSchema(config);
+    }
+
+    @Override
+    public String getMimeType() {
+      return "";
     }
   }
 

@@ -28,26 +28,23 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 class TestNativeConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties() {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "Native");
-    props.put("type", TYPE.DOUBLE.toString());
+  SchemaConfig getProperties() {
+    NativeSchemaConfig props = new NativeSchemaConfig();
+    props.setType(TYPE.DOUBLE);
     return props;
   }
 
   @Override
   SchemaConfig buildConfig() {
-    NativeSchemaConfig config = new NativeSchemaConfig();
-    config.setType(TYPE.DOUBLE);
-    setBaseConfig(config);
-    return config;
+    NativeSchemaConfig props = new NativeSchemaConfig();
+    props.setType(TYPE.DOUBLE);
+    setBaseConfig(props);
+    return props;
   }
 
   @Override
@@ -62,8 +59,8 @@ class TestNativeConfig extends GeneralBaseTest {
   void invalidConfig() {
     NativeSchemaConfig config = new NativeSchemaConfig();
     config.setUniqueId(UUID.randomUUID());
-    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
-    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    config.setExpiresAfter(OffsetDateTime.now().plusDays(10));
+    config.setNotBefore(OffsetDateTime.now().minusDays(10));
     Assertions.assertThrowsExactly(IOException.class, config::pack);
   }
 
@@ -73,24 +70,17 @@ class TestNativeConfig extends GeneralBaseTest {
       NativeSchemaConfig config = new NativeSchemaConfig();
       config.setType(type);
       config.setUniqueId(UUID.randomUUID());
-      config.setExpiresAfter(LocalDateTime.now().plusDays(10));
-      config.setNotBefore(LocalDateTime.now().minusDays(10));
-      JsonObject jsonObject = JsonParser.parseString(config.pack()).getAsJsonObject();
+      config.setExpiresAfter(OffsetDateTime.now().plusDays(10));
+      config.setNotBefore(OffsetDateTime.now().minusDays(10));
+      JsonObject jsonObject = JsonParser.parseString(new String(config.pack())).getAsJsonObject();
       Assertions.assertEquals(type.toString(), jsonObject.getAsJsonObject("schema").get("type").getAsString());
 
     }
 
     for (TYPE type : NativeSchemaConfig.TYPE.values()) {
-
-      Map<String, Object> props = new LinkedHashMap<>();
-      props.put("format", "Native");
-      props.put("type", type.toString());
-      props.put("uuid", UUID.randomUUID());
-      Map<String, Object> schema = new LinkedHashMap<>();
-      schema.put("schema", props);
-
-      SchemaConfig config = SchemaConfigFactory.getInstance().constructConfig(schema);
-      JsonObject jsonObject = JsonParser.parseString(config.pack()).getAsJsonObject();
+      NativeSchemaConfig props = new NativeSchemaConfig();
+      props.setType(type);
+      JsonObject jsonObject = JsonParser.parseString(new String(props.pack())).getAsJsonObject();
       Assertions.assertEquals(type.toString(), jsonObject.getAsJsonObject("schema").get("type").getAsString());
     }
   }

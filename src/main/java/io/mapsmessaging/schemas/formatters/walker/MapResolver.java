@@ -46,7 +46,7 @@ public class MapResolver implements ParsedObject {
   /**
    * Instantiates a new Map resolver.
    *
-   * @param map the map
+   * @param map                 the map
    * @param parseStringNumerics the parse string numerics
    */
   public MapResolver(Map<String, Object> map, boolean parseStringNumerics) {

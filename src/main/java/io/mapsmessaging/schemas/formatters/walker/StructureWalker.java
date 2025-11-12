@@ -37,7 +37,7 @@ public class StructureWalker {
   /**
    * Locate object object.
    *
-   * @param resolver the resolver
+   * @param resolver   the resolver
    * @param searchPath the search path
    * @return the object
    */
@@ -68,6 +68,8 @@ public class StructureWalker {
       return lookup;
     } else if (lookup instanceof BigDecimal) {
       return ((BigDecimal) lookup).doubleValue();
+    } else if (lookup instanceof byte[]) {
+      return lookup;
     }
     return lookup.toString();
   }

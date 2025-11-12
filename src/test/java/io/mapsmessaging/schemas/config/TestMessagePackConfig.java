@@ -23,15 +23,12 @@ package io.mapsmessaging.schemas.config;
 import io.mapsmessaging.schemas.config.impl.MessagePackSchemaConfig;
 import org.junit.jupiter.api.Assertions;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class TestMessagePackConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties() {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "MessagePack");
-    return props;
+  SchemaConfig getProperties() {
+    MessagePackSchemaConfig config = new MessagePackSchemaConfig();
+    return config;
   }
 
   @Override

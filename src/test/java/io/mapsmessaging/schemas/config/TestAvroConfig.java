@@ -20,6 +20,8 @@
 
 package io.mapsmessaging.schemas.config;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -27,29 +29,25 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public class TestAvroConfig extends GeneralBaseTest {
 
-  public static String getSchema() throws IOException {
+  public static JsonObject getSchema() throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
     byte[] tmp = new byte[10240];
     try (InputStream fis = TestProtobufConfig.class.getClassLoader().getResourceAsStream("avro/Person.avsc")) {
       int len = fis.read(tmp);
       baos.write(tmp, 0, len);
     }
-    return baos.toString();
+    return JsonParser.parseString(baos.toString()).getAsJsonObject();
   }
 
-  Map<String, Object> getProperties() throws IOException {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "AVRO");
-    props.put("schema", new String(Base64.getEncoder().encode(getSchema().getBytes())));
-    return props;
+  SchemaConfig getProperties() throws IOException {
+    AvroSchemaConfig config = new AvroSchemaConfig();
+    config.setSchema(getSchema());
+    return config;
   }
 
   @Override
@@ -62,7 +60,7 @@ public class TestAvroConfig extends GeneralBaseTest {
 
   @Override
   void validate(SchemaConfig schemaConfig) throws IOException {
-    Assertions.assertTrue(schemaConfig instanceof AvroSchemaConfig);
+    Assertions.assertInstanceOf(AvroSchemaConfig.class, schemaConfig);
     AvroSchemaConfig config = (AvroSchemaConfig) schemaConfig;
     Assertions.assertEquals(getSchema(), config.getSchema());
   }
@@ -71,8 +69,8 @@ public class TestAvroConfig extends GeneralBaseTest {
   void invalidConfig() {
     AvroSchemaConfig config = new AvroSchemaConfig();
     config.setUniqueId(UUID.randomUUID());
-    config.setExpiresAfter(LocalDateTime.now().plusDays(10));
-    config.setNotBefore(LocalDateTime.now().minusDays(10));
+    config.setExpiresAfter(OffsetDateTime.now().plusDays(10));
+    config.setNotBefore(OffsetDateTime.now().minusDays(10));
     Assertions.assertThrowsExactly(IOException.class, config::pack);
   }
 }

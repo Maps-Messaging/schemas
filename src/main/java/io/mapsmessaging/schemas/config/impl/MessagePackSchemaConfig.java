@@ -20,55 +20,35 @@
 
 package io.mapsmessaging.schemas.config.impl;
 
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import lombok.Getter;
 
-import java.util.Map;
+public class MessagePackSchemaConfig extends SchemaConfig {
 
-import static io.mapsmessaging.schemas.config.SchemaConfigFactory.gson;
-
-public class MessagePackSchemaConfig extends SimpleSchemaConfig {
-
-  private static final String NAME = "MessagePack";
-
-  @Getter
-  private final String schema;
+  private static final String NAME = "messagepack";
 
   public MessagePackSchemaConfig() {
     super(NAME);
-    schema = "{}";
-    setMimeType("application/msgpack");
+    setSchema(JsonParser.parseString("{}").getAsJsonObject());
+
   }
 
   public MessagePackSchemaConfig(String schema) {
     super(NAME);
-    this.schema = schema;
-    setMimeType("application/msgpack");
+    setSchema(JsonParser.parseString(schema).getAsJsonObject());
   }
 
-  private MessagePackSchemaConfig(Map<String, Object> config) {
-    super(NAME, config);
-    Object obj = config.get("jsonSchema");
-    if (obj instanceof Map) {
-      @SuppressWarnings("unchecked")
-      JsonObject jsonSchema = gson.toJsonTree((Map<String, Object>) obj).getAsJsonObject();
-      schema = gson.toJson(jsonSchema);
-    } else {
-      schema = "{}";
-    }
+  private MessagePackSchemaConfig(SchemaConfig config) {
+    super(config);
   }
 
   @Override
-  protected void packData(JsonObject jsonObject) {
-    super.packData(jsonObject);
-    JsonObject schemaObject = JsonParser.parseString(schema).getAsJsonObject();
-    jsonObject.add("jsonSchema", schemaObject);
+  public String getMimeType() {
+    return "application/msgpack";
   }
 
   @Override
-  protected SchemaConfig getInstance(Map<String, Object> config) {
+  public SchemaConfig getInstance(SchemaConfig config) {
     return new MessagePackSchemaConfig(config);
   }
 }

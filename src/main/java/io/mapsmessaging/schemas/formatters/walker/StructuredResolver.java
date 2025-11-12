@@ -37,7 +37,7 @@ public class StructuredResolver implements ParsedObject {
   /**
    * Instantiates a new Structured resolver.
    *
-   * @param resolver the resolver
+   * @param resolver  the resolver
    * @param reference the reference
    */
   public StructuredResolver(IdentifierResolver resolver, Object reference) {

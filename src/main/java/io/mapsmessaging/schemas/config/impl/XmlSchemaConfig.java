@@ -19,71 +19,54 @@
  */
 package io.mapsmessaging.schemas.config.impl;
 
-import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Map;
 
 /**
  * The type Xml schema config.
  */
 @Schema(description = "XML Schema Configuration")
-public class XmlSchemaConfig extends SimpleSchemaConfig {
+public class XmlSchemaConfig extends SchemaConfig {
 
-  private static final String NAME = "XML";
-  private static final String ROOT = "root";
-  private static final String NAMESPACE_AWARE_HEADER = "namespaceAware";
-  private static final String VALIDATING_HEADER = "validating";
-  private static final String COALESCING_HEADER = "coalescing";
-
-  @Getter
-  @Setter
-  private String rootEntry;
-
-  @Getter
-  @Setter
-  private boolean namespaceAware = false;
-
-  @Getter
-  @Setter
-  private boolean validating = false;
-
-  @Getter
-  @Setter
-  private boolean coalescing = false;
+  private static final String NAME = "xml";
 
   /**
    * Instantiates a new Xml schema config.
    */
   public XmlSchemaConfig() {
     super(NAME);
-    setMimeType("application/xml");
   }
 
-  private XmlSchemaConfig(Map<String, Object> config) {
-    super(NAME, config);
-    rootEntry = config.getOrDefault("root", "").toString();
-    namespaceAware = (Boolean) config.getOrDefault(NAMESPACE_AWARE_HEADER, false);
-    validating = (Boolean) config.getOrDefault(VALIDATING_HEADER, false);
-    coalescing = (Boolean) config.getOrDefault(COALESCING_HEADER, false);
+  private XmlSchemaConfig(SchemaConfig config) {
+    super(config);
   }
 
-  protected SchemaConfig getInstance(Map<String, Object> config) {
+  public SchemaConfig getInstance(SchemaConfig config) {
     return new XmlSchemaConfig(config);
   }
 
   @Override
-  protected JsonObject packData() {
-    JsonObject data = new JsonObject();
-    packData(data);
-    data.addProperty(ROOT, rootEntry);
-    data.addProperty(NAMESPACE_AWARE_HEADER, namespaceAware);
-    data.addProperty(VALIDATING_HEADER, validating);
-    data.addProperty(COALESCING_HEADER, coalescing);
-    return data;
+  public String getMimeType() {
+    return "application/xml";
   }
 
+  public XmlConfig getConfig() {
+    return gson.fromJson(getSchema(), XmlConfig.class);
+  }
+
+  public void setConfig(XmlConfig xmlConfig) {
+    setSchema(gson.toJsonTree(xmlConfig).getAsJsonObject());
+  }
+
+  @Getter
+  @Setter
+  public static final class XmlConfig {
+    private String rootEntry;
+    private boolean namespaceAware = false;
+    private boolean validating = false;
+    private boolean coalescing = false;
+  }
 }

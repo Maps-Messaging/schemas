@@ -25,18 +25,29 @@ public class Constants {
   public static final String SCHEMA = "schema";
   public static final String FORMAT = "format";
 
-
   public static final String UUID = "uuid";
   public static final String NAME = "name";
   public static final String MATCH = "match";
+
+  public static final String UPDATED = "updated";
   public static final String NOT_BEFORE = "notBefore";
   public static final String EXPIRES_AFTER = "expiresAfter";
 
   public static final String CREATION = "creation";
   public static final String COMMENTS = "comments";
+  public static final String DESCRIPTION = "description";
+  public static final String LABELS = "labels";
+
   public static final String SOURCE = "source";
   public static final String TITLE = "title";
   public static final String VERSION = "version";
+  public static final String VERSION_ID = "versionId";
+  public static final String ANCESTOR = "ancestor";
+  public static final String SELF_URL = "selfUrl";
+  public static final String SCHEMA_URL = "schemaUrl";
+  public static final String DOCUMENTATION_URL = "documentationUrl";
+  public static final String VALIDATED = "validated";
+
   public static final String MIME_TYPE = "mime-type";
   public static final String RESOURCE_TYPE = "resource-type";
   public static final String INTERFACE_DESCRIPTION = "interface-description";

@@ -20,6 +20,7 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig;
@@ -28,6 +29,7 @@ import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
@@ -109,6 +111,16 @@ public class NativeFormatter extends MessageFormatter {
     return val;
   }
 
+  private static byte[] writeToByteArray(long value, int size) {
+    byte[] payload = new byte[size];
+    for (int x = 0; x < size; x++) {
+      payload[x] = (byte) ((value >> (x * 8)) & 0xFF);
+    }
+    return payload;
+  }
+
+
+
   @Override
   public ParsedObject parse(byte[] payload) {
     return new ParsedObject() {
@@ -126,9 +138,9 @@ public class NativeFormatter extends MessageFormatter {
           return null;
         }
       }
-
     };
   }
+
 
   @Override
   public JsonObject parseToJson(byte[] payload) throws IOException {
@@ -141,6 +153,11 @@ public class NativeFormatter extends MessageFormatter {
     }
     jsonObject.addProperty("type", type.name());
     return jsonObject;
+  }
+
+  @Override
+  public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
+    return encoderDecoder.encode(jsonObject.get(VALUE));
   }
 
   @Override
@@ -181,6 +198,8 @@ public class NativeFormatter extends MessageFormatter {
      * @return the object
      */
     Object decode(byte[] payload);
+
+    byte[] encode(JsonElement object);
   }
 
   /**
@@ -191,6 +210,10 @@ public class NativeFormatter extends MessageFormatter {
     @Override
     public Object decode(byte[] payload) {
       return new String(payload);
+    }
+
+    public byte[] encode(JsonElement object) {
+      return object.getAsString().getBytes(StandardCharsets.UTF_8);
     }
 
   }
@@ -211,6 +234,11 @@ public class NativeFormatter extends MessageFormatter {
       }
       return Long.parseLong(val);
     }
+
+    public byte[] encode(JsonElement object) {
+      return object.getAsString().getBytes(StandardCharsets.UTF_8);
+    }
+
   }
 
   /**
@@ -248,6 +276,11 @@ public class NativeFormatter extends MessageFormatter {
           return result;
       }
     }
+
+    public byte[] encode(JsonElement object) {
+      int val = object.getAsJsonPrimitive().getAsInt();
+      return writeToByteArray(val, size);
+    }
   }
 
   /**
@@ -260,6 +293,12 @@ public class NativeFormatter extends MessageFormatter {
       long val = readFromByteArray(payload, 4);
       return Float.intBitsToFloat((int) val);
     }
+
+    public byte[] encode(JsonElement object) {
+      float val = object.getAsJsonPrimitive().getAsFloat();
+      long floatVal = Float.floatToRawIntBits(val);
+      return writeToByteArray(floatVal, 4);
+    }
   }
 
   /**
@@ -271,6 +310,12 @@ public class NativeFormatter extends MessageFormatter {
     public Object decode(byte[] payload) {
       long val = readFromByteArray(payload, 8);
       return Double.longBitsToDouble(val);
+    }
+
+    public byte[] encode(JsonElement object) {
+      float val = object.getAsJsonPrimitive().getAsFloat();
+      long doubleVal = Double.doubleToLongBits(val);
+      return writeToByteArray(doubleVal, 4);
     }
   }
 }

@@ -20,55 +20,29 @@
 
 package io.mapsmessaging.schemas.config.impl;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import lombok.Getter;
 
-import java.util.Map;
+public class CborSchemaConfig extends SchemaConfig {
 
-import static io.mapsmessaging.schemas.config.SchemaConfigFactory.gson;
-
-public class CborSchemaConfig extends SimpleSchemaConfig {
-
-  private static final String NAME = "CBOR";
-
-  @Getter
-  private final String schema;
+  private static final String NAME = "cbor";
 
   public CborSchemaConfig() {
     super(NAME);
-    schema = "{}";
-    setMimeType("application/cbor");
   }
 
-  public CborSchemaConfig(String schema) {
-    super(NAME);
-    this.schema = schema;
-    setMimeType("application/cbor");
-  }
 
-  private CborSchemaConfig(Map<String, Object> config) {
-    super(NAME, config);
-    Object obj = config.get("jsonSchema");
-    if (obj instanceof Map) {
-      @SuppressWarnings("unchecked")
-      JsonObject jsonSchema = gson.toJsonTree((Map<String, Object>) obj).getAsJsonObject();
-      schema = gson.toJson(jsonSchema);
-    } else {
-      schema = "{}";
-    }
+  public CborSchemaConfig(SchemaConfig config) {
+    super(config);
   }
 
   @Override
-  protected void packData(JsonObject jsonObject) {
-    super.packData(jsonObject);
-    JsonObject schemaObject = JsonParser.parseString(schema).getAsJsonObject();
-    jsonObject.add("jsonSchema", schemaObject);
+  public String getMimeType() {
+    return "application/cbor";
   }
 
   @Override
-  protected SchemaConfig getInstance(Map<String, Object> config) {
+  public SchemaConfig getInstance(SchemaConfig config) {
     return new CborSchemaConfig(config);
   }
+
 }

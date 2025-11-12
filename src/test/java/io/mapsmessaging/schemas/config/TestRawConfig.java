@@ -23,15 +23,10 @@ package io.mapsmessaging.schemas.config;
 import io.mapsmessaging.schemas.config.impl.RawSchemaConfig;
 import org.junit.jupiter.api.Assertions;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 class TestRawConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties() {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "RAW");
-    return props;
+  SchemaConfig getProperties() {
+    return new RawSchemaConfig();
   }
 
   @Override
@@ -43,7 +38,7 @@ class TestRawConfig extends GeneralBaseTest {
 
   @Override
   void validate(SchemaConfig schemaConfig) {
-    Assertions.assertTrue(schemaConfig instanceof RawSchemaConfig);
+    Assertions.assertInstanceOf(RawSchemaConfig.class, schemaConfig);
   }
 
 

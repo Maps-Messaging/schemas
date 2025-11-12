@@ -1,0 +1,4 @@
+{
+  "headerValues": "stringId,intId,longId,floatId,doubleId,booleanId,bytesId,arrayId,enumId,timestampId",
+  "interpretNumericStrings": true
+}

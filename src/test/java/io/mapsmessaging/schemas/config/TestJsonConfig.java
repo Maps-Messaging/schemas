@@ -23,15 +23,10 @@ package io.mapsmessaging.schemas.config;
 import io.mapsmessaging.schemas.config.impl.JsonSchemaConfig;
 import org.junit.jupiter.api.Assertions;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 class TestJsonConfig extends GeneralBaseTest {
 
-  Map<String, Object> getProperties() {
-    Map<String, Object> props = new LinkedHashMap<>();
-    props.put("format", "JSON");
-    return props;
+  SchemaConfig getProperties() {
+    return new JsonSchemaConfig();
   }
 
   @Override

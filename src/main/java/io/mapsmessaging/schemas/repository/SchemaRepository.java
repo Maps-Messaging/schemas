@@ -21,71 +21,118 @@
 package io.mapsmessaging.schemas.repository;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.config.SchemaResource;
+import lombok.NonNull;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * The interface Schema repository.
+ * Repository API for schema resources and their versions.
+ * Runtime bindings (context → schema) are handled elsewhere.
  */
 public interface SchemaRepository {
 
   /**
-   * Add schema schema config.
+   * Create a new schema resource with an optional initial default version.
    *
-   * @param context the context
-   * @param config the config
-   * @return the schema config
+   * @param schemaId       the schema identifier
+   * @param initialVersion the initial version (nullable)
+   * @return the created resource
    */
-  SchemaConfig addSchema(String context, SchemaConfig config);
+  SchemaResource createSchema(String schemaId, SchemaConfig initialVersion);
 
   /**
-   * Gets schema.
+   * Get a schema resource with the default version inlined.
    *
-   * @param uuid the uuid
-   * @return the schema
+   * @param schemaId the schema identifier
+   * @return the resource or null if not found
    */
-  SchemaConfig getSchema(String uuid);
+  SchemaResource getResource(String schemaId);
 
   /**
-   * Gets schema by context.
+   * Deletes the resource and all versions bound to it
    *
-   * @param context the context
-   * @return the schema by context
+   * @param schemaId
+   * @return true if successful
    */
-  List<SchemaConfig> getSchemaByContext(String context);
+  boolean deleteResource(String schemaId);
 
   /**
-   * Gets schemas.
+   * Get a specific version for a schema.
    *
-   * @param type the type
-   * @return the schemas
+   * @param schemaId  the schema identifier
+   * @param versionId the version identifier
+   * @return the version or null if not found
    */
-  List<SchemaConfig> getSchemas(String type);
+  SchemaConfig getVersion(String schemaId, String versionId);
 
   /**
-   * Gets all.
+   * Add a new version to an existing schema.
    *
-   * @return the all
+   * @param schemaId the schema identifier
+   * @param version  the version payload
+   * @return the created version (with ids and timestamps)
    */
-  List<SchemaConfig> getAll();
+  SchemaResource addVersion(String schemaId, SchemaConfig version);
 
   /**
-   * get mapped schemas
+   * Set the default version for a schema.
    *
-   * @return a map of schema configurations keyed on a context, could be path name for example
+   * @param schemaId  the schema identifier
+   * @param versionId the version identifier to set as default
+   * @return the updated resource
    */
-  Map<String, List<SchemaConfig>> getMappedSchemas();
+  SchemaResource setDefaultVersion(String schemaId, String versionId);
 
   /**
-   * Remove schema.
+   * List versions for a schema.
    *
-   * @param uuid the uuid
+   * @param schemaId the schema identifier
+   * @param page     zero-based page index
+   * @param size     page size
+   * @return versions in the requested page
    */
-  void removeSchema(String uuid);
+  List<SchemaConfig> listVersions(String schemaId, int page, int size);
 
   /**
-   * Remove all schemas.
+   * Search schemas by format and label predicates.
+   *
+   * @param format      optional format filter (e.g., AVRO, PROTOBUF)
+   * @param labelFilter optional exact-match labels filter
+   * @param page        zero-based page index
+   * @param size        page size
+   * @return matching resources (default version inlined)
    */
-  void removeAllSchemas();
+  List<SchemaResource> search(String format, Map<String, String> labelFilter, int page, int size);
+
+  /**
+   * Update resource-level metadata without changing schema bytes.
+   *
+   * @param schemaId      the schema identifier
+   * @param documentation optional documentation URL (nullable to leave unchanged)
+   * @param labels        optional labels to upsert (null to leave unchanged)
+   * @return the updated resource
+   */
+  public SchemaResource updateMetadata(@NonNull String schemaId,
+                                       String version,
+                                       String documentation,
+                                       Map<String, String> labels);
+
+  /**
+   * Delete a specific version.
+   *
+   * @param schemaId  the schema identifier
+   * @param versionId the version identifier
+   * @param force     if true, allow deleting the current default
+   * @return true if deleted
+   */
+  boolean deleteVersion(String schemaId, String versionId, boolean force);
+
+  /**
+   * Retrieves all registered schemas
+   *
+   * @return list of known schemas
+   */
+  List<SchemaResource> getAllSchemas();
 }

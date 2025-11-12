@@ -19,24 +19,24 @@
  */
 package io.mapsmessaging.schemas.config.impl;
 
+import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.swagger.v3.oas.annotations.media.Schema;
-
-import java.util.Map;
 
 /**
  * The type Raw schema config.
  */
 @Schema(description = "Raw Schema Configuration")
-public class RawSchemaConfig extends SimpleSchemaConfig {
+public class RawSchemaConfig extends SchemaConfig {
 
-  private static final String NAME = "RAW";
+  private static final String NAME = "raw";
 
   /**
    * Instantiates a new Raw schema config.
    */
   public RawSchemaConfig() {
     super(NAME);
+    setSchema(new JsonObject());
   }
 
   /**
@@ -44,13 +44,16 @@ public class RawSchemaConfig extends SimpleSchemaConfig {
    *
    * @param config the config
    */
-  protected RawSchemaConfig(Map<String, Object> config) {
-    super(NAME, config);
-    setMimeType("application/octet-stream");
+  protected RawSchemaConfig(SchemaConfig config) {
+    super(config);
   }
 
-  protected SchemaConfig getInstance(Map<String, Object> config) {
+  @Override
+  public String getMimeType() {
+    return "application/octet-stream";
+  }
+
+  public SchemaConfig getInstance(SchemaConfig config) {
     return new RawSchemaConfig(config);
   }
-
 }

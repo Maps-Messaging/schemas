@@ -56,7 +56,7 @@ class TestJsonFormatter extends BaseTest {
   }
 
   @Override
-  SchemaConfig getSchema()  {
+  SchemaConfig getSchema() {
     String jsonSchema = "{\n" +
         "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n" +
         "  \"type\": \"object\",\n" +
@@ -78,7 +78,7 @@ class TestJsonFormatter extends BaseTest {
     SchemaConfig config = getSchema();
     config.setUniqueId(UUID.randomUUID());
     config.setSource("test");
-    config.setVersion(1);
+    config.setVersion("1");
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
     JsonObject jsonObject = new JsonObject();
     jsonObject.addProperty("something_different", "hello");

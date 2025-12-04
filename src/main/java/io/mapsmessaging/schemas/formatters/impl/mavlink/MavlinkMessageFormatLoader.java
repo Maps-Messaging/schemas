@@ -25,34 +25,60 @@ import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkDialectDef
 import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkEnumDefinition;
 import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkMessageDefinition;
 import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkXmlParser;
+import org.xml.sax.SAXException;
 
-import java.io.File;
-import java.io.FileInputStream;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MavlinkMessageFormatLoader {
 
-  public static void main(String[] args) throws Exception {
-    MavlinkXmlParser definitionParser = new MavlinkXmlParser();
-    if (args.length > 0) {
-      File file = new File(args[0]);
-      MavlinkDialectDefinition def = definitionParser.parse(new FileInputStream(file), args[0]);
-      MavlinkMessageRegistry registry = MavlinkMessageRegistry.fromDialectDefinition(def);
-      MavlinkPayloadParser payloadParser = new MavlinkPayloadParser(registry);
-      MavlinkPayloadPacker packer = new  MavlinkPayloadPacker(registry);
-      MavlinkPayloadParser parser = new  MavlinkPayloadParser(registry);
+  public static MavlinkMessageFormatLoader getInstance() {
+    return loader;
+  }
 
-      int fieldCount = 0;
-      int enumCount = 0;
-      for (MavlinkMessageDefinition definition : def.getMessages()) {
-        System.out.println(definition);
-        fieldCount += definition.getFields().size();
-      }
-      for (MavlinkEnumDefinition definition : def.getEnumsByName().values()) {
-        System.out.println(definition);
-        enumCount += definition.getEntries().size();
-      }
-      System.err.println(fieldCount + " " + enumCount);
+  private static final MavlinkMessageFormatLoader loader = new MavlinkMessageFormatLoader();
 
+  private Map<String, MavlinkFormatter> dialects;
+
+  private MavlinkMessageFormatLoader() {
+    dialects = new ConcurrentHashMap<>();
+    try {
+      dialects.put("common", loadDefault());
+    } catch (Exception e) {
+      e.printStackTrace();
     }
+  }
+
+  public MavlinkFormatter getDialect(String dialectName) {
+    return dialects.get(dialectName);
+  }
+
+
+  protected MavlinkFormatter loadDefault() throws IOException, ParserConfigurationException, SAXException {
+    try (InputStream stream = getClass().getClassLoader().getResourceAsStream("mavlink/common.xml")) {
+      return loadFromStream(stream, "common");
+    }
+  }
+
+  private MavlinkFormatter loadFromStream(InputStream stream, String name) throws IOException, ParserConfigurationException, SAXException {
+    MavlinkXmlParser definitionParser = new MavlinkXmlParser();
+    MavlinkDialectDefinition def = definitionParser.parse(stream, name);
+    MavlinkMessageRegistry registry = MavlinkMessageRegistry.fromDialectDefinition(def);
+    MavlinkFormatter formatter = new MavlinkFormatter(new MavlinkPayloadPacker(registry), new MavlinkPayloadParser(registry));
+    int fieldCount = 0;
+    int enumCount = 0;
+    for (MavlinkMessageDefinition definition : def.getMessages()) {
+      System.out.println(definition);
+      fieldCount += definition.getFields().size();
+    }
+    for (MavlinkEnumDefinition definition : def.getEnumsByName().values()) {
+      System.out.println(definition);
+      enumCount += definition.getEntries().size();
+    }
+    System.err.println(fieldCount + " " + enumCount);
+    return formatter;
   }
 }

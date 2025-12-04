@@ -18,30 +18,26 @@
  *
  */
 
-package io.mapsmessaging.schemas.config.impl.mavlink;
+package io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields;
 
-import lombok.Data;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
-import java.util.ArrayList;
-import java.util.List;
+public class Int16FieldCodec extends AbstractMavlinkFieldCodec {
 
-@Data
-public class MavlinkEnumDefinition {
-  private String name;
-  private boolean bitmask;
-  private String description;
-  private List<MavlinkEnumEntry> entries = new ArrayList<>();
-
-  @Override
-  public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append(name)
-        .append(", bitmask=").append(bitmask)
-        .append(", description=").append(description).append("\n");
-    for (MavlinkEnumEntry entry : entries) {
-      builder.append(entry.toString()).append("\n");
-    }
-    return builder.toString();
+  public Int16FieldCodec() {
+    super(MavlinkWireType.INT16);
   }
 
+  @Override
+  public Object decode(ByteBuffer buffer) {
+    buffer.order(ByteOrder.LITTLE_ENDIAN);
+    return buffer.getShort();
+  }
+
+  @Override
+  public void encode(ByteBuffer buffer, Object value) {
+    buffer.order(ByteOrder.LITTLE_ENDIAN);
+    buffer.putShort(((Number) value).shortValue());
+  }
 }

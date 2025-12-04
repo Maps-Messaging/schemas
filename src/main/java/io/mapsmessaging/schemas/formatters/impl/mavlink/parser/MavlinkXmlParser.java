@@ -18,7 +18,7 @@
  *
  */
 
-package io.mapsmessaging.schemas.config.impl.mavlink;
+package io.mapsmessaging.schemas.formatters.impl.mavlink.parser;
 
 
 import org.w3c.dom.Document;
@@ -28,8 +28,6 @@ import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -183,18 +181,4 @@ public class MavlinkXmlParser {
     return text.trim();
   }
 
-  public static void main(String[] args) throws Exception {
-    MavlinkXmlParser parser = new MavlinkXmlParser();
-    if (args.length > 0) {
-      File file = new File(args[0]);
-      MavlinkDialectDefinition def = parser.parse(new FileInputStream(file), args[0]);
-      for (MavlinkMessageDefinition definition : def.getMessages()) {
-        System.out.println(definition);
-      }
-      for (MavlinkEnumDefinition definition : def.getEnumsByName().values()) {
-        System.out.println(definition);
-      }
-
-    }
-  }
 }

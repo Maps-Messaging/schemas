@@ -18,39 +18,42 @@
  *
  */
 
-package io.mapsmessaging.schemas.config.impl.mavlink;
+package io.mapsmessaging.schemas.formatters.impl.mavlink.message;
 
 
+import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkMessageDefinition;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
-public class MavlinkFieldDefinition {
-  private int index;
-  private String type;
+public class MavlinkCompiledMessage {
+
+  private int messageId;
+
   private String name;
-  private String units;
-  private String description;
-  private String enumName;
+
+  private MavlinkMessageDefinition messageDefinition;
+
+  private List<MavlinkCompiledField> compiledFields;
+
+  private int payloadSizeBytes;
 
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.append("\t Field[")
-        .append(index)
-        .append("] ")
-        .append(type)
-        .append(" ")
-        .append(name);
+    builder.append("CompiledMessage[id=")
+        .append(messageId)
+        .append(", name=")
+        .append(name)
+        .append(", payloadSize=")
+        .append(payloadSizeBytes)
+        .append("]\n");
 
-    if (units != null && !units.isEmpty()) {
-      builder.append(" (units=").append(units).append(")");
-    }
-    if (enumName != null && !enumName.isEmpty()) {
-      builder.append(" <enum=").append(enumName).append(">");
-    }
-    if (description != null && !description.isEmpty()) {
-      builder.append(" : ").append(description);
+    for (MavlinkCompiledField compiledField : compiledFields) {
+      builder.append("  ").append(compiledField.toString()).append("\n");
     }
     return builder.toString();
   }
 }
+

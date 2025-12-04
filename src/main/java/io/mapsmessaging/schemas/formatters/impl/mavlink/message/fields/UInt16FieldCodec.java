@@ -18,17 +18,27 @@
  *
  */
 
-package io.mapsmessaging.schemas.config.impl.mavlink;
+package io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields;
 
-import lombok.Data;
 
-import java.util.List;
-import java.util.Map;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
-@Data
-public class MavlinkDialectDefinition {
-  private String name;
-  private List<MavlinkMessageDefinition> messages;
-  private Map<Integer, MavlinkMessageDefinition> messagesById;
-  private Map<String, MavlinkEnumDefinition> enumsByName;
+public class UInt16FieldCodec extends AbstractMavlinkFieldCodec {
+
+  public UInt16FieldCodec() {
+    super(MavlinkWireType.UINT16);
+  }
+
+  @Override
+  public Object decode(ByteBuffer buffer) {
+    buffer.order(ByteOrder.LITTLE_ENDIAN);
+    return Short.toUnsignedInt(buffer.getShort());
+  }
+
+  @Override
+  public void encode(ByteBuffer buffer, Object value) {
+    buffer.order(ByteOrder.LITTLE_ENDIAN);
+    buffer.putShort(((Number) value).shortValue());
+  }
 }

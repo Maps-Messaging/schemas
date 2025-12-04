@@ -18,27 +18,26 @@
  *
  */
 
-package io.mapsmessaging.schemas.config.impl.mavlink;
+package io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields;
 
-import lombok.Data;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
-@Data
-public class MavlinkEnumEntry {
-  private long value;
-  private String name;
-  private String description;
+public class FloatFieldCodec extends AbstractMavlinkFieldCodec {
+
+  public FloatFieldCodec() {
+    super(MavlinkWireType.FLOAT);
+  }
 
   @Override
-  public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("\t").append(name)
-        .append("(")
-        .append(value)
-        .append(")");
+  public Object decode(ByteBuffer buffer) {
+    buffer.order(ByteOrder.LITTLE_ENDIAN);
+    return buffer.getFloat();
+  }
 
-    if (description != null && !description.isEmpty()) {
-      builder.append(" : ").append(description);
-    }
-    return builder.toString();
+  @Override
+  public void encode(ByteBuffer buffer, Object value) {
+    buffer.order(ByteOrder.LITTLE_ENDIAN);
+    buffer.putFloat(((Number) value).floatValue());
   }
 }

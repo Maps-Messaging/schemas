@@ -26,6 +26,7 @@ import io.mapsmessaging.schemas.formatters.impl.mavlink.message.MavlinkCompiledM
 import io.mapsmessaging.schemas.formatters.impl.mavlink.message.MavlinkMessageRegistry;
 import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.AbstractMavlinkFieldCodec;
 import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkFieldDefinition;
+import lombok.Getter;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -33,6 +34,7 @@ import java.util.Map;
 
 public class MavlinkPayloadPacker {
 
+  @Getter
   private final MavlinkMessageRegistry messageRegistry;
 
   public MavlinkPayloadPacker(MavlinkMessageRegistry messageRegistry) {

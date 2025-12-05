@@ -21,7 +21,6 @@
 package io.mapsmessaging.schemas.formatters.impl.mavlink.message;
 
 
-import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkMessageDefinition;
 import lombok.Data;
 
 import java.util.List;
@@ -30,13 +29,9 @@ import java.util.List;
 public class MavlinkCompiledMessage {
 
   private int messageId;
-
   private String name;
-
   private MavlinkMessageDefinition messageDefinition;
-
   private List<MavlinkCompiledField> compiledFields;
-
   private int payloadSizeBytes;
 
   @Override
@@ -55,5 +50,6 @@ public class MavlinkCompiledMessage {
     }
     return builder.toString();
   }
+
 }
 

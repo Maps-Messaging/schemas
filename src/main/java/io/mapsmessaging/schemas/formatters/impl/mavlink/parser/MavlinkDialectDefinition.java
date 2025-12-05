@@ -20,6 +20,8 @@
 
 package io.mapsmessaging.schemas.formatters.impl.mavlink.parser;
 
+import io.mapsmessaging.schemas.formatters.impl.mavlink.message.MavlinkMessageDefinition;
+import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.MavlinkEnumDefinition;
 import lombok.Data;
 
 import java.util.List;

@@ -18,7 +18,7 @@
  *
  */
 
-package io.mapsmessaging.schemas.formatters.impl.mavlink.parser;
+package io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields;
 
 
 import lombok.Data;
@@ -26,21 +26,31 @@ import lombok.Data;
 @Data
 public class MavlinkFieldDefinition {
   private int index;
-  private String type;
+  private String type;          // XML base type ("uint8_t", "char")
   private String name;
   private String units;
   private String description;
   private String enumName;
 
+  private MavlinkWireType wireType;
+
+  private boolean extension;
+  private boolean array;
+  private int arrayLength;      // 0 for scalars; >0 for arrays
+
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.append("\t Field[")
+    builder.append("\tField[")
         .append(index)
         .append("] ")
-        .append(type)
-        .append(" ")
-        .append(name);
+        .append(type);
+
+    if (array) {
+      builder.append("[").append(arrayLength).append("]");
+    }
+
+    builder.append(" ").append(name);
 
     if (units != null && !units.isEmpty()) {
       builder.append(" (units=").append(units).append(")");
@@ -51,6 +61,7 @@ public class MavlinkFieldDefinition {
     if (description != null && !description.isEmpty()) {
       builder.append(" : ").append(description);
     }
+
     return builder.toString();
   }
 }

@@ -25,7 +25,8 @@ import io.mapsmessaging.schemas.formatters.impl.mavlink.message.MavlinkCompiledF
 import io.mapsmessaging.schemas.formatters.impl.mavlink.message.MavlinkCompiledMessage;
 import io.mapsmessaging.schemas.formatters.impl.mavlink.message.MavlinkMessageRegistry;
 import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.AbstractMavlinkFieldCodec;
-import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkFieldDefinition;
+import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.MavlinkFieldDefinition;
+import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.MavlinkWireType;
 import lombok.Getter;
 
 import java.nio.ByteBuffer;
@@ -58,17 +59,77 @@ public class MavlinkPayloadPacker {
       AbstractMavlinkFieldCodec codec = compiledField.getFieldCodec();
 
       Object value = values.get(field.getName());
+
+      // Missing value: zero-fill the whole field (MAVLink semantics)
       if (value == null) {
-        // MAVLink expects zero-fill for missing values
         encodeZero(compiledField, buffer);
         continue;
       }
 
-      codec.encode(buffer, value);
+      if (!field.isArray()) {
+        // Scalar
+        codec.encode(buffer, value);
+      } else {
+        int len = field.getArrayLength();
+
+        if (field.getWireType() == MavlinkWireType.CHAR) {
+          // MAVLink strings: fixed-size, null-terminated, null-padded
+          byte[] src;
+          if (value instanceof String s) {
+            src = s.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+          } else if (value instanceof byte[] b) {
+            src = b;
+          } else {
+            throw new IllegalArgumentException(
+                "CHAR array field '" + field.getName() + "' expects String or byte[], got: "
+                    + value.getClass().getName());
+          }
+
+          int copyLen = Math.min(len, src.length);
+          buffer.put(src, 0, copyLen);
+          for (int i = copyLen; i < len; i++) {
+            buffer.put((byte) 0);
+          }
+        } else {
+          // Numeric / non-char arrays: expect List<?> or primitive array
+          java.util.List<?> elements;
+
+          if (value instanceof java.util.List<?> list) {
+            elements = list;
+          } else if (value.getClass().isArray()) {
+            int arrayLen = java.lang.reflect.Array.getLength(value);
+            java.util.List<Object> tmp = new java.util.ArrayList<>(arrayLen);
+            for (int i = 0; i < arrayLen; i++) {
+              tmp.add(java.lang.reflect.Array.get(value, i));
+            }
+            elements = tmp;
+          } else {
+            throw new IllegalArgumentException(
+                "Array field '" + field.getName() + "' expects List or array, got: "
+                    + value.getClass().getName());
+          }
+
+          int count = Math.min(len, elements.size());
+          for (int i = 0; i < count; i++) {
+            codec.encode(buffer, elements.get(i));
+          }
+
+          // Zero-fill remaining elements if list is shorter than declared array length
+          int remaining = len - count;
+          if (remaining > 0) {
+            int elementSize = field.getWireType().getSizeInBytes();
+            int bytesToZero = remaining * elementSize;
+            for (int i = 0; i < bytesToZero; i++) {
+              buffer.put((byte) 0);
+            }
+          }
+        }
+      }
     }
 
     return buffer.array();
   }
+
 
   private void encodeZero(MavlinkCompiledField compiledField, ByteBuffer buffer) {
     int size = compiledField.getSizeInBytes();

@@ -22,9 +22,8 @@ package io.mapsmessaging.schemas.formatters.impl.mavlink.message;
 
 import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.AbstractMavlinkFieldCodec;
 import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.MavlinkFieldCodecFactory;
+import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.MavlinkFieldDefinition;
 import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkDialectDefinition;
-import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkFieldDefinition;
-import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkMessageDefinition;
 import lombok.Data;
 
 import java.util.ArrayList;

@@ -20,10 +20,9 @@
 
 package io.mapsmessaging.schemas.formatters.impl.mavlink;
 
+import io.mapsmessaging.schemas.formatters.impl.mavlink.message.MavlinkCompiledMessage;
 import io.mapsmessaging.schemas.formatters.impl.mavlink.message.MavlinkMessageRegistry;
 import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkDialectDefinition;
-import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkEnumDefinition;
-import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkMessageDefinition;
 import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkXmlParser;
 import org.xml.sax.SAXException;
 
@@ -67,18 +66,9 @@ public class MavlinkMessageFormatLoader {
     MavlinkXmlParser definitionParser = new MavlinkXmlParser();
     MavlinkDialectDefinition def = definitionParser.parse(stream, name);
     MavlinkMessageRegistry registry = MavlinkMessageRegistry.fromDialectDefinition(def);
-    MavlinkFormatter formatter = new MavlinkFormatter(new MavlinkPayloadPacker(registry), new MavlinkPayloadParser(registry));
-    int fieldCount = 0;
-    int enumCount = 0;
-    for (MavlinkMessageDefinition definition : def.getMessages()) {
-      System.out.println(definition);
-      fieldCount += definition.getFields().size();
+    for (MavlinkCompiledMessage message : registry.getCompiledMessages()) {
+      System.err.println(message.getMessageId() + " " + message.getName() + " " + message.getMessageDefinition().getExtraCrc());
     }
-    for (MavlinkEnumDefinition definition : def.getEnumsByName().values()) {
-      System.out.println(definition);
-      enumCount += definition.getEntries().size();
-    }
-    System.err.println(fieldCount + " " + enumCount);
-    return formatter;
+    return new MavlinkFormatter(name, new MavlinkPayloadPacker(registry), new MavlinkPayloadParser(registry));
   }
 }

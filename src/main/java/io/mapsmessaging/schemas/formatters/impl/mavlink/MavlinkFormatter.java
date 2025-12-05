@@ -160,10 +160,27 @@ public class MavlinkFormatter extends MessageFormatter {
     buffer.put((byte) ((messageId >> 16) & 0xFF));   // msgid high
     buffer.put(payload);
 
-    // Compute CRC here
-    buffer.putShort((short) 0);
+    int written = buffer.position();  // how many bytes we have so far
+    byte[] frameBytes = new byte[written];
+    System.arraycopy(buffer.array(), 0, frameBytes, 0, written);
+    int start = 1;  // skip STX (always excluded from CRC)
+    int lengthForCrc = written - 1; // everything except STX
 
-    return buffer.array();
+    X25Crc crc = new X25Crc();
+    crc.update(frameBytes, start, lengthForCrc);
+
+// mandatory message-specific extra CRC byte
+    crc.update(compiledMessage.getMessageDefinition().getExtraCrc() & 0xFF);
+
+    short crcValue = crc.getCrcAsShort();
+    buffer.put((byte) (crcValue & 0xFF));        // low byte
+    buffer.put((byte) ((crcValue >> 8) & 0xFF));
+
+    int finalLength = buffer.position();
+    byte[] mavlinkFrame = new byte[finalLength];
+    System.arraycopy(buffer.array(), 0, mavlinkFrame, 0, finalLength);
+
+    return mavlinkFrame;
   }
 
   @Override

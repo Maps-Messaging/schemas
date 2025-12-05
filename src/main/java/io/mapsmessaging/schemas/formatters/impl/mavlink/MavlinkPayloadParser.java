@@ -25,12 +25,13 @@ import io.mapsmessaging.schemas.formatters.impl.mavlink.message.MavlinkCompiledF
 import io.mapsmessaging.schemas.formatters.impl.mavlink.message.MavlinkCompiledMessage;
 import io.mapsmessaging.schemas.formatters.impl.mavlink.message.MavlinkMessageRegistry;
 import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.AbstractMavlinkFieldCodec;
-import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkFieldDefinition;
+import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.MavlinkFieldDefinition;
+import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.MavlinkWireType;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 public class MavlinkPayloadParser {
 
@@ -63,8 +64,37 @@ public class MavlinkPayloadParser {
       MavlinkFieldDefinition fieldDefinition = compiledField.getFieldDefinition();
       AbstractMavlinkFieldCodec fieldCodec = compiledField.getFieldCodec();
 
-      Object value = fieldCodec.decode(buffer);
-      result.put(fieldDefinition.getName(), value);
+      String fieldName = fieldDefinition.getName();
+
+      if (!fieldDefinition.isArray()) {
+        Object value = fieldCodec.decode(buffer);
+        result.put(fieldName, value);
+        continue;
+      }
+
+      int len = fieldDefinition.getArrayLength();
+
+      // Arrays
+      if (Objects.requireNonNull(fieldDefinition.getWireType()) == MavlinkWireType.CHAR) {
+        byte[] bytes = new byte[len];
+        for (int i = 0; i < len; i++) {
+          Object v = fieldCodec.decode(buffer);   // underlying codec returns Byte
+          bytes[i] = (byte) v;
+        }
+        // strip trailing 0 / '\0'
+        int end = len;
+        while (end > 0 && bytes[end - 1] == 0) {
+          end--;
+        }
+        String value = new String(bytes, 0, end, StandardCharsets.UTF_8);
+        result.put(fieldName, value);
+      } else {// For now: JSON-friendly List<Object>. You can later specialise to int[], float[] etc.
+        List<Object> values = new ArrayList<>(len);
+        for (int i = 0; i < len; i++) {
+          values.add(fieldCodec.decode(buffer));
+        }
+        result.put(fieldName, values);
+      }
     }
 
     return result;

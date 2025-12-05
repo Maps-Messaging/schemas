@@ -21,8 +21,6 @@
 package io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields;
 
 
-import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkFieldDefinition;
-
 public final class MavlinkFieldCodecFactory {
 
   private MavlinkFieldCodecFactory() {

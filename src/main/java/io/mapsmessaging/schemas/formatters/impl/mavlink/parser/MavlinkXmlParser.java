@@ -21,6 +21,11 @@
 package io.mapsmessaging.schemas.formatters.impl.mavlink.parser;
 
 
+import io.mapsmessaging.schemas.formatters.impl.mavlink.message.MavlinkMessageDefinition;
+import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.MavlinkEnumDefinition;
+import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.MavlinkEnumEntry;
+import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.MavlinkFieldDefinition;
+import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.MavlinkWireType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -136,22 +141,42 @@ public class MavlinkXmlParser {
       List<MavlinkFieldDefinition> fieldDefinitions = new ArrayList<>();
       NodeList childNodes = messageElement.getChildNodes();
       int fieldIndex = 0;
+      boolean inExtensions = false;
       for (int childIndex = 0; childIndex < childNodes.getLength(); childIndex++) {
         Node childNode = childNodes.item(childIndex);
         if (childNode.getNodeType() != Node.ELEMENT_NODE) {
           continue;
         }
-        if (!"field".equals(childNode.getNodeName())) {
+        String nodeName = childNode.getNodeName();
+
+        // Detect the <extensions> start
+        if ("extensions".equals(nodeName)) {
+          inExtensions = true;
+          continue;
+        }
+
+        // Normal field
+        if (!"field".equals(nodeName)) {
           continue;
         }
         Element fieldElement = (Element) childNode;
 
         MavlinkFieldDefinition fieldDefinition = new MavlinkFieldDefinition();
         fieldDefinition.setIndex(fieldIndex++);
-        fieldDefinition.setType(fieldElement.getAttribute("type"));
+        String type = fieldElement.getAttribute("type");
+        if (type.contains("[") && type.contains("]")) {
+          String strLen = type.substring(type.indexOf("[") + 1, type.indexOf("]"));
+          int len = Integer.parseInt(strLen);
+          type = type.substring(0, type.indexOf("["));
+          fieldDefinition.setArray(true);
+          fieldDefinition.setArrayLength(len);
+        }
+        fieldDefinition.setType(type);
         fieldDefinition.setName(fieldElement.getAttribute("name"));
         fieldDefinition.setUnits(fieldElement.getAttribute("units"));
         fieldDefinition.setDescription(fieldElement.getTextContent().trim());
+        fieldDefinition.setWireType(MavlinkWireType.fromXmlType(fieldElement.getAttribute("type")));
+        fieldDefinition.setExtension(inExtensions);
 
         String enumName = fieldElement.getAttribute("enum");
         if (!enumName.isEmpty()) {
@@ -161,7 +186,7 @@ public class MavlinkXmlParser {
         fieldDefinitions.add(fieldDefinition);
       }
 
-      messageDefinition.setFields(fieldDefinitions);
+      messageDefinition.setXmlOrderedFields(fieldDefinitions);
       messageDefinitions.add(messageDefinition);
     }
 

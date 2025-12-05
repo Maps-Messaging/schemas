@@ -18,36 +18,30 @@
  *
  */
 
-package io.mapsmessaging.schemas.formatters.impl.mavlink.parser;
+package io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields;
 
 import lombok.Data;
-import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
-@ToString
-public class MavlinkMessageDefinition {
-  private int messageId;
+public class MavlinkEnumDefinition {
   private String name;
+  private boolean bitmask;
   private String description;
-  private List<MavlinkFieldDefinition> fields = new ArrayList<>();
+  private List<MavlinkEnumEntry> entries = new ArrayList<>();
 
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.append("MavlinkMessageDefinition [messageId=")
-        .append(messageId)
-        .append(", name=")
-        .append(name)
-        .append(", description=")
-        .append(description)
-        .append("\n");
-    for (MavlinkFieldDefinition field : fields) {
-      builder.append(field.toString()).append("\n");
+    builder.append(name)
+        .append(", bitmask=").append(bitmask)
+        .append(", description=").append(description).append("\n");
+    for (MavlinkEnumEntry entry : entries) {
+      builder.append(entry.toString()).append("\n");
     }
-
     return builder.toString();
   }
+
 }

@@ -21,7 +21,7 @@
 package io.mapsmessaging.schemas.formatters.impl.mavlink.message;
 
 import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.AbstractMavlinkFieldCodec;
-import io.mapsmessaging.schemas.formatters.impl.mavlink.parser.MavlinkFieldDefinition;
+import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.MavlinkFieldDefinition;
 import lombok.Data;
 
 @Data

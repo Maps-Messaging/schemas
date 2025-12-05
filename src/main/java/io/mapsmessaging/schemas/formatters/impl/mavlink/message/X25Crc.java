@@ -95,6 +95,10 @@ public final class X25Crc {
     return (short) (getCrc() & 0xFFFF);
   }
 
+  public int getRawCrc() {
+    return currentCrc & 0xFFFF;
+  }
+
   /**
    * Convenience one-shot calculation.
    */

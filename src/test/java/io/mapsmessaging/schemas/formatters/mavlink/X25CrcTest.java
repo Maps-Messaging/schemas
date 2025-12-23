@@ -128,30 +128,4 @@ class X25CrcTest {
     accumulateString(crc, name + " ");
     // No array_length here for HEARTBEAT fields
   }
-
-  /*
-
-
-
-            <field type="uint16_t" name="errors_comm">Communication errors (UART, I2C, SPI, CAN), dropped packets on all
-                links (packets that were corrupted on reception on the MAV)
-            </field>
-            <field type="uint16_t" name="errors_count1">Autopilot-specific errors</field>
-            <field type="uint16_t" name="errors_count2">Autopilot-specific errors</field>
-            <field type="uint16_t" name="errors_count3">Autopilot-specific errors</field>
-            <field type="uint16_t" name="errors_count4">Autopilot-specific errors</field>
-            <extensions/>
-            <field type="uint32_t" name="onboard_control_sensors_present_extended" enum="MAV_SYS_STATUS_SENSOR_EXTENDED"
-                   print_format="0x%04x">Bitmap showing which onboard controllers and sensors are present. Value of 0:
-                not present. Value of 1: present.
-            </field>
-            <field type="uint32_t" name="onboard_control_sensors_enabled_extended" enum="MAV_SYS_STATUS_SENSOR_EXTENDED"
-                   print_format="0x%04x">Bitmap showing which onboard controllers and sensors are enabled: Value of 0:
-                not enabled. Value of 1: enabled.
-            </field>
-            <field type="uint32_t" name="onboard_control_sensors_health_extended" enum="MAV_SYS_STATUS_SENSOR_EXTENDED"
-                   print_format="0x%04x">Bitmap showing which onboard controllers and sensors have an error (or are
-                operational). Value of 0: error. Value of 1: healthy.
-            </field>
-   */
 }

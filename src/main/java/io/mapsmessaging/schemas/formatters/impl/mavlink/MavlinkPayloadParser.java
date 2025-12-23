@@ -31,7 +31,10 @@ import io.mapsmessaging.schemas.formatters.impl.mavlink.message.fields.MavlinkWi
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MavlinkPayloadParser {
 
@@ -42,17 +45,10 @@ public class MavlinkPayloadParser {
   }
 
   public Map<String, Object> parsePayload(int messageId, byte[] payload) {
-    MavlinkCompiledMessage compiledMessage = messageRegistry.getCompiledMessagesById().get(messageId);
+    MavlinkCompiledMessage compiledMessage =
+        messageRegistry.getCompiledMessagesById().get(messageId);
     if (compiledMessage == null) {
       throw new IllegalArgumentException("Unknown MAVLink message id: " + messageId);
-    }
-
-    if (payload.length < compiledMessage.getPayloadSizeBytes()) {
-      throw new IllegalArgumentException(
-          "Payload too short for message " + compiledMessage.getName() +
-              " expected=" + compiledMessage.getPayloadSizeBytes() +
-              " actual=" + payload.length
-      );
     }
 
     Map<String, Object> result = new HashMap<>();
@@ -63,8 +59,28 @@ public class MavlinkPayloadParser {
     for (MavlinkCompiledField compiledField : compiledMessage.getCompiledFields()) {
       MavlinkFieldDefinition fieldDefinition = compiledField.getFieldDefinition();
       AbstractMavlinkFieldCodec fieldCodec = compiledField.getFieldCodec();
-
       String fieldName = fieldDefinition.getName();
+
+      int fieldSize = compiledField.getSizeInBytes();
+
+      // Base fields MUST be present
+      if (!fieldDefinition.isExtension()) {
+        if (buffer.remaining() < fieldSize) {
+          throw new IllegalArgumentException(
+              "Payload too short for base field '" + fieldName +
+                  "' in message " + compiledMessage.getName() +
+                  " remaining=" + buffer.remaining() +
+                  " required=" + fieldSize
+          );
+        }
+      } else {
+        // Extension fields are optional: if not enough bytes left, treat as absent
+        if (buffer.remaining() < fieldSize) {
+          // you can either omit it or explicitly put null; your choice
+          result.put(fieldName, null);
+          continue;
+        }
+      }
 
       if (!fieldDefinition.isArray()) {
         Object value = fieldCodec.decode(buffer);
@@ -74,21 +90,20 @@ public class MavlinkPayloadParser {
 
       int len = fieldDefinition.getArrayLength();
 
-      // Arrays
-      if (Objects.requireNonNull(fieldDefinition.getWireType()) == MavlinkWireType.CHAR) {
+      if (fieldDefinition.getWireType() == MavlinkWireType.CHAR) {
+        // MAVLink strings: fixed-size, null-terminated, null-padded
         byte[] bytes = new byte[len];
         for (int i = 0; i < len; i++) {
-          Object v = fieldCodec.decode(buffer);   // underlying codec returns Byte
+          Object v = fieldCodec.decode(buffer);   // codec returns Byte
           bytes[i] = (byte) v;
         }
-        // strip trailing 0 / '\0'
         int end = len;
         while (end > 0 && bytes[end - 1] == 0) {
           end--;
         }
         String value = new String(bytes, 0, end, StandardCharsets.UTF_8);
         result.put(fieldName, value);
-      } else {// For now: JSON-friendly List<Object>. You can later specialise to int[], float[] etc.
+      } else {
         List<Object> values = new ArrayList<>(len);
         for (int i = 0; i < len; i++) {
           values.add(fieldCodec.decode(buffer));

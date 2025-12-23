@@ -31,6 +31,8 @@ import lombok.Getter;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class MavlinkPayloadPacker {
@@ -50,78 +52,113 @@ public class MavlinkPayloadPacker {
       throw new IllegalArgumentException("Unknown MAVLink message id: " + messageId);
     }
 
-    int size = compiledMessage.getPayloadSizeBytes();
+    List<MavlinkCompiledField> compiledFields = compiledMessage.getCompiledFields();
+
+    // 1) Find the last extension field that actually has a non-null value
+    int lastExtensionIndex = -1;
+    for (int i = 0; i < compiledFields.size(); i++) {
+      MavlinkCompiledField compiledField = compiledFields.get(i);
+      MavlinkFieldDefinition field = compiledField.getFieldDefinition();
+      if (!field.isExtension()) {
+        continue;
+      }
+      Object value = values.get(field.getName());
+      if (value != null) {
+        lastExtensionIndex = i;
+      }
+    }
+
+    // 2) Compute payload size: all base fields, plus extension fields up to lastExtensionIndex
+    int size = 0;
+    for (int i = 0; i < compiledFields.size(); i++) {
+      MavlinkCompiledField compiledField = compiledFields.get(i);
+      MavlinkFieldDefinition field = compiledField.getFieldDefinition();
+
+      if (!field.isExtension()) {
+        size += compiledField.getSizeInBytes();
+      } else if (i <= lastExtensionIndex) {
+        size += compiledField.getSizeInBytes();
+      } else {
+        // trailing extensions with no values are omitted entirely
+        break;
+      }
+    }
+
     ByteBuffer buffer = ByteBuffer.allocate(size);
     buffer.order(ByteOrder.LITTLE_ENDIAN);
 
-    for (MavlinkCompiledField compiledField : compiledMessage.getCompiledFields()) {
+    // 3) Encode fields
+    for (int i = 0; i < compiledFields.size(); i++) {
+      MavlinkCompiledField compiledField = compiledFields.get(i);
       MavlinkFieldDefinition field = compiledField.getFieldDefinition();
       AbstractMavlinkFieldCodec codec = compiledField.getFieldCodec();
 
+      // Stop once we are past the last extension we decided to include
+      if (field.isExtension() && i > lastExtensionIndex) {
+        break;
+      }
+
       Object value = values.get(field.getName());
 
-      // Missing value: zero-fill the whole field (MAVLink semantics)
+      // Base fields: always encoded, null => all zeros
+      // Extension fields up to lastExtensionIndex: always present, null => all zeros
       if (value == null) {
         encodeZero(compiledField, buffer);
         continue;
       }
 
       if (!field.isArray()) {
-        // Scalar
         codec.encode(buffer, value);
-      } else {
-        int len = field.getArrayLength();
+        continue;
+      }
 
-        if (field.getWireType() == MavlinkWireType.CHAR) {
-          // MAVLink strings: fixed-size, null-terminated, null-padded
-          byte[] src;
-          if (value instanceof String s) {
-            src = s.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-          } else if (value instanceof byte[] b) {
-            src = b;
-          } else {
-            throw new IllegalArgumentException(
-                "CHAR array field '" + field.getName() + "' expects String or byte[], got: "
-                    + value.getClass().getName());
-          }
+      int len = field.getArrayLength();
 
-          int copyLen = Math.min(len, src.length);
-          buffer.put(src, 0, copyLen);
-          for (int i = copyLen; i < len; i++) {
-            buffer.put((byte) 0);
-          }
+      if (field.getWireType() == MavlinkWireType.CHAR) {
+        byte[] src;
+        if (value instanceof String s) {
+          src = s.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        } else if (value instanceof byte[] b) {
+          src = b;
         } else {
-          // Numeric / non-char arrays: expect List<?> or primitive array
-          java.util.List<?> elements;
+          throw new IllegalArgumentException(
+              "CHAR array field '" + field.getName() + "' expects String or byte[], got: "
+                  + value.getClass().getName());
+        }
 
-          if (value instanceof java.util.List<?> list) {
-            elements = list;
-          } else if (value.getClass().isArray()) {
-            int arrayLen = java.lang.reflect.Array.getLength(value);
-            java.util.List<Object> tmp = new java.util.ArrayList<>(arrayLen);
-            for (int i = 0; i < arrayLen; i++) {
-              tmp.add(java.lang.reflect.Array.get(value, i));
-            }
-            elements = tmp;
-          } else {
-            throw new IllegalArgumentException(
-                "Array field '" + field.getName() + "' expects List or array, got: "
-                    + value.getClass().getName());
+        int copyLen = Math.min(len, src.length);
+        buffer.put(src, 0, copyLen);
+        for (int j = copyLen; j < len; j++) {
+          buffer.put((byte) 0);
+        }
+      } else {
+        List<?> elements;
+        if (value instanceof List<?> list) {
+          elements = list;
+        } else if (value.getClass().isArray()) {
+          int arrayLen = java.lang.reflect.Array.getLength(value);
+          List<Object> tmp = new ArrayList<>(arrayLen);
+          for (int j = 0; j < arrayLen; j++) {
+            tmp.add(java.lang.reflect.Array.get(value, j));
           }
+          elements = tmp;
+        } else {
+          throw new IllegalArgumentException(
+              "Array field '" + field.getName() + "' expects List or array, got: "
+                  + value.getClass().getName());
+        }
 
-          int count = Math.min(len, elements.size());
-          for (int i = 0; i < count; i++) {
-            codec.encode(buffer, elements.get(i));
-          }
+        int count = Math.min(len, elements.size());
+        for (int j = 0; j < count; j++) {
+          codec.encode(buffer, elements.get(j));
+        }
 
-          // Zero-fill remaining elements if list is shorter than declared array length
-          int remaining = len - count;
-          if (remaining > 0) {
-            int elementSize = field.getWireType().getSizeInBytes();
-            int bytesToZero = remaining * elementSize;
-            for (int i = 0; i < bytesToZero; i++) {
-              buffer.put((byte) 0);
-            }
+        int remaining = len - count;
+        if (remaining > 0) {
+          int elementSize = field.getWireType().getSizeInBytes();
+          int bytesToZero = remaining * elementSize;
+          for (int j = 0; j < bytesToZero; j++) {
+            buffer.put((byte) 0);
           }
         }
       }
@@ -130,11 +167,11 @@ public class MavlinkPayloadPacker {
     return buffer.array();
   }
 
-
   private void encodeZero(MavlinkCompiledField compiledField, ByteBuffer buffer) {
     int size = compiledField.getSizeInBytes();
     for (int i = 0; i < size; i++) {
       buffer.put((byte) 0);
     }
   }
+
 }

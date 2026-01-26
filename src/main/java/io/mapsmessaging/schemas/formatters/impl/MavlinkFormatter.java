@@ -21,11 +21,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.mapsmessaging.mavlink.MavlinkCodec;
-import io.mapsmessaging.mavlink.MavlinkFrameCodec;
 import io.mapsmessaging.mavlink.MavlinkMessageFormatLoader;
-import io.mapsmessaging.mavlink.message.MavlinkFrame;
-import io.mapsmessaging.mavlink.message.MavlinkVersion;
+import io.mapsmessaging.mavlink.codec.MavlinkCodec;
+import io.mapsmessaging.mavlink.codec.MavlinkFrameCodec;
+import io.mapsmessaging.mavlink.message.Frame;
+import io.mapsmessaging.mavlink.message.Version;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.MavlinkSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
@@ -91,7 +91,7 @@ public class MavlinkFormatter extends MessageFormatter {
   @Override
   public ParsedObject parse(byte[] payload) {
     try {
-      MavlinkFrame frame = parseFrame(payload);
+      Frame frame = parseFrame(payload);
       Map<String, Object> map = codec.parsePayload(frame.getMessageId(), frame.getPayload());
       return new StructuredResolver(new MapResolver(map), frame);
     } catch (Exception exception) {
@@ -103,7 +103,7 @@ public class MavlinkFormatter extends MessageFormatter {
   @Override
   public JsonObject parseToJson(byte[] payload) throws IOException {
     try {
-      MavlinkFrame frame = parseFrame(payload);
+      Frame frame = parseFrame(payload);
       Map<String, Object> map = codec.parsePayload(frame.getMessageId(), frame.getPayload());
 
       JsonObject json = new JsonObject();
@@ -124,6 +124,7 @@ public class MavlinkFormatter extends MessageFormatter {
 
       return json;
     } catch (Exception exception) {
+      exception.printStackTrace();
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
       throw new IOException("Failed to parse MAVLink payload to JSON", exception);
     }
@@ -160,8 +161,8 @@ public class MavlinkFormatter extends MessageFormatter {
 
       byte[] payload = codec.encodePayload(messageId, values);
 
-      MavlinkFrame frame = new MavlinkFrame();
-      frame.setVersion(MavlinkVersion.V2);
+      Frame frame = new Frame();
+      frame.setVersion(Version.V2);
       frame.setSequence(headerObject.get("sequence").getAsInt());
       frame.setSystemId(headerObject.get("systemId").getAsInt());
       frame.setComponentId(headerObject.get("componentId").getAsInt());
@@ -200,10 +201,9 @@ public class MavlinkFormatter extends MessageFormatter {
     return Map.of("dialect", dialectName);
   }
 
-  private MavlinkFrame parseFrame(byte[] bytes) throws IOException {
-    ByteBuffer buffer = ByteBuffer.allocate(bytes.length);
-    buffer.put(bytes);              // now position = len, limit = capacity
-    Optional<MavlinkFrame> frameOpt = frameCodec.tryUnpackFrame(buffer); // flip makes sense here
+  private Frame parseFrame(byte[] bytes) throws IOException {
+    ByteBuffer buffer = ByteBuffer.wrap(bytes);
+    Optional<Frame> frameOpt = frameCodec.tryUnpackFrame(buffer); // flip makes sense here
     if (frameOpt.isEmpty()) {
       throw new IOException("Not a valid MAVLink frame");
     }

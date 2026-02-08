@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-class TestMavlinkFormatter {
+class TestMavLinkFormatter {
 
   private static final String DIALECT = "common";
 

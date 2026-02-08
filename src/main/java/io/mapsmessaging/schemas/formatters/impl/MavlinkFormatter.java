@@ -18,7 +18,6 @@
 package io.mapsmessaging.schemas.formatters.impl;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mapsmessaging.mavlink.MavlinkMessageFormatLoader;
@@ -39,6 +38,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.mapsmessaging.schemas.formatters.impl.GsonFactory.createStrictJsonWithSafeFloats;
 import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
 
 @Getter
@@ -64,7 +64,7 @@ public class MavlinkFormatter extends MessageFormatter {
     this.codec = codec;
     this.frameCodec = new MavlinkFrameCodec(codec);
 
-    this.gson = new GsonBuilder().disableHtmlEscaping().create();
+    this.gson = createStrictJsonWithSafeFloats();
   }
 
   @Override

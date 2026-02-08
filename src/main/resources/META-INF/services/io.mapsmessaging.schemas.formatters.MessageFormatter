@@ -15,13 +15,14 @@
 #     limitations under the License.
 #
 io.mapsmessaging.schemas.formatters.impl.AvroFormatter
-io.mapsmessaging.schemas.formatters.impl.CsvFormatter
+io.mapsmessaging.schemas.formatters.impl.CanbusFormatter
+io.mapsmessaging.schemas.formatters.impl.CbcFormatter
 io.mapsmessaging.schemas.formatters.impl.CborFormatter
+io.mapsmessaging.schemas.formatters.impl.CsvFormatter
+io.mapsmessaging.schemas.formatters.impl.JsonFormatter
 io.mapsmessaging.schemas.formatters.impl.MavlinkFormatter
 io.mapsmessaging.schemas.formatters.impl.MessagePackFormatter
-io.mapsmessaging.schemas.formatters.impl.JsonFormatter
 io.mapsmessaging.schemas.formatters.impl.NativeFormatter
 io.mapsmessaging.schemas.formatters.impl.ProtoBufFormatter
 io.mapsmessaging.schemas.formatters.impl.RawFormatter
 io.mapsmessaging.schemas.formatters.impl.XmlFormatter
-io.mapsmessaging.schemas.formatters.impl.CbcFormatter

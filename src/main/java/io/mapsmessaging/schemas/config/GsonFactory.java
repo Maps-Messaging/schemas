@@ -50,7 +50,7 @@ public final class GsonFactory {
                 .registerSubtype("cbc", CbcSchemaConfig.class)
                 .registerSubtype("raw", RawSchemaConfig.class)
                 .registerSubtype("mavlink", MavlinkSchemaConfig.class)
-                .registerSubtype("n2k", N2kSchemaConfig.class)
+                .registerSubtype("canbus", CanbusSchemaConfig.class)
         )
         .create();
   }

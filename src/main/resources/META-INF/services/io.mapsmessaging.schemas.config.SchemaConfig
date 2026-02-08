@@ -22,7 +22,7 @@ io.mapsmessaging.schemas.config.impl.CsvSchemaConfig
 io.mapsmessaging.schemas.config.impl.JsonSchemaConfig
 io.mapsmessaging.schemas.config.impl.MavlinkSchemaConfig
 io.mapsmessaging.schemas.config.impl.MessagePackSchemaConfig
-io.mapsmessaging.schemas.config.impl.N2kSchemaConfig
+io.mapsmessaging.schemas.config.impl.CanbusSchemaConfig
 io.mapsmessaging.schemas.config.impl.NativeSchemaConfig
 io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig
 io.mapsmessaging.schemas.config.impl.RawSchemaConfig

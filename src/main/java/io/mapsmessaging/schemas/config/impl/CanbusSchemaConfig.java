@@ -26,17 +26,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 @Schema(description = "NMEA2000 Schema Configuration")
-public class N2kSchemaConfig extends SchemaConfig {
+public class CanbusSchemaConfig extends SchemaConfig {
 
   private static final String DIALECT = "dialect";
   private static final String DIALECT_XML = "dialectXml";
   private static final String DIALECT_XML_BASE64 = "dialectXmlBase64";
 
-  public N2kSchemaConfig() {
-    super("n2k");
+  public CanbusSchemaConfig() {
+    super("canbus");
   }
 
-  protected N2kSchemaConfig(SchemaConfig config) {
+  protected CanbusSchemaConfig(SchemaConfig config) {
     super(config);
   }
 

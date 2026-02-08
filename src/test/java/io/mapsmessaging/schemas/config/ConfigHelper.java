@@ -87,7 +87,7 @@ public class ConfigHelper {
 
   public static SchemaConfig buildN2KConfig() {
     CanbusSchemaConfig config = new CanbusSchemaConfig();
-    config.setDialectXml("NMEA_database_1_to_300.xml");
+    config.setXmlPath("NMEA_database_1_to_300.xml");
     setBaseConfig(config);
     return config;
   }

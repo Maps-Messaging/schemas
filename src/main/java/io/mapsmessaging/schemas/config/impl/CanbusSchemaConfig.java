@@ -22,15 +22,13 @@ import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-@Schema(description = "NMEA2000 Schema Configuration")
+@Schema(description = "Canbus Schema Configuration")
 public class CanbusSchemaConfig extends SchemaConfig {
 
-  private static final String DIALECT = "dialect";
-  private static final String DIALECT_XML = "dialectXml";
-  private static final String DIALECT_XML_BASE64 = "dialectXmlBase64";
+  private static final String XML_PATH = "XmlPath";
+  private static final String XML_BASE64 = "XmlBase64";
 
   public CanbusSchemaConfig() {
     super("canbus");
@@ -50,77 +48,55 @@ public class CanbusSchemaConfig extends SchemaConfig {
     return new MavlinkSchemaConfig(config);
   }
 
-
-  public String getDialect() {
+  public String getXmlPath() {
     JsonObject json = getSchema();
-    if (json == null || !json.has(DIALECT)) {
-      return null;
+    if (json != null && json.has(XML_PATH)) {
+      return json.get(XML_PATH).getAsString();
     }
-    return json.get(DIALECT).getAsString();
-  }
-
-  public void setDialect(String dialect) {
-    JsonObject json = ensureSchema();
-    if (dialect == null || dialect.isBlank()) {
-      json.remove(DIALECT);
-      return;
-    }
-    json.addProperty(DIALECT, dialect.toLowerCase());
-  }
-
-  public String getDialectXml() {
-    JsonObject json = getSchema();
-    if (json == null) {
-      return null;
-    }
-
-    if (json.has(DIALECT_XML)) {
-      return json.get(DIALECT_XML).getAsString();
-    }
-
-    if (json.has(DIALECT_XML_BASE64)) {
-      byte[] bytes = Base64.getDecoder().decode(json.get(DIALECT_XML_BASE64).getAsString());
-      return new String(bytes, StandardCharsets.UTF_8);
-    }
-
     return null;
   }
 
-  public void setDialectXml(String xml) {
+  public void setXmlPath(String xmlPath) {
     JsonObject json = ensureSchema();
-    if (xml == null || xml.isBlank()) {
-      json.remove(DIALECT_XML);
-      json.remove(DIALECT_XML_BASE64);
+    if (xmlPath == null || xmlPath.isBlank()) {
+      json.remove(XML_PATH);
       return;
     }
-    json.addProperty(DIALECT_XML, xml);
-    json.remove(DIALECT_XML_BASE64);
+    json.addProperty(XML_PATH, xmlPath);
+    json.remove(XML_BASE64);
   }
 
-  public void setDialectXmlBase64(byte[] xmlBytes) {
+  public void setXmlBase64(byte[] xmlBytes) {
     JsonObject json = ensureSchema();
     if (xmlBytes == null || xmlBytes.length == 0) {
-      json.remove(DIALECT_XML);
-      json.remove(DIALECT_XML_BASE64);
+      json.remove(XML_PATH);
+      json.remove(XML_BASE64);
       return;
     }
-    json.addProperty(DIALECT_XML_BASE64, Base64.getEncoder().encodeToString(xmlBytes));
-    json.remove(DIALECT_XML);
+    json.addProperty(XML_BASE64, Base64.getEncoder().encodeToString(xmlBytes));
+    json.remove(XML_PATH);
+  }
+
+  public byte[] getXmlBase64() {
+    JsonObject json = getSchema();
+    if (json == null || !json.has(XML_BASE64)) {
+      return null;
+    }
+    return Base64.getDecoder().decode(json.get(XML_BASE64).getAsString());
   }
 
   @Override
   public String pack() throws IOException {
-    String dialect = getDialect();
-    String xml = getDialectXml();
+    String path = getXmlPath();
+    byte[] xml = getXmlBase64();
 
-    if ((dialect == null || dialect.isBlank()) && (xml == null || xml.isBlank())) {
-      throw new IOException("N2K config requires either 'dialect' or 'dialectXml'");
+    if ((path == null || path.isBlank()) && (xml == null || xml.length > 0)) {
+      throw new IOException("Canbus config requires either 'dialect' or 'dialectXml'");
     }
 
-    if (dialect != null && !dialect.isBlank() && xml != null && !xml.isBlank()) {
-      throw new IOException("N2K config must specify only one of 'dialect' or 'dialectXml'");
+    if (path != null && !path.isBlank() && xml != null && xml.length > 0) {
+      throw new IOException("Canbus config must specify only one of 'path' or 'xmlBase64'");
     }
-
     return super.pack();
   }
 

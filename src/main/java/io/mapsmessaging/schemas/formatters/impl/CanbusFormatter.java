@@ -26,16 +26,21 @@ import io.mapsmessaging.canbus.j1939.n2k.codec.N2kMessageParser;
 import io.mapsmessaging.canbus.j1939.n2k.compile.N2kCompiledMessage;
 import io.mapsmessaging.canbus.j1939.n2k.compile.N2kCompiledRegistry;
 import io.mapsmessaging.canbus.j1939.n2k.compile.N2kCompiler;
+import io.mapsmessaging.canbus.j1939.n2k.model.N2kMessageDefinition;
 import io.mapsmessaging.canbus.j1939.n2k.parser.N2kXmlDialectParser;
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.config.impl.CanbusSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 
 public class CanbusFormatter extends MessageFormatter {
@@ -61,6 +66,18 @@ public class CanbusFormatter extends MessageFormatter {
     }
     parser = new N2kMessageParser(registry);
   }
+
+  public CanbusFormatter(InputStream stream) throws IOException {
+    N2kCompiledRegistry registry;
+    try {
+      List<N2kMessageDefinition> messageDefinitions = N2kXmlDialectParser.parse(stream);
+      registry = N2kCompiler.compile(messageDefinitions);
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
+    parser = new N2kMessageParser(registry);
+  }
+
 
   @Override
   public ParsedObject parse(byte[] payload) {
@@ -100,8 +117,19 @@ public class CanbusFormatter extends MessageFormatter {
   }
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) {
-    return new CanbusFormatter();
+  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+    if (!(config instanceof CanbusSchemaConfig canbusSchemaConfig)) {
+      throw new IOException("Invalid config type for Canbus formatter: " + config.getClass().getName());
+    }
+    if (canbusSchemaConfig.getXmlPath() != null && !canbusSchemaConfig.getXmlPath().isEmpty()) {
+      return new CanbusFormatter(canbusSchemaConfig.getXmlPath());
+    }
+    if (canbusSchemaConfig.getXmlBase64() != null) {
+      byte[] xml = Base64.getDecoder().decode(canbusSchemaConfig.getXmlBase64());
+      ByteArrayInputStream n2kStream = new ByteArrayInputStream(xml);
+      return new CanbusFormatter(n2kStream);
+    }
+    return new CanbusFormatter(""); // load default database
   }
 
   private JsonObject buildEnvelope(JsonObject n2kJson, CanId canId, CanFrame frame) {

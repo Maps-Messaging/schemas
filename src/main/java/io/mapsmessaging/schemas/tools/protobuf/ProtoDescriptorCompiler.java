@@ -98,6 +98,7 @@ public class ProtoDescriptorCompiler {
 
     List<String> command = buildCompileCommand(
         normalizedRootPath,
+        normalizedProtoRootPath,
         normalizedDescriptorOutputPath,
         protoFiles,
         additionalIncludePaths
@@ -203,17 +204,26 @@ public class ProtoDescriptorCompiler {
 
   private List<String> buildCompileCommand(
       Path rootPath,
+      Path protoRootPath,
       Path descriptorOutputPath,
       List<Path> protoFiles,
       List<Path> additionalIncludePaths
   ) throws IOException {
     Path protocPath = resolveProtocPath();
 
+    Path normalizedRootPath = rootPath.toAbsolutePath().normalize();
+    Path normalizedProtoRootPath = protoRootPath.toAbsolutePath().normalize();
+
     List<String> command = new ArrayList<>();
     command.add(protocPath.toString());
 
     command.add("-I");
-    command.add(rootPath.toString());
+    command.add(normalizedRootPath.toString());
+
+    if (!normalizedProtoRootPath.equals(normalizedRootPath)) {
+      command.add("-I");
+      command.add(normalizedProtoRootPath.toString());
+    }
 
     if (additionalIncludePaths != null) {
       for (Path includePath : additionalIncludePaths) {
@@ -225,14 +235,19 @@ public class ProtoDescriptorCompiler {
     }
 
     command.add("--include_imports");
-    command.add("--descriptor_set_out=" + descriptorOutputPath);
+    command.add("--descriptor_set_out=" + descriptorOutputPath.toAbsolutePath().normalize());
 
     for (Path protoFile : protoFiles) {
       Path normalizedProtoFile = protoFile.toAbsolutePath().normalize();
-      if (!normalizedProtoFile.startsWith(rootPath)) {
+      if (!normalizedProtoFile.startsWith(normalizedRootPath)) {
         throw new IOException("Proto file is outside root path: " + normalizedProtoFile);
       }
-      command.add(rootPath.relativize(normalizedProtoFile).toString());
+
+      String relativeProtoPath = normalizedRootPath.relativize(normalizedProtoFile)
+          .toString()
+          .replace('\\', '/');
+
+      command.add(relativeProtoPath);
     }
 
     return command;
@@ -329,7 +344,7 @@ public class ProtoDescriptorCompiler {
     String executableName = isWindows() ? "protoc.exe" : "protoc";
 
     for (String pathEntry : pathEnvironment.split(File.pathSeparator)) {
-      if (pathEntry == null || pathEntry.isBlank()) {
+      if (pathEntry.isBlank()) {
         continue;
       }
 

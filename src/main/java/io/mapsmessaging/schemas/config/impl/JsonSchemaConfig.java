@@ -19,9 +19,15 @@
  */
 package io.mapsmessaging.schemas.config.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * The type Json schema config.
@@ -43,6 +49,15 @@ public class JsonSchemaConfig extends SchemaConfig {
   public JsonSchemaConfig(String schema) {
     super(NAME);
     setSchema(JsonParser.parseString(schema).getAsJsonObject());
+  }
+
+
+  public JsonSchemaConfig(Path schemaDirectory) throws IOException {
+    super(NAME);
+    ObjectMapper objectMapper = new ObjectMapper();
+    JsonNode schemaNode = objectMapper.readTree(schemaDirectory.toFile());
+    JsonObject jsonObject = JsonParser.parseString(schemaNode.toString()).getAsJsonObject();
+    setSchema(jsonObject);
   }
 
   private JsonSchemaConfig(SchemaConfig config) {

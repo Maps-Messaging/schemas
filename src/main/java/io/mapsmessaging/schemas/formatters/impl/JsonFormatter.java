@@ -24,10 +24,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.networknt.schema.*;
 import com.networknt.schema.Error;
-import com.networknt.schema.Schema;
-import com.networknt.schema.SchemaRegistry;
-import com.networknt.schema.SpecificationVersion;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
@@ -36,6 +34,8 @@ import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -65,6 +65,30 @@ public class JsonFormatter extends MessageFormatter {
     SpecificationVersion version = SpecificationVersion.fromDialectId(schemaDialect).orElse(SpecificationVersion.DRAFT_7);
     SchemaRegistry schemaRegistry = SchemaRegistry.withDefaultDialect(version);
     schema = schemaRegistry.getSchema(schemaNode);
+  }
+
+  public JsonFormatter(Path schemaPath) throws IOException {
+    if (schemaPath == null) {
+      throw new IllegalArgumentException("schemaPath cannot be null");
+    }
+    if (!Files.exists(schemaPath)) {
+      throw new IOException("Schema file does not exist: " + schemaPath);
+    }
+    if (!Files.isRegularFile(schemaPath)) {
+      throw new IOException("Schema path is not a file: " + schemaPath);
+    }
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    schemaNode = objectMapper.readTree(schemaPath.toFile());
+
+    String schemaDialect = schemaNode.path("$schema").asText(null);
+    SpecificationVersion version = SpecificationVersion.fromDialectId(schemaDialect)
+        .orElse(SpecificationVersion.DRAFT_7);
+
+    SchemaRegistry schemaRegistry = SchemaRegistry.withDefaultDialect(version);
+    SchemaLocation location = SchemaLocation.of(schemaPath.toUri().toString());
+    schema = schemaRegistry.getSchema(location);
+    schema.initializeValidators();
   }
 
   @Override

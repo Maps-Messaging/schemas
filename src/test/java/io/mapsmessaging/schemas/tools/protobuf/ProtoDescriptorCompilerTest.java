@@ -68,12 +68,8 @@ class ProtoDescriptorCompilerTest {
 
     List<Path> compiled = compiler.compileAllUnderRoot(rootPath, outputDirectoryPath);
 
-    assertEquals(5, compiled.size());
-    assertTrue(Files.exists(outputDirectoryPath.resolve("base.desc")));
-    assertTrue(Files.exists(outputDirectoryPath.resolve("base_node.desc")));
-    assertTrue(Files.exists(outputDirectoryPath.resolve("base_task.desc")));
-    assertTrue(Files.exists(outputDirectoryPath.resolve("catl_hibw_core.desc")));
-    assertTrue(Files.exists(outputDirectoryPath.resolve("catl_hibw_messages.desc")));
+    assertEquals(1, compiled.size());
+    assertTrue(Files.exists(outputDirectoryPath.resolve("all.desc")));
 
     for (Path path : compiled) {
       assertTrue(Files.exists(path));

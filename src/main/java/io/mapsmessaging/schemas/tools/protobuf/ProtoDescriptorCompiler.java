@@ -100,7 +100,6 @@ public class ProtoDescriptorCompiler {
 
     List<String> command = buildCompileCommand(
         normalizedRootPath,
-        normalizedProtoRootPath,
         normalizedDescriptorOutputPath,
         protoFiles,
         additionalIncludePaths
@@ -157,29 +156,83 @@ public class ProtoDescriptorCompiler {
     Path normalizedOutputDirectoryPath = outputDirectoryPath.toAbsolutePath().normalize();
     Files.createDirectories(normalizedOutputDirectoryPath);
 
-    List<Path> schemaDirectories = findProtoDirectories(normalizedRootPath);
-    if (schemaDirectories.isEmpty()) {
-      throw new IOException("No directories containing .proto files found under " + normalizedRootPath);
+    List<Path> protoFiles = findAllProtoFilesUnderRoot(normalizedRootPath);
+    if (protoFiles.isEmpty()) {
+      throw new IOException("No .proto files found under " + normalizedRootPath);
     }
 
-    List<Path> descriptorPaths = new ArrayList<>();
-    for (Path schemaDirectory : schemaDirectories) {
-      Path relativeDirectory = normalizedRootPath.relativize(schemaDirectory);
+    Path descriptorOutputPath = normalizedOutputDirectoryPath.resolve("all.desc");
+    Path compiledPath = compileAllToSingleDescriptorIfRequired(
+        normalizedRootPath,
+        descriptorOutputPath,
+        protoFiles,
+        additionalIncludePaths
+    );
 
-      String descriptorFileName;
-      if (relativeDirectory.getNameCount() == 0) {
-        descriptorFileName = "root.desc";
-      } else {
-        descriptorFileName = relativeDirectory.toString().replace('\\', '_').replace('/', '_') + ".desc";
-      }
+    return List.of(compiledPath);
+  }
 
-      Path descriptorOutputPath = normalizedOutputDirectoryPath.resolve(descriptorFileName);
-      Path compiledPath = compileIfRequired(normalizedRootPath, schemaDirectory, descriptorOutputPath, additionalIncludePaths);
-      descriptorPaths.add(compiledPath);
+  public Path compileAllToSingleDescriptor(Path rootPath, Path descriptorOutputPath) throws IOException, InterruptedException {
+    return compileAllToSingleDescriptor(rootPath, descriptorOutputPath, List.of());
+  }
+
+  public Path compileAllToSingleDescriptor(
+      Path rootPath,
+      Path descriptorOutputPath,
+      List<Path> additionalIncludePaths
+  ) throws IOException, InterruptedException {
+    Path normalizedRootPath = validateRootPath(rootPath);
+    validateDescriptorOutputPath(descriptorOutputPath);
+
+    List<Path> protoFiles = findAllProtoFilesUnderRoot(normalizedRootPath);
+    if (protoFiles.isEmpty()) {
+      throw new IOException("No .proto files found under " + normalizedRootPath);
     }
 
-    descriptorPaths.sort(Comparator.comparing(path -> path.toAbsolutePath().toString()));
-    return descriptorPaths;
+    Path normalizedDescriptorOutputPath = descriptorOutputPath.toAbsolutePath().normalize();
+    Path parentPath = normalizedDescriptorOutputPath.getParent();
+    if (parentPath != null) {
+      Files.createDirectories(parentPath);
+    }
+
+    List<String> command = buildCompileCommand(
+        normalizedRootPath,
+        normalizedDescriptorOutputPath,
+        protoFiles,
+        additionalIncludePaths
+    );
+
+    ProcessResult processResult = execute(command, normalizedRootPath);
+    if (processResult.exitCode != 0) {
+      throw new IOException("protoc failed with exit code " + processResult.exitCode + "\n" + processResult.output);
+    }
+
+    if (!Files.exists(normalizedDescriptorOutputPath) || Files.size(normalizedDescriptorOutputPath) == 0) {
+      throw new IOException("Descriptor output file was not created: " + normalizedDescriptorOutputPath);
+    }
+
+    return normalizedDescriptorOutputPath;
+  }
+
+  public Path compileAllToSingleDescriptorIfRequired(
+      Path rootPath,
+      Path descriptorOutputPath,
+      List<Path> additionalIncludePaths
+  ) throws IOException, InterruptedException {
+    Path normalizedRootPath = validateRootPath(rootPath);
+    validateDescriptorOutputPath(descriptorOutputPath);
+
+    List<Path> protoFiles = findAllProtoFilesUnderRoot(normalizedRootPath);
+    if (protoFiles.isEmpty()) {
+      throw new IOException("No .proto files found under " + normalizedRootPath);
+    }
+
+    return compileAllToSingleDescriptorIfRequired(
+        normalizedRootPath,
+        descriptorOutputPath,
+        protoFiles,
+        additionalIncludePaths
+    );
   }
 
   public List<Path> findProtoDirectories(Path rootPath) throws IOException {
@@ -202,9 +255,22 @@ public class ProtoDescriptorCompiler {
     return results;
   }
 
+  private Path compileAllToSingleDescriptorIfRequired(
+      Path rootPath,
+      Path descriptorOutputPath,
+      List<Path> protoFiles,
+      List<Path> additionalIncludePaths
+  ) throws IOException, InterruptedException {
+    Path normalizedDescriptorOutputPath = descriptorOutputPath.toAbsolutePath().normalize();
+    if (!needsRebuild(protoFiles, normalizedDescriptorOutputPath)) {
+      return normalizedDescriptorOutputPath;
+    }
+
+    return compileAllToSingleDescriptor(rootPath, normalizedDescriptorOutputPath, additionalIncludePaths);
+  }
+
   private List<String> buildCompileCommand(
       Path rootPath,
-      Path protoRootPath,
       Path descriptorOutputPath,
       List<Path> protoFiles,
       List<Path> additionalIncludePaths
@@ -212,18 +278,12 @@ public class ProtoDescriptorCompiler {
     Path protocPath = resolveProtocPath();
 
     Path normalizedRootPath = rootPath.toAbsolutePath().normalize();
-    Path normalizedProtoRootPath = protoRootPath.toAbsolutePath().normalize();
 
     List<String> command = new ArrayList<>();
     command.add(protocPath.toString());
 
     command.add("-I");
     command.add(normalizedRootPath.toString());
-
-    if (!normalizedProtoRootPath.equals(normalizedRootPath)) {
-      command.add("-I");
-      command.add(normalizedProtoRootPath.toString());
-    }
 
     if (additionalIncludePaths != null) {
       for (Path includePath : additionalIncludePaths) {
@@ -294,6 +354,23 @@ public class ProtoDescriptorCompiler {
           .forEach(protoFiles::add);
     }
 
+    return protoFiles;
+  }
+
+  private List<Path> findAllProtoFilesUnderRoot(Path rootPath) throws IOException {
+    List<Path> protoFiles = new ArrayList<>();
+
+    Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
+        if (attributes.isRegularFile() && file.getFileName().toString().endsWith(".proto")) {
+          protoFiles.add(file.toAbsolutePath().normalize());
+        }
+        return FileVisitResult.CONTINUE;
+      }
+    });
+
+    protoFiles.sort(Comparator.comparing(path -> path.toAbsolutePath().toString()));
     return protoFiles;
   }
 

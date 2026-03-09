@@ -28,6 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.UUID;
 
 /**
  * The type Json schema config.
@@ -58,6 +59,10 @@ public class JsonSchemaConfig extends SchemaConfig {
     JsonNode schemaNode = objectMapper.readTree(schemaDirectory.toFile());
     JsonObject jsonObject = JsonParser.parseString(schemaNode.toString()).getAsJsonObject();
     setSchema(jsonObject);
+    setUniqueId(UUID.nameUUIDFromBytes(schemaNode.toString().getBytes()));
+    setName(schemaDirectory.getFileName().toString());
+    setSource(schemaDirectory.toUri().toString());
+    setVersion(1);
   }
 
   private JsonSchemaConfig(SchemaConfig config) {

@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Instant;
 import java.util.List;
 
@@ -126,11 +127,18 @@ class ProtoDescriptorCompilerTest {
   }
 
   private Path createFakeProtoc(Path scriptDirectory, Path logFile) throws IOException {
+    if (isWindows()) {
+      return createWindowsFakeProtoc(scriptDirectory, logFile);
+    }
+    return createUnixFakeProtoc(scriptDirectory, logFile);
+  }
+
+  private Path createWindowsFakeProtoc(Path scriptDirectory, Path logFile) throws IOException {
     Path scriptPath = scriptDirectory.resolve("protoc.cmd");
     String script =
         "@echo off\r\n" +
             "setlocal EnableDelayedExpansion\r\n" +
-            "set \"LOGFILE=" + logFile.toString() + "\"\r\n" +
+            "set \"LOGFILE=" + logFile.toAbsolutePath().normalize() + "\"\r\n" +
             "if \"%~1\"==\"--version\" (\r\n" +
             "  echo libprotoc 99.0\r\n" +
             "  exit /b 0\r\n" +
@@ -157,4 +165,79 @@ class ProtoDescriptorCompilerTest {
     return scriptPath;
   }
 
+  private Path createUnixFakeProtoc(Path scriptDirectory, Path logFile) throws IOException {
+    Path scriptPath = scriptDirectory.resolve("protoc");
+
+    String script =
+        "#!/bin/sh\n" +
+            "LOGFILE=\"" + logFile.toAbsolutePath().normalize() + "\"\n" +
+            "\n" +
+            "if [ \"$1\" = \"--version\" ]; then\n" +
+            "  echo \"libprotoc 99.0\"\n" +
+            "  exit 0\n" +
+            "fi\n" +
+            "\n" +
+            "OUTFILE=\"\"\n" +
+            "\n" +
+            "while [ \"$#\" -gt 0 ]; do\n" +
+            "  echo \"$1\" >> \"$LOGFILE\"\n" +
+            "\n" +
+            "  case \"$1\" in\n" +
+            "    --descriptor_set_out)\n" +
+            "      shift\n" +
+            "      OUTFILE=\"$1\"\n" +
+            "      echo \"OUTFILE=$OUTFILE\" >> \"$LOGFILE\"\n" +
+            "      ;;\n" +
+            "    --descriptor_set_out=*)\n" +
+            "      OUTFILE=\"${1#--descriptor_set_out=}\"\n" +
+            "      echo \"OUTFILE=$OUTFILE\" >> \"$LOGFILE\"\n" +
+            "      ;;\n" +
+            "  esac\n" +
+            "\n" +
+            "  shift\n" +
+            "done\n" +
+            "\n" +
+            "if [ -z \"$OUTFILE\" ]; then\n" +
+            "  exit 1\n" +
+            "fi\n" +
+            "\n" +
+            "printf 'fake descriptor' > \"$OUTFILE\"\n" +
+            "exit 0\n";
+
+    Files.writeString(scriptPath, script);
+
+    try {
+      Files.setPosixFilePermissions(scriptPath,
+          java.nio.file.attribute.PosixFilePermissions.fromString("rwxr-xr-x"));
+    } catch (UnsupportedOperationException ignored) {
+      scriptPath.toFile().setExecutable(true);
+    }
+
+    return scriptPath;
+  }
+
+  private void setExecutable(Path scriptPath) throws IOException {
+    try {
+      Files.setPosixFilePermissions(
+          scriptPath,
+          PosixFilePermissions.fromString("rwxr-xr-x")
+      );
+    } catch (UnsupportedOperationException ignored) {
+      boolean result = scriptPath.toFile().setExecutable(true);
+      if (!result) {
+        throw new IOException("Failed to mark script as executable: " + scriptPath);
+      }
+    }
+  }
+
+  private boolean isWindows() {
+    String operatingSystemName = System.getProperty("os.name", "");
+    return operatingSystemName.toLowerCase().contains("win");
+  }
+
+  private String escapeForShell(String value) {
+    return value
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"");
+  }
 }

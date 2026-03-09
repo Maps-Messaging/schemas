@@ -1,21 +1,18 @@
 /*
  *
- *  Copyright [ 2020 - 2024 ] Matthew Buckton
- *  Copyright [ 2024 - 2025 ] MapsMessaging B.V.
+ *     Copyright [ 2020 - 2026 ] [Matthew Buckton]
  *
- *  Licensed under the Apache License, Version 2.0 with the Commons Clause
- *  (the "License"); you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at:
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *      https://commonsclause.com/
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
  */
 
 package io.mapsmessaging.schemas.formatters.impl;
@@ -27,10 +24,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.networknt.schema.*;
 import com.networknt.schema.Error;
-import com.networknt.schema.Schema;
-import com.networknt.schema.SchemaRegistry;
-import com.networknt.schema.dialect.Dialects;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
@@ -39,6 +34,8 @@ import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -61,16 +58,37 @@ public class JsonFormatter extends MessageFormatter {
     schema = null;
   }
 
-
   public JsonFormatter(String schemaString) throws JsonProcessingException {
     ObjectMapper objectMapper = new ObjectMapper();
-
-    // Convert byte[] schema to JsonNode
     schemaNode = objectMapper.readTree(schemaString);
-
-    // Create JsonSchema instance
-    SchemaRegistry schemaRegistry = SchemaRegistry.withDialect(Dialects.getDraft7());
+    String schemaDialect = schemaNode.path("$schema").asText(null);
+    SpecificationVersion version = SpecificationVersion.fromDialectId(schemaDialect).orElse(SpecificationVersion.DRAFT_7);
+    SchemaRegistry schemaRegistry = SchemaRegistry.withDefaultDialect(version);
     schema = schemaRegistry.getSchema(schemaNode);
+  }
+
+  public JsonFormatter(Path schemaPath) throws IOException {
+    if (schemaPath == null) {
+      throw new IllegalArgumentException("schemaPath cannot be null");
+    }
+    if (!Files.exists(schemaPath)) {
+      throw new IOException("Schema file does not exist: " + schemaPath);
+    }
+    if (!Files.isRegularFile(schemaPath)) {
+      throw new IOException("Schema path is not a file: " + schemaPath);
+    }
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    schemaNode = objectMapper.readTree(schemaPath.toFile());
+
+    String schemaDialect = schemaNode.path("$schema").asText(null);
+    SpecificationVersion version = SpecificationVersion.fromDialectId(schemaDialect)
+        .orElse(SpecificationVersion.DRAFT_7);
+
+    SchemaRegistry schemaRegistry = SchemaRegistry.withDefaultDialect(version);
+    SchemaLocation location = SchemaLocation.of(schemaPath.toUri().toString());
+    schema = schemaRegistry.getSchema(location);
+    schema.initializeValidators();
   }
 
   @Override

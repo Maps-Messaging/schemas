@@ -41,6 +41,7 @@ public enum SchemaLogMessages implements LogMessage {
   AVRO_PARSE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "Avro format raised exception during parsing, {}"),
   FORMATTER_UNEXPECTED_OBJECT(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "{} formatter unable to parse object, unexpected data {}"),
   PROTOBUF_PARSE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "Protobuf format raised exception during parsing {}"),
+  PROTOBUF_FAILED_TO_DELETE(LEVEL.ERROR, SCHEMA_CATEGORY.CONFIG, "Failed to delete temp file {}"),
   XML_CONFIGURATION_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "XML formatter raised exception during construction {}"),
   XML_PARSE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "XML formatter raised exception during parsing {}"),
   JSON_PARSE_EXCEPTION(LEVEL.ERROR, SCHEMA_CATEGORY.FORMATTER, "JSON formatter raised exception during parsing {} with the following error(s) {}"),

@@ -329,10 +329,7 @@ public class ProtoDescriptorCompiler {
       resolvedProtocPath = pathResolved;
       return resolvedProtocPath;
     }
-
-    throw new IOException(
-        "Unable to locate protoc. Configure an explicit path or ensure protoc is available on PATH."
-    );
+    throw new IOException("Unable to locate protoc. Configure an explicit path or ensure protoc is available on PATH.");
   }
 
   private Path resolveFromPath() {

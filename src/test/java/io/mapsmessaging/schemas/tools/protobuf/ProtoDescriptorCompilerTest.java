@@ -161,16 +161,4 @@ class ProtoDescriptorCompilerTest {
     return scriptPath;
   }
 
-  private boolean isWindows() {
-    String operatingSystemName = System.getProperty("os.name", "");
-    return operatingSystemName.toLowerCase().contains("win");
-  }
-
-  private String escapeForShell(String value) {
-    return value.replace("\\", "\\\\").replace("\"", "\\\"");
-  }
-
-  private String quoteForBatch(String value) {
-    return "\"" + value + "\"";
-  }
 }

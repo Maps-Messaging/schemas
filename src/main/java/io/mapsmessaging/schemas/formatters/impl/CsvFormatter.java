@@ -28,6 +28,7 @@ import io.mapsmessaging.schemas.config.impl.CsvSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
+import io.mapsmessaging.schemas.repository.SchemaResolver;
 
 import java.io.IOException;
 import java.util.*;
@@ -120,7 +121,7 @@ public class CsvFormatter extends MessageFormatter {
 
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  public MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) throws IOException {
     CsvSchemaConfig csvSchemaConfig = (CsvSchemaConfig) config;
     CsvSchemaConfig.CsvConfig csvConfig = csvSchemaConfig.getConfig();
     if (csvConfig != null) {

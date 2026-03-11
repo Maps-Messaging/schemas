@@ -31,11 +31,14 @@ import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
+import io.mapsmessaging.schemas.repository.SchemaResolver;
+import io.mapsmessaging.schemas.tools.json.JsonSchemaPointerResolver;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -47,24 +50,50 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.JSON_PARSE_EXCE
  */
 public class JsonFormatter extends MessageFormatter {
 
-  private final JsonNode schemaNode;
+  private final JsonNode rootSchemaNode;
+  private final JsonNode selectedSchemaNode;
   private final Schema schema;
+  private final String definitionPointer;
 
   /**
    * Instantiates a new Json formatter.
    */
   public JsonFormatter() {
-    schemaNode = null;
+    rootSchemaNode = null;
+    selectedSchemaNode = null;
     schema = null;
+    definitionPointer = null;
   }
 
   public JsonFormatter(String schemaString) throws JsonProcessingException {
+    this(schemaString, null);
+  }
+
+  public JsonFormatter(String schemaString, String definitionPointer) throws JsonProcessingException {
+    if (schemaString == null || schemaString.isEmpty()) {
+      throw new JsonProcessingException("Schema string is null or empty") {
+      };
+    }
+
     ObjectMapper objectMapper = new ObjectMapper();
-    schemaNode = objectMapper.readTree(schemaString);
-    String schemaDialect = schemaNode.path("$schema").asText(null);
+    rootSchemaNode = objectMapper.readTree(schemaString);
+    this.definitionPointer = definitionPointer;
+
+    JsonNode effectiveSchemaNode;
+    if (definitionPointer != null && !definitionPointer.isEmpty()) {
+      effectiveSchemaNode = buildChildWrapperSchema(rootSchemaNode, definitionPointer);
+      JsonObject rootObject = JsonParser.parseString(schemaString).getAsJsonObject();
+      JsonElement selected = JsonSchemaPointerResolver.resolve(rootObject, definitionPointer);
+      selectedSchemaNode = objectMapper.readTree(selected.toString());
+    } else {
+      effectiveSchemaNode = rootSchemaNode;
+      selectedSchemaNode = rootSchemaNode;
+    }
+
+    String schemaDialect = rootSchemaNode.path("$schema").asText(null);
     SpecificationVersion version = SpecificationVersion.fromDialectId(schemaDialect).orElse(SpecificationVersion.DRAFT_7);
     SchemaRegistry schemaRegistry = SchemaRegistry.withDefaultDialect(version);
-    schema = schemaRegistry.getSchema(schemaNode);
+    schema = schemaRegistry.getSchema(effectiveSchemaNode);
   }
 
   public JsonFormatter(Path schemaPath) throws IOException {
@@ -79,9 +108,11 @@ public class JsonFormatter extends MessageFormatter {
     }
 
     ObjectMapper objectMapper = new ObjectMapper();
-    schemaNode = objectMapper.readTree(schemaPath.toFile());
+    rootSchemaNode = objectMapper.readTree(schemaPath.toFile());
+    selectedSchemaNode = rootSchemaNode;
+    definitionPointer = null;
 
-    String schemaDialect = schemaNode.path("$schema").asText(null);
+    String schemaDialect = rootSchemaNode.path("$schema").asText(null);
     SpecificationVersion version = SpecificationVersion.fromDialectId(schemaDialect)
         .orElse(SpecificationVersion.DRAFT_7);
 
@@ -118,13 +149,13 @@ public class JsonFormatter extends MessageFormatter {
 
   @Override
   public Map<String, Object> getFormat() {
-    if (schemaNode == null || !schemaNode.has("properties")) {
+    if (selectedSchemaNode == null || !selectedSchemaNode.has("properties")) {
       return Map.of();
     }
     try {
       ObjectMapper objectMapper = new ObjectMapper();
-      JsonNode propertiesNode = schemaNode.get("properties");
-      Map<String, Object> result = new java.util.LinkedHashMap<>();
+      JsonNode propertiesNode = selectedSchemaNode.get("properties");
+      Map<String, Object> result = new LinkedHashMap<>();
 
       propertiesNode.fields().forEachRemaining(entry -> {
         String fieldName = entry.getKey();
@@ -150,21 +181,34 @@ public class JsonFormatter extends MessageFormatter {
     return gson.toJson(jsonObject).getBytes(StandardCharsets.UTF_8);
   }
 
-
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) {
-    // Extract the JSON Schema string from the version’s schema field (JsonElement recommended)
+  public MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) {
     String schemaString = null;
-    if (config.getSchema() != null) {
-      JsonElement el = config.getSchema();
-      schemaString = el.isJsonPrimitive() ? el.getAsString() : el.toString();
-    }
-    try {
-      return new JsonFormatter(schemaString);
-    } catch (JsonProcessingException e) {
+    String pointer = null;
 
+    try {
+      if (config.isChild()) {
+        SchemaConfig parent = schemaResolver.resolveParent(config);
+        if (parent != null && parent.getSchema() != null) {
+          JsonElement parentElement = parent.getSchema();
+          schemaString = parentElement.isJsonPrimitive() ? parentElement.getAsString() : parentElement.toString();
+          pointer = config.getSource();
+        }
+      } else {
+        if (config.getSchema() != null) {
+          JsonElement element = config.getSchema();
+          schemaString = element.isJsonPrimitive() ? element.getAsString() : element.toString();
+        }
+      }
+
+      if (schemaString == null || schemaString.isEmpty()) {
+        return null;
+      }
+
+      return new JsonFormatter(schemaString, pointer);
+    } catch (Exception e) {
+      return null;
     }
-    return null;
   }
 
   @Override
@@ -172,4 +216,25 @@ public class JsonFormatter extends MessageFormatter {
     return "JSON";
   }
 
+  private JsonNode buildChildWrapperSchema(JsonNode rootSchema, String pointer) {
+    ObjectMapper objectMapper = new ObjectMapper();
+    JsonNode defsNode = rootSchema.get("$defs");
+
+    com.fasterxml.jackson.databind.node.ObjectNode wrapper = objectMapper.createObjectNode();
+
+    if (rootSchema.has("$schema")) {
+      wrapper.set("$schema", rootSchema.get("$schema"));
+    }
+
+    if (rootSchema.has("$id")) {
+      wrapper.set("$id", rootSchema.get("$id"));
+    }
+
+    if (defsNode != null) {
+      wrapper.set("$defs", defsNode);
+    }
+
+    wrapper.put("$ref", pointer);
+    return wrapper;
+  }
 }

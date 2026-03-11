@@ -73,7 +73,7 @@ class TestCbcFormatter {
   @Test
   void roundTrip_parse_and_parseToJson() throws Exception {
     CbcSchemaConfig schema = buildSchema();
-    CbcFormatter formatter = (CbcFormatter) new CbcFormatter().getInstance(schema);
+    CbcFormatter formatter = (CbcFormatter) new CbcFormatter().getInstance(schema, null);
 
     Map<String, Object> src = sample();
     byte[] payload = formatter.toBytes(src);   // use formatter, not a hand-rolled BitWriter
@@ -107,7 +107,7 @@ class TestCbcFormatter {
   @Test
   void format_map_describes_fields() throws IOException {
     CbcSchemaConfig schema = buildSchema();
-    CbcFormatter formatter = (CbcFormatter) new CbcFormatter().getInstance(schema);
+    CbcFormatter formatter = (CbcFormatter) new CbcFormatter().getInstance(schema, null);
     Map<String, Object> fmt = formatter.getFormat();
 
     Assertions.assertTrue(fmt.containsKey("stringId"));

@@ -27,6 +27,7 @@ import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig.TYPE;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
+import io.mapsmessaging.schemas.repository.SchemaResolver;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -161,7 +162,7 @@ public class NativeFormatter extends MessageFormatter {
   }
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  public MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) throws IOException {
     NativeSchemaConfig schemaConfig = (NativeSchemaConfig) config;
     return new NativeFormatter(schemaConfig.getType());
   }

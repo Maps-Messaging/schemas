@@ -25,6 +25,7 @@ import com.google.gson.JsonObject;
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.repository.SchemaResolver;
 
 import java.io.IOException;
 import java.util.Map;
@@ -57,11 +58,12 @@ public abstract class MessageFormatter {
   /**
    * Gets instance.
    *
-   * @param config the config
+   * @param config         the config
+   * @param schemaResolver
    * @return the instance
    * @throws IOException the io exception
    */
-  public abstract MessageFormatter getInstance(SchemaConfig config) throws IOException;
+  public abstract MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) throws IOException;
 
   /**
    * Parse to json json object.

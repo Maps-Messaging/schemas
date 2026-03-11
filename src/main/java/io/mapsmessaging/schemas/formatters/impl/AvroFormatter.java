@@ -27,6 +27,7 @@ import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
+import io.mapsmessaging.schemas.repository.SchemaResolver;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -119,7 +120,7 @@ public class AvroFormatter extends MessageFormatter {
 
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  public MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) throws IOException {
     AvroSchemaConfig avroSchemaConfig = (AvroSchemaConfig) config;
     if (avroSchemaConfig.getSchema() != null) {
       return new AvroFormatter(avroSchemaConfig.getSchema().toString());

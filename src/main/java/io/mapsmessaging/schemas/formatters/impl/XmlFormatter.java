@@ -32,6 +32,7 @@ import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
+import io.mapsmessaging.schemas.repository.SchemaResolver;
 import org.w3c.dom.Document;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
@@ -179,7 +180,7 @@ public class XmlFormatter extends MessageFormatter implements ErrorHandler {
 
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  public MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) throws IOException {
     return new XmlFormatter(((XmlSchemaConfig) config).getConfig());
   }
 

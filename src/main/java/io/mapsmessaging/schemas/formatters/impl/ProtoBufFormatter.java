@@ -30,6 +30,7 @@ import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
+import io.mapsmessaging.schemas.repository.SchemaResolver;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -221,10 +222,15 @@ public class ProtoBufFormatter extends MessageFormatter {
 
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  public MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) throws IOException {
     ProtoBufSchemaConfig protoBufSchemaConfig = (ProtoBufSchemaConfig) config;
     ProtoBufSchemaConfig.ProtobufConfig protobufConfig = protoBufSchemaConfig.getProtobufConfig();
-    return new ProtoBufFormatter(protobufConfig.getMessageName(), protobufConfig.getDescriptorValue());
+    String name = protobufConfig.getMessageName();
+    if (config.isChild()) {
+      SchemaConfig parent = schemaResolver.resolveParent(config);
+      protobufConfig = ((ProtoBufSchemaConfig) parent).getProtobufConfig();
+    }
+    return new ProtoBufFormatter(name, protobufConfig.getDescriptorValue());
   }
 
   private FileDescriptor loadDescFile(byte[] descriptorImage) throws IOException, DescriptorValidationException {

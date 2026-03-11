@@ -31,6 +31,7 @@ import io.mapsmessaging.schemas.formatters.impl.cbc.CbcInputStream;
 import io.mapsmessaging.schemas.formatters.impl.cbc.CbcOutputStream;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
+import io.mapsmessaging.schemas.repository.SchemaResolver;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -114,7 +115,7 @@ public class CbcFormatter extends MessageFormatter {
 
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  public MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) throws IOException {
     if (!(config instanceof CbcSchemaConfig c)) {
       throw new IllegalArgumentException("Expected CbcSchemaConfig");
     }

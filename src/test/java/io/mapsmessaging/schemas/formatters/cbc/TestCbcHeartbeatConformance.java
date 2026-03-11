@@ -118,7 +118,7 @@ public class TestCbcHeartbeatConformance {
 
     // Round-trip
     Map<String, Object> valueMap = jsonToMap(json);
-    byte[] reencoded = ((CbcFormatter) new CbcFormatter().getInstance(schema)).toBytes(valueMap);
+    byte[] reencoded = ((CbcFormatter) new CbcFormatter().getInstance(schema, null)).toBytes(valueMap);
     Assertions.assertArrayEquals(payload, reencoded);
   }
 

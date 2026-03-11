@@ -34,6 +34,7 @@ import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
+import io.mapsmessaging.schemas.repository.SchemaResolver;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -117,7 +118,7 @@ public class CanbusFormatter extends MessageFormatter {
   }
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  public MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) throws IOException {
     if (!(config instanceof CanbusSchemaConfig canbusSchemaConfig)) {
       throw new IOException("Invalid config type for Canbus formatter: " + config.getClass().getName());
     }

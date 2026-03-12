@@ -27,6 +27,8 @@ import com.google.protobuf.Descriptors.FileDescriptor;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParseException;
+import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
@@ -100,20 +102,28 @@ public class ProtoBufFormatter extends MessageFormatter {
   }
 
   @Override
-  public ParsedObject parse(byte[] payload) {
+  public ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException {
     try {
       DynamicMessage message = DynamicMessage.parseFrom(descriptor.findMessageTypeByName(messageName), payload);
       ParsedObject parsed = new MapResolver(convertToMap(message));
       return new StructuredResolver(parsed, message);
     } catch (InvalidProtocolBufferException e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
-      return new DefaultParser(payload);
+      if (parseMode == ParseMode.IGNORE) {
+        return new DefaultParser(payload);
+      }
+      throw new ParseException(e.getMessage(), e);
     }
   }
 
   @Override
-  public JsonObject parseToJson(byte[] payload) {
-    DynamicMessage dynamicMessage = (DynamicMessage) (parse(payload)).getReferenced();
+  public JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException {
+    DynamicMessage dynamicMessage;
+    try {
+      dynamicMessage = (DynamicMessage) (parse(payload, ParseMode.IGNORE)).getReferenced();
+    } catch (ParseException e) {
+      throw new ParseException(e.getMessage(), e);
+    }
     return convertToJson(dynamicMessage);
   }
 

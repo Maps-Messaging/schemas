@@ -28,6 +28,8 @@ import io.mapsmessaging.mavlink.message.Version;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.MavlinkSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParseException;
+import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
@@ -90,19 +92,22 @@ public class MavlinkFormatter extends MessageFormatter {
   }
 
   @Override
-  public ParsedObject parse(byte[] payload) {
+  public ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException {
     try {
       Frame frame = parseFrame(payload);
       Map<String, Object> map = codec.parsePayload(frame.getMessageId(), frame.getPayload());
       return new StructuredResolver(new MapResolver(map), frame);
     } catch (Exception exception) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
-      return new DefaultParser(payload);
+      if (parseMode == ParseMode.IGNORE) {
+        return new DefaultParser(payload);
+      }
+      throw new ParseException(exception.getMessage(), exception);
     }
   }
 
   @Override
-  public JsonObject parseToJson(byte[] payload) throws IOException {
+  public JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException {
     try {
       Frame frame = parseFrame(payload);
       Map<String, Object> map = codec.parsePayload(frame.getMessageId(), frame.getPayload());
@@ -125,9 +130,8 @@ public class MavlinkFormatter extends MessageFormatter {
 
       return json;
     } catch (Exception exception) {
-      exception.printStackTrace();
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
-      throw new IOException("Failed to parse MAVLink payload to JSON", exception);
+      throw new ParseException("Failed to parse MAVLink payload to JSON", exception);
     }
   }
 

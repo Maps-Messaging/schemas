@@ -75,7 +75,7 @@ class TestMavLinkFormatter {
     Assertions.assertNotNull(frame);
     Assertions.assertTrue(frame.length > 0);
 
-    JsonObject output = formatter.parseToJson(frame);
+    JsonObject output = formatter.parseToJson(frame, ParseMode.IGNORE);
     Assertions.assertNotNull(output);
 
     JsonObject outHeader = header(output);
@@ -129,7 +129,7 @@ class TestMavLinkFormatter {
     byte[] frame = formatter.parseFromJson(input);
     Assertions.assertNotNull(frame);
 
-    JsonObject output = formatter.parseToJson(frame);
+    JsonObject output = formatter.parseToJson(frame, ParseMode.IGNORE);
     Assertions.assertNotNull(output);
 
     JsonObject outPayload = payload(output);
@@ -147,7 +147,7 @@ class TestMavLinkFormatter {
     Assertions.assertNotNull(formatter);
 
     byte[] garbage = "This should not be parsable".getBytes();
-    ParsedObject parsed = formatter.parse(garbage);
+    ParsedObject parsed = formatter.parse(garbage, ParseMode.IGNORE);
 
     Assertions.assertNotNull(parsed);
     Assertions.assertNull(parsed.get("value"));
@@ -172,10 +172,10 @@ class TestMavLinkFormatter {
     legacyInput.addProperty("mavlink_version", 3);
 
     byte[] frame1 = formatter.parseFromJson(legacyInput);
-    JsonObject envelope = formatter.parseToJson(frame1);
+    JsonObject envelope = formatter.parseToJson(frame1, ParseMode.IGNORE);
 
     byte[] frame2 = formatter.parseFromJson(envelope);
-    JsonObject envelope2 = formatter.parseToJson(frame2);
+    JsonObject envelope2 = formatter.parseToJson(frame2, ParseMode.IGNORE);
 
     Assertions.assertEquals(
         header(envelope).get("messageId").getAsInt(),

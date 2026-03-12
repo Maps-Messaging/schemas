@@ -86,7 +86,7 @@ class TestMessagePackFormatter extends BaseTest {
     Map<String, Object> invalid = new HashMap<>();
     invalid.put("something_else", "test");
     byte[] payload = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(invalid);
-    Assertions.assertNotNull(formatter.parse(payload));
+    Assertions.assertNotNull(formatter.parse(payload, ParseMode.IGNORE));
   }
 
   @Test
@@ -103,7 +103,7 @@ class TestMessagePackFormatter extends BaseTest {
     map.put("next", nested);
 
     byte[] payload = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(map);
-    ParsedObject parsed = formatter.parse(payload);
+    ParsedObject parsed = formatter.parse(payload, ParseMode.IGNORE);
 
     Assertions.assertEquals(11, ((Number) parsed.get("next.1")).intValue());
     Assertions.assertEquals(1, ((Number) parsed.get("1")).intValue());
@@ -122,7 +122,7 @@ class TestMessagePackFormatter extends BaseTest {
     map.put("arr", array);
 
     byte[] payload = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(map);
-    ParsedObject parsed = formatter.parse(payload);
+    ParsedObject parsed = formatter.parse(payload, ParseMode.IGNORE);
 
     Assertions.assertEquals(1, ((Number) parsed.get("arr[1]")).intValue());
     Assertions.assertEquals(0, ((Number) parsed.get("arr[0]")).intValue());

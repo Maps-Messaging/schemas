@@ -29,6 +29,8 @@ import com.google.gson.reflect.TypeToken;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.XmlSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParseException;
+import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
@@ -95,7 +97,7 @@ public class XmlFormatter extends MessageFormatter implements ErrorHandler {
   }
 
   @Override
-  public JsonObject parseToJson(byte[] payload) {
+  public JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException {
     try {
       ObjectMapper xmlMapper = new XmlMapper();
       Map<String, Object> map = xmlMapper.readValue(payload, new TypeReference<>() {
@@ -115,7 +117,7 @@ public class XmlFormatter extends MessageFormatter implements ErrorHandler {
       return rootObject;
     } catch (Exception e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName());
-      return new JsonObject();
+      throw new ParseException(e.getMessage(), e);
     }
   }
 
@@ -138,10 +140,10 @@ public class XmlFormatter extends MessageFormatter implements ErrorHandler {
 
 
   @Override
-  public synchronized ParsedObject parse(byte[] payload) {
+  public synchronized ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException {
     try {
       Document document = parser.parse(new ByteArrayInputStream(payload));
-      JsonObject jsonObject = parseToJson(payload);
+      JsonObject jsonObject = parseToJson(payload, ParseMode.IGNORE);
       Type type = new TypeToken<Map<String, Object>>() {
       }.getType();
       Map<String, Object> map = gson.fromJson(jsonObject, type);
@@ -152,18 +154,8 @@ public class XmlFormatter extends MessageFormatter implements ErrorHandler {
       return new StructuredResolver(new MapResolver(map), document);
     } catch (IOException | SAXException e) {
       logger.log(XML_PARSE_EXCEPTION, getName(), e);
+      throw new ParseException(e.getMessage(), e);
     }
-    return new ParsedObject() {
-      @Override
-      public Object getReferenced() {
-        return payload;
-      }
-
-      @Override
-      public Object get(String s) {
-        return null;
-      }
-    };
   }
 
   @Override

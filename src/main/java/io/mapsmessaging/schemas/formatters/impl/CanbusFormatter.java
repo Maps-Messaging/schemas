@@ -31,6 +31,8 @@ import io.mapsmessaging.canbus.j1939.n2k.parser.N2kXmlDialectParser;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.CanbusSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParseException;
+import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
@@ -81,8 +83,8 @@ public class CanbusFormatter extends MessageFormatter {
 
 
   @Override
-  public ParsedObject parse(byte[] payload) {
-    JsonObject json = parseToJson(payload);
+  public ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException {
+    JsonObject json = parseToJson(payload, parseMode);
     Map<String, Object> map = gson.fromJson(json, Map.class);
     return new StructuredResolver(new MapResolver(map), json);
   }
@@ -93,7 +95,7 @@ public class CanbusFormatter extends MessageFormatter {
   }
 
   @Override
-  public JsonObject parseToJson(byte[] payload) {
+  public JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException {
     CanFrame frame = CanFrame.fromBytes(payload);
     int id = frame.canIdentifier();
     CanId canId = CanId.parse(id);
@@ -107,8 +109,10 @@ public class CanbusFormatter extends MessageFormatter {
         return json;
       }
     }
-    json = processRawPacket(frame);
-    return json;
+    if (parseMode == ParseMode.IGNORE) {
+      return processRawPacket(frame);
+    }
+    throw new ParseException("No parser found for CAN ID " + id);
   }
 
   @Override

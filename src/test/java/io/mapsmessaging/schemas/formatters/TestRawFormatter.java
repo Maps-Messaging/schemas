@@ -32,13 +32,22 @@ class TestRawFormatter {
   @Test
   void testJSONpacker() {
     RawFormatter rawFormatter = new RawFormatter();
-    JsonObject jsonObject = rawFormatter.parseToJson("Hi there".getBytes());
+    JsonObject jsonObject = null;
+    try {
+      jsonObject = rawFormatter.parseToJson("Hi there".getBytes(), ParseMode.IGNORE);
+    } catch (ParseException e) {
+      throw new RuntimeException(e);
+    }
     Assertions.assertEquals("Hi there", new String(Base64.getDecoder().decode((jsonObject.get("payload").getAsString()))));
   }
 
   @Test
   void testNullResponse() {
     RawFormatter rawFormatter = new RawFormatter();
-    Assertions.assertNull(rawFormatter.parse("what ever is here can not be parsed".getBytes()).get("whatEver"));
+    try {
+      Assertions.assertNull(rawFormatter.parse("what ever is here can not be parsed".getBytes(), ParseMode.IGNORE).get("whatEver"));
+    } catch (ParseException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

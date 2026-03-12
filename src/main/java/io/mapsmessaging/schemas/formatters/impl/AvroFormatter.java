@@ -25,6 +25,8 @@ import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.AvroSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParseException;
+import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.repository.SchemaResolver;
@@ -74,27 +76,34 @@ public class AvroFormatter extends MessageFormatter {
   }
 
   @Override
-  public synchronized ParsedObject parse(byte[] payload) {
+  public synchronized ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException {
     try {
       decoder = DecoderFactory.get().binaryDecoder(payload, decoder);
       GenericRecord genericRecord = datumReader.read(null, decoder);
       return new AvroResolver(genericRecord);
     } catch (Exception e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
-      return new DefaultParser(payload);
+      if (parseMode == ParseMode.IGNORE) {
+        return new DefaultParser(payload);
+      }
+      throw new ParseException(e.getMessage());
     }
   }
 
   @Override
-  public JsonObject parseToJson(byte[] payload) throws IOException {
-    GenericRecord genericRecord = (GenericRecord) parse(payload).getReferenced();
-    ByteArrayOutputStream stream = new ByteArrayOutputStream(1024);
-    Encoder jsonEncoder = EncoderFactory.get().jsonEncoder(schema, stream);
-    GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
-    writer.write(genericRecord, jsonEncoder);
-    jsonEncoder.flush();
-    String jsonString = stream.toString(StandardCharsets.UTF_8);
-    return JsonParser.parseString(jsonString).getAsJsonObject();
+  public JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException {
+    GenericRecord genericRecord = (GenericRecord) parse(payload, parseMode).getReferenced();
+    try {
+      ByteArrayOutputStream stream = new ByteArrayOutputStream(1024);
+      Encoder jsonEncoder = EncoderFactory.get().jsonEncoder(schema, stream);
+      GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
+      writer.write(genericRecord, jsonEncoder);
+      jsonEncoder.flush();
+      String jsonString = stream.toString(StandardCharsets.UTF_8);
+      return JsonParser.parseString(jsonString).getAsJsonObject();
+    } catch (IOException e) {
+      throw new ParseException(e.getMessage(), e);
+    }
   }
 
   @Override

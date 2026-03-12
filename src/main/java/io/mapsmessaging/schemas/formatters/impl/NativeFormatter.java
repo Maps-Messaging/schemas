@@ -26,6 +26,8 @@ import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.NativeSchemaConfig.TYPE;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParseException;
+import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.repository.SchemaResolver;
 
@@ -123,7 +125,7 @@ public class NativeFormatter extends MessageFormatter {
 
 
   @Override
-  public ParsedObject parse(byte[] payload) {
+  public ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException {
     return new ParsedObject() {
       @Override
       public Object getReferenced() {
@@ -144,9 +146,9 @@ public class NativeFormatter extends MessageFormatter {
 
 
   @Override
-  public JsonObject parseToJson(byte[] payload) throws IOException {
+  public JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException {
     JsonObject jsonObject = new JsonObject();
-    Object value = parse(payload).get(VALUE);
+    Object value = parse(payload, ParseMode.IGNORE).get(VALUE);
     if (value != null) {
       jsonObject.add(VALUE, gson.toJsonTree(value));
     } else {
@@ -261,21 +263,13 @@ public class NativeFormatter extends MessageFormatter {
     @Override
     public Object decode(byte[] payload) {
       long result = readFromByteArray(payload, size);
-      switch (size) {
-        case 8:
-          return result;
-        case 4:
-          return (int) result;
-
-        case 2:
-          return (short) result;
-
-        case 1:
-          return (byte) result;
-
-        default:
-          return result;
-      }
+      return switch (size) {
+        case 8 -> result;
+        case 4 -> (int) result;
+        case 2 -> (short) result;
+        case 1 -> (byte) result;
+        default -> result;
+      };
     }
 
     public byte[] encode(JsonElement object) {

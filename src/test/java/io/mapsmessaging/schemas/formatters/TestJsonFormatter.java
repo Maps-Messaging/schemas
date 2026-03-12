@@ -82,7 +82,7 @@ class TestJsonFormatter extends BaseTest {
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
     JsonObject jsonObject = new JsonObject();
     jsonObject.addProperty("something_different", "hello");
-    Assertions.assertNotNull(formatter.parse(jsonObject.toString().getBytes()));
+    Assertions.assertNotNull(formatter.parse(jsonObject.toString().getBytes(), ParseMode.IGNORE));
 
   }
 
@@ -100,7 +100,7 @@ class TestJsonFormatter extends BaseTest {
       next.addProperty("" + x, x + 10);
     }
     top.add("next", next);
-    ParsedObject parsed = formatter.parse(top.toString().getBytes());
+    ParsedObject parsed = formatter.parse(top.toString().getBytes(), ParseMode.IGNORE);
     Assertions.assertEquals(11, ((Number) parsed.get("next.1")).intValue());
     Assertions.assertEquals(1, ((Number) parsed.get("1")).intValue());
   }
@@ -117,7 +117,7 @@ class TestJsonFormatter extends BaseTest {
     }
     JsonObject top = new JsonObject();
     top.add("arr", jsonArray);
-    ParsedObject parsed = formatter.parse(top.toString().getBytes());
+    ParsedObject parsed = formatter.parse(top.toString().getBytes(), ParseMode.IGNORE);
     Assertions.assertEquals(1, ((Number) parsed.get("arr[1]")).intValue());
     Assertions.assertEquals(0, ((Number) parsed.get("arr[0]")).intValue());
     Assertions.assertEquals(9, ((Number) parsed.get("arr[9]")).intValue());

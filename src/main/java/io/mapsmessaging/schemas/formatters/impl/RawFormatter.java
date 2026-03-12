@@ -23,6 +23,8 @@ package io.mapsmessaging.schemas.formatters.impl;
 import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParseException;
+import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.repository.SchemaResolver;
 
@@ -48,7 +50,7 @@ public class RawFormatter extends MessageFormatter {
   }
 
   @Override
-  public JsonObject parseToJson(byte[] payload) {
+  public JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException {
     JsonObject obj = new JsonObject();
     String encoded = Base64.getEncoder().encodeToString(payload);
     obj.addProperty("payload", encoded);
@@ -62,7 +64,7 @@ public class RawFormatter extends MessageFormatter {
   }
 
   @Override
-  public ParsedObject parse(byte[] payload) {
+  public ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException {
     return new ParsedObject() {
       @Override
       public Object getReferenced() {

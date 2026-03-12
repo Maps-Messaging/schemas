@@ -40,7 +40,7 @@ class TestCanbusFormatter {
     CanFrame original = new CanFrame(canIdentifier, extendedFrame, dataLengthCode, payload);
     byte[] packed = original.getRawData();
 
-    JsonObject json = formatter.parseToJson(packed);
+    JsonObject json = formatter.parseToJson(packed, ParseMode.IGNORE);
 
     Assertions.assertEquals(canIdentifier, json.get("canId").getAsInt());
     Assertions.assertEquals(dataLengthCode, json.get("dlc").getAsInt());
@@ -63,7 +63,7 @@ class TestCanbusFormatter {
     CanFrame original = new CanFrame(canIdentifier, extendedFrame, dataLengthCode, payload);
     byte[] packed = original.getRawData();
 
-    JsonObject json = formatter.parseToJson(packed);
+    JsonObject json = formatter.parseToJson(packed, ParseMode.IGNORE);
 
     Assertions.assertEquals(canIdentifier, json.get("canId").getAsInt());
     Assertions.assertEquals(dataLengthCode, json.get("dlc").getAsInt());

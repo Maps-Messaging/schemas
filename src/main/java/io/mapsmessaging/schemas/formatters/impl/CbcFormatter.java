@@ -26,6 +26,8 @@ import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.CbcSchemaConfig;
 import io.mapsmessaging.schemas.config.impl.cbc.CbcFormat;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParseException;
+import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.impl.cbc.CbcInputStream;
 import io.mapsmessaging.schemas.formatters.impl.cbc.CbcOutputStream;
@@ -81,21 +83,24 @@ public class CbcFormatter extends MessageFormatter {
   }
 
   @Override
-  public ParsedObject parse(byte[] payload) {
+  public ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException {
     try {
       Map<String, Object> map = inputStream.decode(schema, payload);
       ParsedObject parsed = new MapResolver(map);
       return new StructuredResolver(parsed, map);
     } catch (Exception e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
-      return new DefaultParser(payload);
+      if (parseMode == ParseMode.IGNORE) {
+        return new DefaultParser(payload);
+      }
+      throw new ParseException(e.getMessage(), e);
     }
   }
 
   @Override
-  public synchronized JsonObject parseToJson(byte[] payload) throws IOException {
+  public synchronized JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException {
     if (schema == null) {
-      throw new IllegalStateException("CBC SchemaConfig not set on formatter");
+      throw new ParseException("CBC SchemaConfig not set on formatter");
     }
     Map<String, Object> map = inputStream.decode(schema, payload);
     return new Gson().toJsonTree(map).getAsJsonObject();

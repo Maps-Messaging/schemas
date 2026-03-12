@@ -90,14 +90,27 @@ public abstract class BaseTest {
   void testInvalidData() throws IOException {
     SchemaConfig schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
-    Assertions.assertNotNull(formatter.parse("This should not be parsable".getBytes()));
-    Assertions.assertNull(formatter.parse("This should not be parsable".getBytes()).get("value"));
+    Assertions.assertThrows(
+        io.mapsmessaging.schemas.formatters.ParseException.class,
+        () -> formatter.parse("This should not be parsable".getBytes(), ParseMode.STRICT)
+    );
+
+    Assertions.assertThrows(
+        io.mapsmessaging.schemas.formatters.ParseException.class,
+        () -> formatter.parse("This should not be parsable".getBytes(), ParseMode.STRICT).get("value")
+    );
     byte[] binary = new byte[1024];
     for (int x = 0; x < binary.length; x++) {
       binary[x] = (byte) (x % 0xf);
     }
-    Assertions.assertNotNull(formatter.parse(binary));
-    Assertions.assertNull(formatter.parse(binary).get("value"));
+    Assertions.assertThrows(
+        io.mapsmessaging.schemas.formatters.ParseException.class,
+        () -> formatter.parse(binary, ParseMode.STRICT)
+    );
+    Assertions.assertThrows(
+        io.mapsmessaging.schemas.formatters.ParseException.class,
+        () -> formatter.parse(binary, ParseMode.STRICT).get("value")
+    );
   }
 
   @Test
@@ -107,7 +120,7 @@ public abstract class BaseTest {
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     for (int x = 0; x < data.size(); x++) {
       Person p = data.get(x);
-      JsonObject jsonObject = formatter.parseToJson(packed.get(x));
+      JsonObject jsonObject = formatter.parseToJson(packed.get(x), ParseMode.IGNORE);
       validateValues(p.getStringId(), jsonObject.get("stringId").getAsString());
       validateValues(p.getLongId(), jsonObject.get("longId").getAsLong());
       validateValues(p.getIntId(), jsonObject.get("intId").getAsInt());
@@ -140,7 +153,7 @@ public abstract class BaseTest {
     SchemaConfig schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     for (int x = 0; x < data.size(); x++) {
-      ParsedObject parsedObject = formatter.parse(packed.get(x));
+      ParsedObject parsedObject = formatter.parse(packed.get(x), ParseMode.IGNORE);
       Person p = data.get(x);
       validateValues(p.getStringId(), parsedObject.get("stringId"));
       validateValues(p.getLongId(), parsedObject.get("longId"));
@@ -173,7 +186,12 @@ public abstract class BaseTest {
     SchemaConfig schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     dataSet.parallelStream().forEach(set -> {
-      ParsedObject parsedObject = formatter.parse(set.packed);
+      ParsedObject parsedObject = null;
+      try {
+        parsedObject = formatter.parse(set.packed, ParseMode.IGNORE);
+      } catch (io.mapsmessaging.schemas.formatters.ParseException e) {
+        throw new RuntimeException(e);
+      }
       Person p = set.source;
       validateValues(p.getStringId(), parsedObject.get("stringId"));
       validateValues(p.getLongId(), parsedObject.get("longId"));
@@ -213,7 +231,13 @@ public abstract class BaseTest {
 
     ParserExecutor executor = SelectorParser.compile(selector);
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
-    List<DataSet> result = dataSet.parallelStream().filter(dataSet1 -> executor.evaluate(formatter.parse(dataSet1.packed))).collect(Collectors.toList());
+    List<DataSet> result = dataSet.parallelStream().filter(dataSet1 -> {
+      try {
+        return executor.evaluate(formatter.parse(dataSet1.packed, ParseMode.IGNORE));
+      } catch (io.mapsmessaging.schemas.formatters.ParseException e) {
+        throw new RuntimeException(e);
+      }
+    }).collect(Collectors.toList());
 
     Assertions.assertTrue(result.size() >= 5, "result.size() "+result.size()+" >= 5");
     long time = (System.currentTimeMillis() - start);
@@ -246,11 +270,11 @@ public abstract class BaseTest {
     ParserExecutor floatExecutor = SelectorParser.compile("floatId = " + data.get(index).getFloatId());
 
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
-    Assertions.assertTrue(stringExecutor.evaluate(formatter.parse(dataSet.get(index).packed)));
-    Assertions.assertTrue(longExecutor.evaluate(formatter.parse(dataSet.get(index).packed)));
-    Assertions.assertTrue(intExecutor.evaluate(formatter.parse(dataSet.get(index).packed)));
-    Assertions.assertTrue(doubleExecutor.evaluate(formatter.parse(dataSet.get(index).packed)));
-    Assertions.assertTrue(floatExecutor.evaluate(formatter.parse(dataSet.get(index).packed)));
+    Assertions.assertTrue(stringExecutor.evaluate(formatter.parse(dataSet.get(index).packed, ParseMode.IGNORE)));
+    Assertions.assertTrue(longExecutor.evaluate(formatter.parse(dataSet.get(index).packed, ParseMode.IGNORE)));
+    Assertions.assertTrue(intExecutor.evaluate(formatter.parse(dataSet.get(index).packed, ParseMode.IGNORE)));
+    Assertions.assertTrue(doubleExecutor.evaluate(formatter.parse(dataSet.get(index).packed, ParseMode.IGNORE)));
+    Assertions.assertTrue(floatExecutor.evaluate(formatter.parse(dataSet.get(index).packed, ParseMode.IGNORE)));
   }
 
   private void validateValues(Object lhs, Object rhs) {

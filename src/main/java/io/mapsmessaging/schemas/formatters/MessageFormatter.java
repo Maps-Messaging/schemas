@@ -68,11 +68,12 @@ public abstract class MessageFormatter {
   /**
    * Parse to json json object.
    *
-   * @param payload the payload
+   * @param payload   the payload
+   * @param parseMode
    * @return the json object
    * @throws IOException the io exception
    */
-  public abstract JsonObject parseToJson(byte[] payload) throws IOException;
+  public abstract JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException;
 
 
   /**
@@ -87,10 +88,11 @@ public abstract class MessageFormatter {
   /**
    * Parse parsed object.
    *
-   * @param payload the payload
+   * @param payload   the payload
+   * @param parseMode
    * @return the parsed object
    */
-  public abstract ParsedObject parse(byte[] payload);
+  public abstract ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException;
 
 
   public abstract Map<String, Object> getFormat();

@@ -19,6 +19,7 @@ package io.mapsmessaging.schemas.config;
 
 import com.google.gson.JsonObject;
 import io.mapsmessaging.canbus.device.frames.CanFrame;
+import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.impl.CanbusFormatter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -54,7 +55,7 @@ class TestCanbusSchema {
     CanFrame original = new CanFrame(canIdentifier, extendedFrame, dataLengthCode, payload);
     byte[] packed = original.getRawData();
 
-    JsonObject json = formatter.parseToJson(packed);
+    JsonObject json = formatter.parseToJson(packed, ParseMode.IGNORE);
 
     Assertions.assertTrue(json.has("canId"));
     Assertions.assertTrue(json.has("dlc"));
@@ -82,7 +83,7 @@ class TestCanbusSchema {
     CanFrame original = new CanFrame(canIdentifier, extendedFrame, dataLengthCode, payload);
     byte[] packed = original.getRawData();
 
-    JsonObject json = formatter.parseToJson(packed);
+    JsonObject json = formatter.parseToJson(packed, ParseMode.IGNORE);
 
     Assertions.assertEquals(canIdentifier, json.get("canId").getAsInt());
     Assertions.assertEquals(dataLengthCode, json.get("dlc").getAsInt());

@@ -27,6 +27,7 @@ import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.impl.CbcSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.MessageFormatterFactory;
+import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -60,8 +61,8 @@ class TestCbcFuzzHeartbeat {
       byte[] packed = HeartBeatPacker.pack(hb, schema);
 
       // parse to JSON and to ParsedObject
-      JsonObject json = formatter.parseToJson(packed);
-      ParsedObject po = formatter.parse(packed);
+      JsonObject json = formatter.parseToJson(packed, ParseMode.IGNORE);
+      ParsedObject po = formatter.parse(packed, ParseMode.IGNORE);
 
       // header
       Assertions.assertEquals(65280L, json.get("messageKey").getAsLong());

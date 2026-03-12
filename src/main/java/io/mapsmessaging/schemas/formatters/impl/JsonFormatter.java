@@ -28,6 +28,8 @@ import com.networknt.schema.*;
 import com.networknt.schema.Error;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParseException;
+import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
@@ -123,7 +125,7 @@ public class JsonFormatter extends MessageFormatter {
   }
 
   @Override
-  public ParsedObject parse(byte[] payload) {
+  public ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException {
     try {
       String jsonString = new String(payload, StandardCharsets.UTF_8);
       JsonObject json = JsonParser.parseString(jsonString).getAsJsonObject();
@@ -134,6 +136,9 @@ public class JsonFormatter extends MessageFormatter {
         List<Error> validationResult = schema.validate(jsonNode);
         if (!validationResult.isEmpty()) {
           logger.log(JSON_PARSE_EXCEPTION, getName(), validationResult);
+          if (parseMode == ParseMode.STRICT) {
+            throw new ParseException(validationResult.toString());
+          }
         }
       }
 
@@ -143,7 +148,10 @@ public class JsonFormatter extends MessageFormatter {
       return new StructuredResolver(new MapResolver(map), json);
     } catch (Exception e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
-      return new DefaultParser(payload);
+      if (parseMode == ParseMode.IGNORE) {
+        return new DefaultParser(payload);
+      }
+      throw new ParseException(e.getMessage(), e);
     }
   }
 
@@ -172,7 +180,7 @@ public class JsonFormatter extends MessageFormatter {
   }
 
   @Override
-  public JsonObject parseToJson(byte[] payload) throws IOException {
+  public JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException {
     return JsonParser.parseString(new String(payload, StandardCharsets.UTF_8)).getAsJsonObject();
   }
 

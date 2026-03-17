@@ -40,7 +40,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -157,22 +156,20 @@ public class JsonFormatter extends MessageFormatter {
 
   @Override
   public Map<String, Object> getFormat() {
-    if (selectedSchemaNode == null || !selectedSchemaNode.has("properties")) {
+    if (selectedSchemaNode == null) {
       return Map.of();
     }
     try {
       ObjectMapper objectMapper = new ObjectMapper();
-      JsonNode propertiesNode = selectedSchemaNode.get("properties");
-      Map<String, Object> result = new LinkedHashMap<>();
+      JsonNode node = selectedSchemaNode.get("properties");
+      if (node == null) {
+        node = selectedSchemaNode.get("_children");
+      }
+      if (node == null) {
+        node = selectedSchemaNode;
+      }
 
-      propertiesNode.fields().forEachRemaining(entry -> {
-        String fieldName = entry.getKey();
-        JsonNode attributes = entry.getValue();
-        Map<String, Object> attrMap = objectMapper.convertValue(attributes, Map.class);
-        result.put(fieldName, attrMap);
-      });
-
-      return result;
+      return objectMapper.convertValue(node, Map.class);
     } catch (Exception e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), e.getMessage());
       return Map.of();

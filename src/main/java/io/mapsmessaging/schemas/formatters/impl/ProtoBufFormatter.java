@@ -20,12 +20,15 @@ package io.mapsmessaging.schemas.formatters.impl;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import com.google.protobuf.*;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.Descriptors.DescriptorValidationException;
 import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Descriptors.FileDescriptor;
+import com.google.protobuf.DynamicMessage;
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig;
+import io.mapsmessaging.schemas.config.impl.protobuf.DescriptorLoader;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParseException;
 import io.mapsmessaging.schemas.formatters.ParseMode;
@@ -34,9 +37,7 @@ import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 import io.mapsmessaging.schemas.repository.SchemaResolver;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -48,14 +49,14 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXP
 public class ProtoBufFormatter extends MessageFormatter {
 
   private final String messageName;
-  private final FileDescriptor descriptor;
+  private final Map<String, Descriptors.FileDescriptor> descriptors;
 
   /**
    * Instantiates a new Proto buf formatter.
    */
   public ProtoBufFormatter() {
     messageName = "";
-    descriptor = null;
+    descriptors = new HashMap<>();
   }
 
   /**
@@ -67,7 +68,8 @@ public class ProtoBufFormatter extends MessageFormatter {
    */
   ProtoBufFormatter(String messageName, byte[] descriptorImage) throws IOException {
     try {
-      this.descriptor = loadDescFile(descriptorImage);
+      DescriptorLoader loader = new DescriptorLoader();
+      this.descriptors = loader.loadDescFiles(descriptorImage);
       this.messageName = messageName;
     } catch (DescriptorValidationException e) {
       throw new IOException(e);
@@ -80,11 +82,11 @@ public class ProtoBufFormatter extends MessageFormatter {
 
   @Override
   public Map<String, Object> getFormat() {
-    if (descriptor == null || messageName == null || messageName.isEmpty()) {
+    if (descriptors == null || descriptors.isEmpty() || messageName == null || messageName.isEmpty()) {
       return Map.of();
     }
 
-    Descriptors.Descriptor messageDescriptor = descriptor.findMessageTypeByName(messageName);
+    Descriptors.Descriptor messageDescriptor = findMessageDescriptor(messageName);
     if (messageDescriptor == null) {
       return Map.of();
     }
@@ -104,7 +106,7 @@ public class ProtoBufFormatter extends MessageFormatter {
   @Override
   public ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException {
     try {
-      DynamicMessage message = DynamicMessage.parseFrom(descriptor.findMessageTypeByName(messageName), payload);
+      DynamicMessage message = DynamicMessage.parseFrom(findMessageDescriptor(messageName), payload);
       ParsedObject parsed = new MapResolver(convertToMap(message));
       return new StructuredResolver(parsed, message);
     } catch (InvalidProtocolBufferException e) {
@@ -129,9 +131,9 @@ public class ProtoBufFormatter extends MessageFormatter {
 
   @Override
   public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
-    if (descriptor == null || messageName == null || messageName.isEmpty()) return new byte[0];
+    if (descriptors == null || messageName == null || messageName.isEmpty()) return new byte[0];
 
-    Descriptors.Descriptor messageDescriptor = descriptor.findMessageTypeByName(messageName);
+    Descriptors.Descriptor messageDescriptor = findMessageDescriptor(messageName);
     if (messageDescriptor == null) return new byte[0];
 
     @SuppressWarnings("unchecked")
@@ -153,84 +155,6 @@ public class ProtoBufFormatter extends MessageFormatter {
     return builder.build().toByteArray();
   }
 
-  private Object normalizeForField(FieldDescriptor fd, Object v) {
-    switch (fd.getJavaType()) {
-      case BYTE_STRING -> {
-        if (v instanceof com.google.protobuf.ByteString bs) return bs;
-        if (v instanceof String s) {
-          // accept standard or URL-safe, ignore whitespace
-          String clean = s.replaceAll("\\s+", "");
-          try {
-            return com.google.protobuf.ByteString.copyFrom(java.util.Base64.getDecoder().decode(clean));
-          } catch (IllegalArgumentException ignore) {
-            return com.google.protobuf.ByteString.copyFrom(java.util.Base64.getUrlDecoder().decode(clean));
-          }
-        }
-        if (v instanceof java.util.List<?> lst) {
-          byte[] b = new byte[lst.size()];
-          for (int i = 0; i < b.length; i++) b[i] = ((Number) lst.get(i)).byteValue();
-          return com.google.protobuf.ByteString.copyFrom(b);
-        }
-        throw new IllegalArgumentException("Field '" + fd.getName() + "' expects bytes");
-      }
-      case ENUM -> {
-        if (v instanceof Number n) return fd.getEnumType().findValueByNumber(n.intValue());
-        String s = v.toString();
-        // allow numeric-in-string too
-        try {
-          return fd.getEnumType().findValueByNumber(Integer.parseInt(s));
-        } catch (NumberFormatException ignore) { /* fall through */ }
-        Descriptors.EnumValueDescriptor ev = fd.getEnumType().findValueByName(s);
-        if (ev == null) throw new IllegalArgumentException("Unknown enum: " + s + " for " + fd.getFullName());
-        return ev;
-      }
-      case LONG -> {  // handle stringified 64-bit
-        if (v instanceof Number n) return n.longValue();
-        return Long.parseLong(v.toString());
-      }
-      case INT -> {
-        if (v instanceof Number n) return n.intValue();
-        return Integer.parseInt(v.toString());
-      }
-      case FLOAT -> {
-        if (v instanceof Number n) return n.floatValue();
-        return Float.parseFloat(v.toString());
-      }
-      case DOUBLE -> {
-        if (v instanceof Number n) return n.doubleValue();
-        return Double.parseDouble(v.toString());
-      }
-      case BOOLEAN -> {
-        if (v instanceof Boolean b) return b;
-        if (v instanceof Number n) return n.intValue() != 0;
-        return Boolean.parseBoolean(v.toString());
-      }
-      case STRING -> {
-        return v.toString();
-      }
-      case MESSAGE -> {
-        if (v instanceof Map<?, ?> m) {
-          DynamicMessage.Builder child = DynamicMessage.newBuilder(fd.getMessageType());
-          for (FieldDescriptor cf : fd.getMessageType().getFields()) {
-            Object cv = m.get(cf.getName());
-            if (cv == null) continue;
-            if (cf.isRepeated() && cv instanceof Collection<?> coll) {
-              for (Object e : coll) child.addRepeatedField(cf, normalizeForField(cf, e));
-            } else {
-              child.setField(cf, normalizeForField(cf, cv));
-            }
-          }
-          return child.build();
-        }
-        throw new IllegalArgumentException("Field '" + fd.getName() + "' expects object for MESSAGE");
-      }
-      default -> {
-        return v;
-      }
-    }
-  }
-
-
   @Override
   public MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) throws IOException {
     ProtoBufSchemaConfig protoBufSchemaConfig = (ProtoBufSchemaConfig) config;
@@ -241,19 +165,6 @@ public class ProtoBufFormatter extends MessageFormatter {
       protobufConfig = ((ProtoBufSchemaConfig) parent).getProtobufConfig();
     }
     return new ProtoBufFormatter(name, protobufConfig.getDescriptorValue());
-  }
-
-  private FileDescriptor loadDescFile(byte[] descriptorImage) throws IOException, DescriptorValidationException {
-    DescriptorProtos.FileDescriptorSet set;
-    List<FileDescriptor> dependencyFileDescriptorList;
-    try (InputStream fin = new ByteArrayInputStream(descriptorImage)) {
-      set = DescriptorProtos.FileDescriptorSet.parseFrom(fin);
-      dependencyFileDescriptorList = new ArrayList<>();
-      for (int i = 0; i < set.getFileCount() - 1; i++) {
-        dependencyFileDescriptorList.add(FileDescriptor.buildFrom(set.getFile(i), dependencyFileDescriptorList.toArray(new FileDescriptor[i])));
-      }
-    }
-    return Descriptors.FileDescriptor.buildFrom(set.getFile(set.getFileCount() - 1), dependencyFileDescriptorList.toArray(new FileDescriptor[0]));
   }
 
   // Replace convertToJson(DynamicMessage) with:
@@ -435,5 +346,43 @@ public class ProtoBufFormatter extends MessageFormatter {
       }
     }
     return list;
+  }
+
+  private Descriptors.Descriptor findMessageDescriptor(String messageName) {
+    if (messageName == null || messageName.isEmpty()) {
+      return null;
+    }
+
+    for (Descriptors.FileDescriptor fileDescriptor : descriptors.values()) {
+      Descriptors.Descriptor descriptor = findMessageDescriptor(fileDescriptor, messageName);
+      if (descriptor != null) {
+        return descriptor;
+      }
+    }
+    return null;
+  }
+
+  private Descriptors.Descriptor findMessageDescriptor(Descriptors.FileDescriptor fileDescriptor, String messageName) {
+    for (Descriptors.Descriptor descriptor : fileDescriptor.getMessageTypes()) {
+      Descriptors.Descriptor match = findMessageDescriptor(descriptor, messageName);
+      if (match != null) {
+        return match;
+      }
+    }
+    return null;
+  }
+
+  private Descriptors.Descriptor findMessageDescriptor(Descriptors.Descriptor descriptor, String messageName) {
+    if (messageName.equals(descriptor.getFullName()) || messageName.equals(descriptor.getName())) {
+      return descriptor;
+    }
+
+    for (Descriptors.Descriptor nestedDescriptor : descriptor.getNestedTypes()) {
+      Descriptors.Descriptor match = findMessageDescriptor(nestedDescriptor, messageName);
+      if (match != null) {
+        return match;
+      }
+    }
+    return null;
   }
 }

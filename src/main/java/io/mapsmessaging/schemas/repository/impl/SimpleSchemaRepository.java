@@ -221,6 +221,9 @@ public class SimpleSchemaRepository implements SchemaRepository {
         // ignore invalid URL in simple repo
       }
     }
+    if (version.getParentUuid() != null && !version.getParentUuid().isBlank()) {
+      v.setParentUuid(version.getParentUuid());
+    }
     return v;
   }
 

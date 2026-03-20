@@ -18,6 +18,7 @@
 package io.mapsmessaging.schemas.formatters.impl;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.protobuf.ByteString;
@@ -91,16 +92,125 @@ public class ProtoBufFormatter extends MessageFormatter {
       return Map.of();
     }
 
-    Map<String, Object> format = new LinkedHashMap<>();
-    for (FieldDescriptor field : messageDescriptor.getFields()) {
-      Map<String, Object> fieldInfo = new LinkedHashMap<>();
-      fieldInfo.put("type", field.getType().name());
-      fieldInfo.put("label", field.isRepeated() ? "repeated" : "optional");
-      fieldInfo.put("number", field.getNumber());
-      format.put(field.getName(), fieldInfo);
+    return buildMessageFormat(messageDescriptor, 0, 1, new LinkedHashSet<>());
+  }
+
+  private Map<String, Object> buildMessageFormat(
+      Descriptors.Descriptor descriptor,
+      int currentDepth,
+      int maximumDepth,
+      Set<String> visitedMessageTypes) {
+
+    Map<String, Object> result = new LinkedHashMap<>();
+    List<Map<String, Object>> fieldList = new ArrayList<>();
+    List<Map<String, Object>> oneOfList = new ArrayList<>();
+
+    result.put("messageName", descriptor.getFullName());
+    result.put("fields", fieldList);
+
+    for (Descriptors.OneofDescriptor oneofDescriptor : descriptor.getRealOneofs()) {
+      Map<String, Object> oneOfInfo = new LinkedHashMap<>();
+      List<String> oneOfFields = new ArrayList<>();
+
+      oneOfInfo.put("name", oneofDescriptor.getName());
+      for (FieldDescriptor fieldDescriptor : oneofDescriptor.getFields()) {
+        oneOfFields.add(fieldDescriptor.getName());
+      }
+      oneOfInfo.put("fields", oneOfFields);
+
+      oneOfList.add(oneOfInfo);
     }
 
-    return format;
+    if (!oneOfList.isEmpty()) {
+      result.put("oneOfs", oneOfList);
+    }
+
+    visitedMessageTypes.add(descriptor.getFullName());
+
+    for (FieldDescriptor fieldDescriptor : descriptor.getFields()) {
+      fieldList.add(buildFieldFormat(fieldDescriptor, currentDepth, maximumDepth, visitedMessageTypes));
+    }
+
+    visitedMessageTypes.remove(descriptor.getFullName());
+
+    return result;
+  }
+
+  private Map<String, Object> buildFieldFormat(
+      FieldDescriptor fieldDescriptor,
+      int currentDepth,
+      int maximumDepth,
+      Set<String> visitedMessageTypes) {
+
+    Map<String, Object> fieldInfo = new LinkedHashMap<>();
+    fieldInfo.put("name", fieldDescriptor.getName());
+    fieldInfo.put("number", fieldDescriptor.getNumber());
+    fieldInfo.put("repeated", fieldDescriptor.isRepeated());
+    fieldInfo.put("map", fieldDescriptor.isMapField());
+    fieldInfo.put("label", resolveLabel(fieldDescriptor));
+    fieldInfo.put("type", fieldDescriptor.getType().name().toLowerCase());
+
+    if (fieldDescriptor.getContainingOneof() != null) {
+      fieldInfo.put("oneOf", fieldDescriptor.getContainingOneof().getName());
+    }
+
+    if (fieldDescriptor.getJavaType() == FieldDescriptor.JavaType.ENUM) {
+      fieldInfo.put("enumType", fieldDescriptor.getEnumType().getFullName());
+      fieldInfo.put("enumValues", buildEnumValues(fieldDescriptor.getEnumType()));
+    }
+
+    if (fieldDescriptor.getJavaType() == FieldDescriptor.JavaType.MESSAGE) {
+      Descriptors.Descriptor nestedDescriptor = fieldDescriptor.getMessageType();
+      String nestedMessageName = nestedDescriptor.getFullName();
+
+      fieldInfo.put("messageType", nestedMessageName);
+
+      if (fieldDescriptor.isMapField()) {
+        fieldInfo.put("mapKeyType", fieldDescriptor.getMessageType().findFieldByName("key").getType().name().toLowerCase());
+
+        FieldDescriptor valueFieldDescriptor = fieldDescriptor.getMessageType().findFieldByName("value");
+        fieldInfo.put("mapValueType", valueFieldDescriptor.getType().name().toLowerCase());
+
+        if (valueFieldDescriptor.getJavaType() == FieldDescriptor.JavaType.MESSAGE) {
+          fieldInfo.put("mapValueMessageType", valueFieldDescriptor.getMessageType().getFullName());
+        }
+
+        if (valueFieldDescriptor.getJavaType() == FieldDescriptor.JavaType.ENUM) {
+          fieldInfo.put("mapValueEnumType", valueFieldDescriptor.getEnumType().getFullName());
+          fieldInfo.put("mapValueEnumValues", buildEnumValues(valueFieldDescriptor.getEnumType()));
+        }
+      } else if (currentDepth < maximumDepth && !visitedMessageTypes.contains(nestedMessageName)) {
+        fieldInfo.put(
+            "structure",
+            buildMessageFormat(
+                nestedDescriptor,
+                currentDepth + 1,
+                maximumDepth,
+                new LinkedHashSet<>(visitedMessageTypes)
+            )
+        );
+      }
+    }
+
+    return fieldInfo;
+  }
+
+  private List<String> buildEnumValues(Descriptors.EnumDescriptor enumDescriptor) {
+    List<String> enumValues = new ArrayList<>();
+    for (Descriptors.EnumValueDescriptor enumValueDescriptor : enumDescriptor.getValues()) {
+      enumValues.add(enumValueDescriptor.getName());
+    }
+    return enumValues;
+  }
+
+  private String resolveLabel(FieldDescriptor fieldDescriptor) {
+    if (fieldDescriptor.isRequired()) {
+      return "required";
+    }
+    if (fieldDescriptor.isRepeated()) {
+      return "repeated";
+    }
+    return "optional";
   }
 
   @Override
@@ -167,8 +277,7 @@ public class ProtoBufFormatter extends MessageFormatter {
     return new ProtoBufFormatter(name, protobufConfig.getDescriptorValue());
   }
 
-  // Replace convertToJson(DynamicMessage) with:
-  private JsonObject convertToJson(DynamicMessage message) {
+  private JsonObject convertToJson(DynamicMessage message) throws ParseException {
     JsonObject jsonObject = new JsonObject();
     for (Map.Entry<FieldDescriptor, Object> entry : message.getAllFields().entrySet()) {
       try {
@@ -180,14 +289,13 @@ public class ProtoBufFormatter extends MessageFormatter {
           jsonObject.add(field.getName(), toJsonElement(field, value));
         }
       } catch (Exception e) {
-        e.printStackTrace();
+        throw new ParseException("Error converting message to JSON", e);
       }
     }
     return jsonObject;
   }
 
-  // New helper for repeated fields:
-  private JsonArray convertRepeatedToJson(FieldDescriptor field, Collection<?> values) {
+  private JsonArray convertRepeatedToJson(FieldDescriptor field, Collection<?> values) throws ParseException {
     JsonArray jsonArray = new JsonArray();
     for (Object value : values) {
       jsonArray.add(toJsonElement(field, value));
@@ -196,45 +304,25 @@ public class ProtoBufFormatter extends MessageFormatter {
   }
 
   // New leaf serializer that avoids gson reflection traps:
-  private com.google.gson.JsonElement toJsonElement(FieldDescriptor field, Object value) {
+  private JsonElement toJsonElement(FieldDescriptor field, Object value) throws ParseException {
     if (value == null) return com.google.gson.JsonNull.INSTANCE;
 
-    switch (field.getJavaType()) {
-      case STRING:
-        return new JsonPrimitive((String) value);
-
-      case INT:
-        return new JsonPrimitive(((Number) value).intValue());
-
-      case LONG:
-        return new JsonPrimitive(((Number) value).longValue());
-
-      case FLOAT:
-        return new JsonPrimitive(((Number) value).floatValue());
-
-      case DOUBLE:
-        return new JsonPrimitive(((Number) value).doubleValue());
-
-      case BOOLEAN:
-        return new JsonPrimitive((Boolean) value);
-
-      case BYTE_STRING:
-        // Base64 for bytes
+    return switch (field.getJavaType()) {
+      case STRING -> new JsonPrimitive((String) value);
+      case INT -> new JsonPrimitive(((Number) value).intValue());
+      case LONG -> new JsonPrimitive(((Number) value).longValue());
+      case FLOAT -> new JsonPrimitive(((Number) value).floatValue());
+      case DOUBLE -> new JsonPrimitive(((Number) value).doubleValue());
+      case BOOLEAN -> new JsonPrimitive((Boolean) value);
+      case BYTE_STRING -> {
         String b64 = Base64.getEncoder().encodeToString(((ByteString) value).toByteArray());
-        return new JsonPrimitive(b64);
-
-      case ENUM:
-        // Prefer enum name
-        return new JsonPrimitive(field.getEnumType().findValueByNumber(((Descriptors.EnumValueDescriptor) value).getNumber()).getName());
-
-      case MESSAGE:
-        // Nested message
-        return convertToJson((DynamicMessage) value);
-
-      default:
-        // Last-resort string
-        return new JsonPrimitive(String.valueOf(value));
-    }
+        yield new JsonPrimitive(b64);
+      }
+      case ENUM ->
+          new JsonPrimitive(field.getEnumType().findValueByNumber(((Descriptors.EnumValueDescriptor) value).getNumber()).getName());
+      case MESSAGE -> convertToJson((DynamicMessage) value);
+      default -> new JsonPrimitive(String.valueOf(value));
+    };
   }
 
 

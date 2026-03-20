@@ -45,7 +45,7 @@ public class CanbusSchemaConfig extends SchemaConfig {
 
   @Override
   public SchemaConfig getInstance(SchemaConfig config) {
-    return new MavlinkSchemaConfig(config);
+    return new CanbusSchemaConfig(config);
   }
 
   public String getXmlPath() {

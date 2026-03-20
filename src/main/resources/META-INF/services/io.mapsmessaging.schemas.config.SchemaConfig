@@ -16,6 +16,7 @@
 #
 
 io.mapsmessaging.schemas.config.impl.AvroSchemaConfig
+io.mapsmessaging.schemas.config.impl.CanAerospaceSchemaConfig
 io.mapsmessaging.schemas.config.impl.CanbusSchemaConfig
 io.mapsmessaging.schemas.config.impl.CbcSchemaConfig
 io.mapsmessaging.schemas.config.impl.CborSchemaConfig

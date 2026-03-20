@@ -15,6 +15,7 @@
 #     limitations under the License.
 #
 io.mapsmessaging.schemas.formatters.impl.AvroFormatter
+io.mapsmessaging.schemas.formatters.impl.CanAerospaceFormatter
 io.mapsmessaging.schemas.formatters.impl.CanbusFormatter
 io.mapsmessaging.schemas.formatters.impl.CbcFormatter
 io.mapsmessaging.schemas.formatters.impl.CborFormatter

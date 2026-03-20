@@ -121,7 +121,11 @@ public class CanAerospaceFormatter extends MessageFormatter {
       return new CanAerospaceFormatter(yamlPath);
     }
 
-    return new CanAerospaceFormatter();
+    try {
+      return new CanAerospaceFormatter(CanaerospaceSchemaRegistry.loadFromClasspath());
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
   }
 
   @Override

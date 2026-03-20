@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -135,6 +136,16 @@ public abstract class BaseTest {
     SchemaConfig schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     Map<String, Object> format = formatter.getFormat();
+    if (format.containsKey("fields")) {
+      Object fields = format.get("fields");
+      if (fields instanceof List) {
+        Map<String, Object> fieldsMap = new LinkedHashMap<>();
+        for (Map<String, Object> entry : (List<Map<String, Object>>) fields) {
+          fieldsMap.put(entry.get("name").toString(), entry);
+        }
+        format = fieldsMap;
+      }
+    }
     Assertions.assertTrue(format.containsKey("stringId"));
     Assertions.assertTrue(format.containsKey("longId"));
     Assertions.assertTrue(format.containsKey("intId"));

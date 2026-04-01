@@ -1,21 +1,18 @@
 /*
  *
- *  Copyright [ 2020 - 2024 ] Matthew Buckton
- *  Copyright [ 2024 - 2026 ] MapsMessaging B.V.
+ *     Copyright [ 2020 - 2026 ] [Matthew Buckton]
  *
- *  Licensed under the Apache License, Version 2.0 with the Commons Clause
- *  (the "License"); you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at:
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *      https://commonsclause.com/
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
  */
 
 package io.mapsmessaging.schemas.formatters.impl;
@@ -41,12 +38,14 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CanAerospaceFormatter extends MessageFormatter {
 
   private static final int CAN_AEROSPACE_DLC = 8;
 
   private final CanaerospaceFrameParser parser;
+  private final Map<Integer, JsonObject> cache = new ConcurrentHashMap<>();
 
   public CanAerospaceFormatter() {
     this.parser = null;
@@ -145,24 +144,57 @@ public class CanAerospaceFormatter extends MessageFormatter {
   }
 
   private JsonObject buildEnvelope(CanFrame frame, ParsedCanaerospaceMessage parsedMessage) {
+    return buildLeanEnvelope(frame, parsedMessage);
+  }
+
+  private JsonObject buildLeanEnvelope(CanFrame frame, ParsedCanaerospaceMessage parsedMessage) {
     JsonObject envelope = new JsonObject();
     envelope.addProperty("canId", frame.canIdentifier());
+
+    int key =
+        ((parsedMessage.getCanId() & 0x1FFFFFFF) << 24) |
+            ((parsedMessage.getServiceCode() & 0xFF) << 16) |
+            ((parsedMessage.getMessageCode() & 0xFF) << 8) |
+            (parsedMessage.getNodeId() & 0xFF);
+
+    JsonObject canaerospace = cache.computeIfAbsent(
+        key,
+        k -> buildBaseCanaerospace(parsedMessage)
+    ).deepCopy();
+
+    addNumber(canaerospace, "engineeringValue", parsedMessage.getEngineeringValue());
+    envelope.add("canaerospace", canaerospace);
+    return envelope;
+  }
+
+  private JsonObject buildBaseCanaerospace(ParsedCanaerospaceMessage parsedMessage) {
+    JsonObject canaerospace = new JsonObject();
+    canaerospace.addProperty("nodeId", parsedMessage.getNodeId());
+    canaerospace.addProperty("payloadDataTypeNumber", parsedMessage.getPayloadDataTypeNumber());
+    canaerospace.addProperty("serviceCode", parsedMessage.getServiceCode());
+    canaerospace.addProperty("messageCode", parsedMessage.getMessageCode());
+
+    addString(canaerospace, "name", parsedMessage.getName());
+    addString(canaerospace, "schemaDataType", parsedMessage.getSchemaDataType());
+    return canaerospace;
+  }
+
+
+  private JsonObject buildFullEnvelope(CanFrame frame, ParsedCanaerospaceMessage parsedMessage) {
+    JsonObject envelope = buildLeanEnvelope(frame, parsedMessage);
+
     envelope.addProperty("dlc", frame.dataLengthCode());
     envelope.addProperty("extended", frame.extendedFrame());
     envelope.addProperty("data", Base64.getEncoder().encodeToString(frame.data()));
 
-    JsonObject canaerospace = new JsonObject();
+    JsonObject canaerospace = envelope.getAsJsonObject("canaerospace");
+
     addString(canaerospace, "messageType", parsedMessage.getMessageType());
-    canaerospace.addProperty("nodeId", parsedMessage.getNodeId());
-    canaerospace.addProperty("payloadDataTypeNumber", parsedMessage.getPayloadDataTypeNumber());
     addString(canaerospace, "payloadDataTypeName", parsedMessage.getPayloadDataTypeName());
-    canaerospace.addProperty("serviceCode", parsedMessage.getServiceCode());
-    canaerospace.addProperty("messageCode", parsedMessage.getMessageCode());
     canaerospace.addProperty("dataBytes", Base64.getEncoder().encodeToString(parsedMessage.getDataBytes()));
 
     addString(canaerospace, "group", parsedMessage.getGroup());
     addString(canaerospace, "title", parsedMessage.getTitle());
-    addString(canaerospace, "name", parsedMessage.getName());
     addString(canaerospace, "schemaDataType", parsedMessage.getSchemaDataType());
     addString(canaerospace, "units", parsedMessage.getUnits());
     addString(canaerospace, "notes", parsedMessage.getNotes());
@@ -176,10 +208,8 @@ public class CanAerospaceFormatter extends MessageFormatter {
       canaerospace.add("rawValue", gson.toJsonTree(rawValue));
     }
 
-    addNumber(canaerospace, "engineeringValue", parsedMessage.getEngineeringValue());
     canaerospace.addProperty("dataTypeMismatch", parsedMessage.isDataTypeMismatch());
 
-    envelope.add("canaerospace", canaerospace);
     return envelope;
   }
 

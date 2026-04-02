@@ -239,7 +239,7 @@ public class CanAerospaceFormatter extends MessageFormatter {
     JsonObject canaerospace = json.getAsJsonObject("canaerospace");
 
     int canIdentifier = requireInt(json, "canId");
-    boolean extendedFrame = getBoolean(json, "extended", true);
+    boolean extendedFrame = getBoolean(json, "extended", false);
 
     int nodeId = requireInt(canaerospace, "nodeId");
     int payloadDataTypeNumber = requireInt(canaerospace, "payloadDataTypeNumber");

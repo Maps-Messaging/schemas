@@ -37,6 +37,7 @@ import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 import io.mapsmessaging.schemas.repository.SchemaResolver;
+import lombok.Getter;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -48,6 +49,7 @@ import java.util.Map;
 
 public class CanbusFormatter extends MessageFormatter {
 
+  @Getter
   private final N2kMessageParser parser;
 
   public CanbusFormatter() {

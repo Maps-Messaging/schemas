@@ -49,7 +49,6 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXP
  * The type Proto buf formatter.
  */
 public class ProtoBufFormatter extends MessageFormatter {
-  private static final boolean DEBUG_FROM_JSON = true;
 
   private final String messageName;
   private final Map<String, Descriptors.FileDescriptor> descriptors;
@@ -244,30 +243,19 @@ public class ProtoBufFormatter extends MessageFormatter {
   @Override
   public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
     if (descriptors == null || messageName == null || messageName.isEmpty()) {
-      debugFromJson("No descriptors or message name configured");
       return new byte[0];
     }
 
     Descriptors.Descriptor messageDescriptor = findMessageDescriptor(messageName);
     if (messageDescriptor == null) {
-      debugFromJson("Message descriptor not found: " + messageName);
       return new byte[0];
     }
 
     @SuppressWarnings("unchecked")
     Map<String, Object> map = gson.fromJson(jsonObject, Map.class);
-
-    debugFromJson("Starting JSON -> protobuf for message: " + messageDescriptor.getFullName());
-    debugFromJson("Input JSON: " + jsonObject);
-
     DynamicMessage.Builder builder = DynamicMessage.newBuilder(messageDescriptor);
     populateBuilderFromMap(builder, messageDescriptor, map, messageDescriptor.getFullName());
-
     DynamicMessage message = builder.build();
-
-    debugFromJson("Completed JSON -> protobuf for message: " + messageDescriptor.getFullName());
-    debugFromJson("Output protobuf size: " + message.toByteArray().length + " bytes");
-
     return message.toByteArray();
   }
 
@@ -281,30 +269,10 @@ public class ProtoBufFormatter extends MessageFormatter {
       String fieldPath = path + "." + field.getName();
       Object raw = map.get(field.getName());
 
-      if (raw == null) {
-        debugFromJson(
-            "FIELD NOT FOUND path=" + fieldPath +
-                ", label=" + resolveLabel(field) +
-                ", type=" + field.getJavaType() +
-                ", required=" + field.isRequired()
-        );
-        continue;
-      }
-
-      debugFromJson(
-          "FIELD FOUND path=" + fieldPath +
-              ", label=" + resolveLabel(field) +
-              ", type=" + field.getJavaType() +
-              ", repeated=" + field.isRepeated() +
-              ", required=" + field.isRequired() +
-              ", value=" + summariseJsonValue(raw)
-      );
-
       if (field.isRepeated() && raw instanceof Collection<?> collection) {
         int index = 0;
         for (Object element : collection) {
           String elementPath = fieldPath + "[" + index + "]";
-          debugFromJson("ADDING REPEATED path=" + elementPath + ", value=" + summariseJsonValue(element));
           builder.addRepeatedField(field, coerceForField(field, element, elementPath));
           index++;
         }
@@ -313,11 +281,6 @@ public class ProtoBufFormatter extends MessageFormatter {
       }
     }
   }
-
-  private Object coerceForField(FieldDescriptor field, Object value) {
-    return coerceForField(field, value, field.getFullName());
-  }
-
 
   @Override
   public MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) throws IOException {
@@ -382,16 +345,8 @@ public class ProtoBufFormatter extends MessageFormatter {
 
   private Object coerceForField(FieldDescriptor field, Object value, String path) {
     if (value == null) {
-      debugFromJson("COERCE NULL path=" + path);
       return null;
     }
-
-    debugFromJson(
-        "COERCE path=" + path +
-            ", protobufType=" + field.getJavaType() +
-            ", jsonValue=" + summariseJsonValue(value)
-    );
-
     switch (field.getJavaType()) {
       case STRING:
         return String.valueOf(value);
@@ -438,16 +393,9 @@ public class ProtoBufFormatter extends MessageFormatter {
         if (value instanceof String byteStringValue) {
           try {
             byte[] decoded = Base64.getDecoder().decode(byteStringValue);
-            debugFromJson("BYTE_STRING BASE64 path=" + path + ", decodedLength=" + decoded.length);
             return ByteString.copyFrom(decoded);
           } catch (IllegalArgumentException exception) {
             byte[] utf8Bytes = byteStringValue.getBytes(StandardCharsets.UTF_8);
-            debugFromJson(
-                "BYTE_STRING BASE64 FAILED path=" + path +
-                    ", reason=" + exception.getMessage() +
-                    ", fallingBack=UTF-8" +
-                    ", utf8Length=" + utf8Bytes.length
-            );
             return ByteString.copyFrom(utf8Bytes);
           }
         }
@@ -459,7 +407,6 @@ public class ProtoBufFormatter extends MessageFormatter {
             bytes[index] = ((Number) object).byteValue();
             index++;
           }
-          debugFromJson("BYTE_STRING ARRAY path=" + path + ", length=" + bytes.length);
           return ByteString.copyFrom(bytes);
         }
 
@@ -477,15 +424,12 @@ public class ProtoBufFormatter extends MessageFormatter {
                 "Unknown enum number " + numberValue + " for " + field.getFullName()
             );
           }
-
-          debugFromJson("ENUM NUMBER path=" + path + ", resolved=" + enumValue.getName());
           return enumValue;
         }
 
         String enumName = String.valueOf(value);
         Descriptors.EnumValueDescriptor enumValue = field.getEnumType().findValueByName(enumName);
         if (enumValue != null) {
-          debugFromJson("ENUM NAME path=" + path + ", resolved=" + enumValue.getName());
           return enumValue;
         }
 
@@ -493,7 +437,6 @@ public class ProtoBufFormatter extends MessageFormatter {
           int enumNumber = Integer.parseInt(enumName);
           enumValue = field.getEnumType().findValueByNumber(enumNumber);
           if (enumValue != null) {
-            debugFromJson("ENUM STRING NUMBER path=" + path + ", resolved=" + enumValue.getName());
             return enumValue;
           }
         } catch (NumberFormatException ignore) {
@@ -520,28 +463,6 @@ public class ProtoBufFormatter extends MessageFormatter {
       default:
         throw new IllegalStateException("Unhandled type for " + field.getFullName());
     }
-  }
-
-  private void debugFromJson(String message) {
-    if (DEBUG_FROM_JSON) {
-      System.err.println("[ProtoBufFormatter JSON->PROTO] " + message);
-    }
-  }
-
-  private String summariseJsonValue(Object value) {
-    if (value == null) {
-      return "null";
-    }
-
-    if (value instanceof Map<?, ?> map) {
-      return "object(keys=" + map.keySet() + ")";
-    }
-
-    if (value instanceof Collection<?> collection) {
-      return "array(size=" + collection.size() + ", value=" + collection + ")";
-    }
-
-    return value + " (" + value.getClass().getSimpleName() + ")";
   }
 
   private Map<String, Object> convertToMap(DynamicMessage message) {

@@ -277,7 +277,10 @@ public class ProtoBufFormatter extends MessageFormatter {
           index++;
         }
       } else {
-        builder.setField(field, coerceForField(field, raw, fieldPath));
+        Object coerced = coerceForField(field, raw, fieldPath);
+        if (coerced != null || field.isRequired()) {
+          builder.setField(field, coerced);
+        }
       }
     }
   }

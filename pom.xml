@@ -355,7 +355,7 @@
           </includes>
         </configuration>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>3.5.4</version>
+        <version>3.5.5</version>
       </plugin>
 
       <!-- JavaDoc -->
@@ -469,7 +469,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.14.1</version>
+        <version>3.15.0</version>
         <configuration>
           <source>17</source>
           <target>17</target>
@@ -485,7 +485,7 @@
       <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
-        <version>12.2.0</version>
+        <version>12.2.2</version>
         <configuration>
           <skip>true</skip>
           <nvdApiKey>${nvd.api.key}</nvdApiKey>
@@ -524,19 +524,19 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.20.1</version>
+      <version>2.21.3</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-xml</artifactId>
-      <version>2.21.0</version> <!-- Match your Jackson core version -->
+      <version>2.21.3</version> <!-- Match your Jackson core version -->
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>4.33.2</version>
+      <version>4.34.1</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.avro/avro -->
@@ -549,13 +549,13 @@
     <dependency>
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-cbor</artifactId>
-      <version>2.20.1</version> <!-- or whatever version you're on -->
+      <version>2.21.3</version> <!-- or whatever version you're on -->
     </dependency>
 
     <dependency>
       <groupId>org.msgpack</groupId>
       <artifactId>jackson-dataformat-msgpack</artifactId>
-      <version>0.9.11</version>
+      <version>0.9.12</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.qpid/proton-j -->
@@ -613,7 +613,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>5.21.0</version>
+      <version>5.23.0</version>
       <scope>test</scope>
     </dependency>
 

@@ -70,7 +70,7 @@ class TestJsonParsing {
     for (MessageFormatter messageFormatter : messageFormatters) {
       byte[] buf = messageFormatter.parseFromJson(initialPerson);
       Assertions.assertNotNull(buf);
-      JsonObject rebuilt = messageFormatter.parseToJson(buf);
+      JsonObject rebuilt = messageFormatter.parseToJson(buf, ParseMode.IGNORE);
       Assertions.assertNotNull(rebuilt);
       Assertions.assertTrue(JsonValidator.validateJson(initialPerson, rebuilt));
     }

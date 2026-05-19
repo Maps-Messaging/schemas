@@ -73,13 +73,13 @@ class TestCbcFormatter {
   @Test
   void roundTrip_parse_and_parseToJson() throws Exception {
     CbcSchemaConfig schema = buildSchema();
-    CbcFormatter formatter = (CbcFormatter) new CbcFormatter().getInstance(schema);
+    CbcFormatter formatter = (CbcFormatter) new CbcFormatter().getInstance(schema, null);
 
     Map<String, Object> src = sample();
     byte[] payload = formatter.toBytes(src);   // use formatter, not a hand-rolled BitWriter
 
     // ParsedObject view
-    ParsedObject parsed = formatter.parse(payload);
+    ParsedObject parsed = formatter.parse(payload, ParseMode.IGNORE);
 
     // stringId comes back as raw bytes of fixed size; trim trailing 0
     String trimmed = (String) parsed.get("stringId");
@@ -93,7 +93,7 @@ class TestCbcFormatter {
         ((Number) parsed.get("doubleId")).doubleValue(), 1e-4);
 
     // JSON view (stringId as byte array)
-    JsonObject json = formatter.parseToJson(payload);
+    JsonObject json = formatter.parseToJson(payload, ParseMode.IGNORE);
     String jsonAsString = json.get("stringId").getAsString();
 
     Assertions.assertEquals(jsonAsString, src.get("stringId").toString());
@@ -107,7 +107,7 @@ class TestCbcFormatter {
   @Test
   void format_map_describes_fields() throws IOException {
     CbcSchemaConfig schema = buildSchema();
-    CbcFormatter formatter = (CbcFormatter) new CbcFormatter().getInstance(schema);
+    CbcFormatter formatter = (CbcFormatter) new CbcFormatter().getInstance(schema, null);
     Map<String, Object> fmt = formatter.getFormat();
 
     Assertions.assertTrue(fmt.containsKey("stringId"));

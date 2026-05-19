@@ -86,11 +86,8 @@ class TestProtobufConfig extends GeneralBaseTest {
   }
 
   @Test
-  void invalidConfigWithDescriptor() throws IOException {
+  void invalidConfigWithDescriptor() {
     ProtoBufSchemaConfig config = new ProtoBufSchemaConfig();
-    ProtoBufSchemaConfig.ProtobufConfig protobufSchema = new ProtoBufSchemaConfig.ProtobufConfig();
-    protobufSchema.setDescriptorValue(getDescriptor());
-    config.setProtobufConfig(protobufSchema);
     config.setUniqueId(UUID.randomUUID());
     config.setExpiresAfter(OffsetDateTime.now().plusDays(10));
     config.setNotBefore(OffsetDateTime.now().minusDays(10));

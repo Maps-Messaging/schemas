@@ -32,9 +32,12 @@ import com.networknt.schema.SchemaRegistry;
 import com.networknt.schema.dialect.Dialects;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParseException;
+import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
+import io.mapsmessaging.schemas.repository.SchemaResolver;
 
 import java.io.IOException;
 import java.util.List;
@@ -62,7 +65,7 @@ public class CborFormatter extends MessageFormatter {
   }
 
   @Override
-  public ParsedObject parse(byte[] payload) {
+  public ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException {
     try {
       ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());
       Map<String, Object> map = cborMapper.readValue(payload, Map.class);
@@ -81,15 +84,22 @@ public class CborFormatter extends MessageFormatter {
       return new StructuredResolver(new MapResolver(map), json);
     } catch (Exception e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
-      return new DefaultParser(payload);
+      if (parseMode == ParseMode.IGNORE) {
+        return new DefaultParser(payload);
+      }
+      throw new ParseException(e.getMessage(), e);
     }
   }
 
   @Override
-  public JsonObject parseToJson(byte[] payload) throws IOException {
+  public JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException {
     ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());
-    Map<String, Object> map = cborMapper.readValue(payload, Map.class);
-    return JsonParser.parseString(new Gson().toJson(map)).getAsJsonObject();
+    try {
+      Map<String, Object> map = cborMapper.readValue(payload, Map.class);
+      return JsonParser.parseString(new Gson().toJson(map)).getAsJsonObject();
+    } catch (IOException e) {
+      throw new ParseException(e.getMessage(), e);
+    }
   }
 
   @Override
@@ -104,7 +114,7 @@ public class CborFormatter extends MessageFormatter {
 
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  public MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) throws IOException {
     return new CborFormatter(SchemaConfig.gson.toJson(config.getSchema()));
   }
 

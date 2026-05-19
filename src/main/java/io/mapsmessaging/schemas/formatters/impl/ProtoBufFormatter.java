@@ -1,42 +1,45 @@
 /*
  *
- *  Copyright [ 2020 - 2024 ] Matthew Buckton
- *  Copyright [ 2024 - 2025 ] MapsMessaging B.V.
+ *     Copyright [ 2020 - 2026 ] [Matthew Buckton]
  *
- *  Licensed under the Apache License, Version 2.0 with the Commons Clause
- *  (the "License"); you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at:
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *      https://commonsclause.com/
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
  */
 
 package io.mapsmessaging.schemas.formatters.impl;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import com.google.protobuf.*;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.Descriptors.DescriptorValidationException;
 import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Descriptors.FileDescriptor;
+import com.google.protobuf.DynamicMessage;
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig;
+import io.mapsmessaging.schemas.config.impl.protobuf.DescriptorLoader;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParseException;
+import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
+import io.mapsmessaging.schemas.repository.SchemaResolver;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -48,14 +51,14 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXP
 public class ProtoBufFormatter extends MessageFormatter {
 
   private final String messageName;
-  private final FileDescriptor descriptor;
+  private final Map<String, Descriptors.FileDescriptor> descriptors;
 
   /**
    * Instantiates a new Proto buf formatter.
    */
   public ProtoBufFormatter() {
     messageName = "";
-    descriptor = null;
+    descriptors = new HashMap<>();
   }
 
   /**
@@ -67,7 +70,8 @@ public class ProtoBufFormatter extends MessageFormatter {
    */
   ProtoBufFormatter(String messageName, byte[] descriptorImage) throws IOException {
     try {
-      this.descriptor = loadDescFile(descriptorImage);
+      DescriptorLoader loader = new DescriptorLoader();
+      this.descriptors = loader.loadDescFiles(descriptorImage);
       this.messageName = messageName;
     } catch (DescriptorValidationException e) {
       throw new IOException(e);
@@ -80,186 +84,238 @@ public class ProtoBufFormatter extends MessageFormatter {
 
   @Override
   public Map<String, Object> getFormat() {
-    if (descriptor == null || messageName == null || messageName.isEmpty()) {
+    if (descriptors == null || descriptors.isEmpty() || messageName == null || messageName.isEmpty()) {
       return Map.of();
     }
 
-    Descriptors.Descriptor messageDescriptor = descriptor.findMessageTypeByName(messageName);
+    Descriptors.Descriptor messageDescriptor = findMessageDescriptor(messageName);
     if (messageDescriptor == null) {
       return Map.of();
     }
 
-    Map<String, Object> format = new LinkedHashMap<>();
-    for (FieldDescriptor field : messageDescriptor.getFields()) {
-      Map<String, Object> fieldInfo = new LinkedHashMap<>();
-      fieldInfo.put("type", field.getType().name());
-      fieldInfo.put("label", field.isRepeated() ? "repeated" : "optional");
-      fieldInfo.put("number", field.getNumber());
-      format.put(field.getName(), fieldInfo);
+    return buildMessageFormat(messageDescriptor, 0, 1, new LinkedHashSet<>());
+  }
+
+  private Map<String, Object> buildMessageFormat(
+      Descriptors.Descriptor descriptor,
+      int currentDepth,
+      int maximumDepth,
+      Set<String> visitedMessageTypes) {
+
+    Map<String, Object> result = new LinkedHashMap<>();
+    List<Map<String, Object>> fieldList = new ArrayList<>();
+    List<Map<String, Object>> oneOfList = new ArrayList<>();
+
+    result.put("messageName", descriptor.getFullName());
+    result.put("fields", fieldList);
+
+    for (Descriptors.OneofDescriptor oneofDescriptor : descriptor.getRealOneofs()) {
+      Map<String, Object> oneOfInfo = new LinkedHashMap<>();
+      List<String> oneOfFields = new ArrayList<>();
+
+      oneOfInfo.put("name", oneofDescriptor.getName());
+      for (FieldDescriptor fieldDescriptor : oneofDescriptor.getFields()) {
+        oneOfFields.add(fieldDescriptor.getName());
+      }
+      oneOfInfo.put("fields", oneOfFields);
+
+      oneOfList.add(oneOfInfo);
     }
 
-    return format;
+    if (!oneOfList.isEmpty()) {
+      result.put("oneOfs", oneOfList);
+    }
+
+    visitedMessageTypes.add(descriptor.getFullName());
+
+    for (FieldDescriptor fieldDescriptor : descriptor.getFields()) {
+      fieldList.add(buildFieldFormat(fieldDescriptor, currentDepth, maximumDepth, visitedMessageTypes));
+    }
+
+    visitedMessageTypes.remove(descriptor.getFullName());
+
+    return result;
+  }
+
+  private Map<String, Object> buildFieldFormat(
+      FieldDescriptor fieldDescriptor,
+      int currentDepth,
+      int maximumDepth,
+      Set<String> visitedMessageTypes) {
+
+    Map<String, Object> fieldInfo = new LinkedHashMap<>();
+    fieldInfo.put("name", fieldDescriptor.getName());
+    fieldInfo.put("number", fieldDescriptor.getNumber());
+    fieldInfo.put("repeated", fieldDescriptor.isRepeated());
+    fieldInfo.put("map", fieldDescriptor.isMapField());
+    fieldInfo.put("label", resolveLabel(fieldDescriptor));
+    fieldInfo.put("type", fieldDescriptor.getType().name().toLowerCase());
+
+    if (fieldDescriptor.getContainingOneof() != null) {
+      fieldInfo.put("oneOf", fieldDescriptor.getContainingOneof().getName());
+    }
+
+    if (fieldDescriptor.getJavaType() == FieldDescriptor.JavaType.ENUM) {
+      fieldInfo.put("enumType", fieldDescriptor.getEnumType().getFullName());
+      fieldInfo.put("enumValues", buildEnumValues(fieldDescriptor.getEnumType()));
+    }
+
+    if (fieldDescriptor.getJavaType() == FieldDescriptor.JavaType.MESSAGE) {
+      Descriptors.Descriptor nestedDescriptor = fieldDescriptor.getMessageType();
+      String nestedMessageName = nestedDescriptor.getFullName();
+
+      fieldInfo.put("messageType", nestedMessageName);
+
+      if (fieldDescriptor.isMapField()) {
+        fieldInfo.put("mapKeyType", fieldDescriptor.getMessageType().findFieldByName("key").getType().name().toLowerCase());
+
+        FieldDescriptor valueFieldDescriptor = fieldDescriptor.getMessageType().findFieldByName("value");
+        fieldInfo.put("mapValueType", valueFieldDescriptor.getType().name().toLowerCase());
+
+        if (valueFieldDescriptor.getJavaType() == FieldDescriptor.JavaType.MESSAGE) {
+          fieldInfo.put("mapValueMessageType", valueFieldDescriptor.getMessageType().getFullName());
+        }
+
+        if (valueFieldDescriptor.getJavaType() == FieldDescriptor.JavaType.ENUM) {
+          fieldInfo.put("mapValueEnumType", valueFieldDescriptor.getEnumType().getFullName());
+          fieldInfo.put("mapValueEnumValues", buildEnumValues(valueFieldDescriptor.getEnumType()));
+        }
+      } else if (currentDepth < maximumDepth && !visitedMessageTypes.contains(nestedMessageName)) {
+        fieldInfo.put(
+            "structure",
+            buildMessageFormat(
+                nestedDescriptor,
+                currentDepth + 1,
+                maximumDepth,
+                new LinkedHashSet<>(visitedMessageTypes)
+            )
+        );
+      }
+    }
+
+    return fieldInfo;
+  }
+
+  private List<String> buildEnumValues(Descriptors.EnumDescriptor enumDescriptor) {
+    List<String> enumValues = new ArrayList<>();
+    for (Descriptors.EnumValueDescriptor enumValueDescriptor : enumDescriptor.getValues()) {
+      enumValues.add(enumValueDescriptor.getName());
+    }
+    return enumValues;
+  }
+
+  private String resolveLabel(FieldDescriptor fieldDescriptor) {
+    if (fieldDescriptor.isRequired()) {
+      return "required";
+    }
+    if (fieldDescriptor.isRepeated()) {
+      return "repeated";
+    }
+    return "optional";
   }
 
   @Override
-  public ParsedObject parse(byte[] payload) {
+  public ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException {
     try {
-      DynamicMessage message = DynamicMessage.parseFrom(descriptor.findMessageTypeByName(messageName), payload);
+      DynamicMessage message = DynamicMessage.parseFrom(findMessageDescriptor(messageName), payload);
       ParsedObject parsed = new MapResolver(convertToMap(message));
       return new StructuredResolver(parsed, message);
     } catch (InvalidProtocolBufferException e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
-      return new DefaultParser(payload);
+      if (parseMode == ParseMode.IGNORE) {
+        return new DefaultParser(payload);
+      }
+      throw new ParseException(e.getMessage(), e);
     }
   }
 
   @Override
-  public JsonObject parseToJson(byte[] payload) {
-    DynamicMessage dynamicMessage = (DynamicMessage) (parse(payload)).getReferenced();
+  public JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException {
+    DynamicMessage dynamicMessage;
+    try {
+      dynamicMessage = (DynamicMessage) (parse(payload, ParseMode.IGNORE)).getReferenced();
+    } catch (ParseException e) {
+      throw new ParseException(e.getMessage(), e);
+    }
     return convertToJson(dynamicMessage);
   }
 
   @Override
   public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
-    if (descriptor == null || messageName == null || messageName.isEmpty()) return new byte[0];
+    if (descriptors == null || messageName == null || messageName.isEmpty()) {
+      return new byte[0];
+    }
 
-    Descriptors.Descriptor messageDescriptor = descriptor.findMessageTypeByName(messageName);
-    if (messageDescriptor == null) return new byte[0];
+    Descriptors.Descriptor messageDescriptor = findMessageDescriptor(messageName);
+    if (messageDescriptor == null) {
+      return new byte[0];
+    }
 
     @SuppressWarnings("unchecked")
     Map<String, Object> map = gson.fromJson(jsonObject, Map.class);
-
     DynamicMessage.Builder builder = DynamicMessage.newBuilder(messageDescriptor);
-    for (FieldDescriptor field : messageDescriptor.getFields()) {
-      Object raw = map.get(field.getName());
-      if (raw == null) continue;
+    populateBuilderFromMap(builder, messageDescriptor, map, messageDescriptor.getFullName());
+    DynamicMessage message = builder.build();
+    return message.toByteArray();
+  }
 
-      if (field.isRepeated() && raw instanceof Collection<?> coll) {
-        for (Object element : coll) {
-          builder.addRepeatedField(field, coerceForField(field, element));
+  private void populateBuilderFromMap(
+      DynamicMessage.Builder builder,
+      Descriptors.Descriptor descriptor,
+      Map<String, Object> map,
+      String path) {
+
+    for (FieldDescriptor field : descriptor.getFields()) {
+      String fieldPath = path + "." + field.getName();
+      Object raw = map.get(field.getName());
+
+      if (field.isRepeated() && raw instanceof Collection<?> collection) {
+        int index = 0;
+        for (Object element : collection) {
+          String elementPath = fieldPath + "[" + index + "]";
+          builder.addRepeatedField(field, coerceForField(field, element, elementPath));
+          index++;
         }
       } else {
-        builder.setField(field, coerceForField(field, raw));
-      }
-    }
-    return builder.build().toByteArray();
-  }
-
-  private Object normalizeForField(FieldDescriptor fd, Object v) {
-    switch (fd.getJavaType()) {
-      case BYTE_STRING -> {
-        if (v instanceof com.google.protobuf.ByteString bs) return bs;
-        if (v instanceof String s) {
-          // accept standard or URL-safe, ignore whitespace
-          String clean = s.replaceAll("\\s+", "");
-          try {
-            return com.google.protobuf.ByteString.copyFrom(java.util.Base64.getDecoder().decode(clean));
-          } catch (IllegalArgumentException ignore) {
-            return com.google.protobuf.ByteString.copyFrom(java.util.Base64.getUrlDecoder().decode(clean));
-          }
+        Object coerced = coerceForField(field, raw, fieldPath);
+        if (coerced != null || field.isRequired()) {
+          builder.setField(field, coerced);
         }
-        if (v instanceof java.util.List<?> lst) {
-          byte[] b = new byte[lst.size()];
-          for (int i = 0; i < b.length; i++) b[i] = ((Number) lst.get(i)).byteValue();
-          return com.google.protobuf.ByteString.copyFrom(b);
-        }
-        throw new IllegalArgumentException("Field '" + fd.getName() + "' expects bytes");
-      }
-      case ENUM -> {
-        if (v instanceof Number n) return fd.getEnumType().findValueByNumber(n.intValue());
-        String s = v.toString();
-        // allow numeric-in-string too
-        try {
-          return fd.getEnumType().findValueByNumber(Integer.parseInt(s));
-        } catch (NumberFormatException ignore) { /* fall through */ }
-        Descriptors.EnumValueDescriptor ev = fd.getEnumType().findValueByName(s);
-        if (ev == null) throw new IllegalArgumentException("Unknown enum: " + s + " for " + fd.getFullName());
-        return ev;
-      }
-      case LONG -> {  // handle stringified 64-bit
-        if (v instanceof Number n) return n.longValue();
-        return Long.parseLong(v.toString());
-      }
-      case INT -> {
-        if (v instanceof Number n) return n.intValue();
-        return Integer.parseInt(v.toString());
-      }
-      case FLOAT -> {
-        if (v instanceof Number n) return n.floatValue();
-        return Float.parseFloat(v.toString());
-      }
-      case DOUBLE -> {
-        if (v instanceof Number n) return n.doubleValue();
-        return Double.parseDouble(v.toString());
-      }
-      case BOOLEAN -> {
-        if (v instanceof Boolean b) return b;
-        if (v instanceof Number n) return n.intValue() != 0;
-        return Boolean.parseBoolean(v.toString());
-      }
-      case STRING -> {
-        return v.toString();
-      }
-      case MESSAGE -> {
-        if (v instanceof Map<?, ?> m) {
-          DynamicMessage.Builder child = DynamicMessage.newBuilder(fd.getMessageType());
-          for (FieldDescriptor cf : fd.getMessageType().getFields()) {
-            Object cv = m.get(cf.getName());
-            if (cv == null) continue;
-            if (cf.isRepeated() && cv instanceof Collection<?> coll) {
-              for (Object e : coll) child.addRepeatedField(cf, normalizeForField(cf, e));
-            } else {
-              child.setField(cf, normalizeForField(cf, cv));
-            }
-          }
-          return child.build();
-        }
-        throw new IllegalArgumentException("Field '" + fd.getName() + "' expects object for MESSAGE");
-      }
-      default -> {
-        return v;
       }
     }
   }
-
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  public MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) throws IOException {
     ProtoBufSchemaConfig protoBufSchemaConfig = (ProtoBufSchemaConfig) config;
     ProtoBufSchemaConfig.ProtobufConfig protobufConfig = protoBufSchemaConfig.getProtobufConfig();
-    return new ProtoBufFormatter(protobufConfig.getMessageName(), protobufConfig.getDescriptorValue());
-  }
-
-  private FileDescriptor loadDescFile(byte[] descriptorImage) throws IOException, DescriptorValidationException {
-    DescriptorProtos.FileDescriptorSet set;
-    List<FileDescriptor> dependencyFileDescriptorList;
-    try (InputStream fin = new ByteArrayInputStream(descriptorImage)) {
-      set = DescriptorProtos.FileDescriptorSet.parseFrom(fin);
-      dependencyFileDescriptorList = new ArrayList<>();
-      for (int i = 0; i < set.getFileCount() - 1; i++) {
-        dependencyFileDescriptorList.add(FileDescriptor.buildFrom(set.getFile(i), dependencyFileDescriptorList.toArray(new FileDescriptor[i])));
-      }
+    String name = protobufConfig.getMessageName();
+    if (config.isChild()) {
+      SchemaConfig parent = schemaResolver.resolveParent(config);
+      protobufConfig = ((ProtoBufSchemaConfig) parent).getProtobufConfig();
     }
-    return Descriptors.FileDescriptor.buildFrom(set.getFile(set.getFileCount() - 1), dependencyFileDescriptorList.toArray(new FileDescriptor[0]));
+    return new ProtoBufFormatter(name, protobufConfig.getDescriptorValue());
   }
 
-  // Replace convertToJson(DynamicMessage) with:
-  private JsonObject convertToJson(DynamicMessage message) {
+  private JsonObject convertToJson(DynamicMessage message) throws ParseException {
     JsonObject jsonObject = new JsonObject();
     for (Map.Entry<FieldDescriptor, Object> entry : message.getAllFields().entrySet()) {
-      FieldDescriptor field = entry.getKey();
-      Object value = entry.getValue();
-      if (field.isRepeated()) {
-        jsonObject.add(field.getName(), convertRepeatedToJson(field, (Collection<?>) value));
-      } else {
-        jsonObject.add(field.getName(), toJsonElement(field, value));
+      try {
+        FieldDescriptor field = entry.getKey();
+        Object value = entry.getValue();
+        if (field.isRepeated()) {
+          jsonObject.add(field.getName(), convertRepeatedToJson(field, (Collection<?>) value));
+        } else {
+          jsonObject.add(field.getName(), toJsonElement(field, value));
+        }
+      } catch (Exception e) {
+        throw new ParseException("Error converting message to JSON", e);
       }
     }
     return jsonObject;
   }
 
-  // New helper for repeated fields:
-  private JsonArray convertRepeatedToJson(FieldDescriptor field, Collection<?> values) {
+  private JsonArray convertRepeatedToJson(FieldDescriptor field, Collection<?> values) throws ParseException {
     JsonArray jsonArray = new JsonArray();
     for (Object value : values) {
       jsonArray.add(toJsonElement(field, value));
@@ -268,129 +324,143 @@ public class ProtoBufFormatter extends MessageFormatter {
   }
 
   // New leaf serializer that avoids gson reflection traps:
-  private com.google.gson.JsonElement toJsonElement(FieldDescriptor field, Object value) {
+  private JsonElement toJsonElement(FieldDescriptor field, Object value) throws ParseException {
     if (value == null) return com.google.gson.JsonNull.INSTANCE;
 
-    switch (field.getJavaType()) {
-      case STRING:
-        return new JsonPrimitive((String) value);
-
-      case INT:
-        return new JsonPrimitive(((Number) value).intValue());
-
-      case LONG:
-        return new JsonPrimitive(((Number) value).longValue());
-
-      case FLOAT:
-        return new JsonPrimitive(((Number) value).floatValue());
-
-      case DOUBLE:
-        return new JsonPrimitive(((Number) value).doubleValue());
-
-      case BOOLEAN:
-        return new JsonPrimitive((Boolean) value);
-
-      case BYTE_STRING:
-        // Base64 for bytes
+    return switch (field.getJavaType()) {
+      case STRING -> new JsonPrimitive((String) value);
+      case INT -> new JsonPrimitive(((Number) value).intValue());
+      case LONG -> new JsonPrimitive(((Number) value).longValue());
+      case FLOAT -> new JsonPrimitive(((Number) value).floatValue());
+      case DOUBLE -> new JsonPrimitive(((Number) value).doubleValue());
+      case BOOLEAN -> new JsonPrimitive((Boolean) value);
+      case BYTE_STRING -> {
         String b64 = Base64.getEncoder().encodeToString(((ByteString) value).toByteArray());
-        return new JsonPrimitive(b64);
-
-      case ENUM:
-        // Prefer enum name
-        return new JsonPrimitive(field.getEnumType().findValueByNumber(((Descriptors.EnumValueDescriptor) value).getNumber()).getName());
-
-      case MESSAGE:
-        // Nested message
-        return convertToJson((DynamicMessage) value);
-
-      default:
-        // Last-resort string
-        return new JsonPrimitive(String.valueOf(value));
-    }
+        yield new JsonPrimitive(b64);
+      }
+      case ENUM ->
+          new JsonPrimitive(field.getEnumType().findValueByNumber(((Descriptors.EnumValueDescriptor) value).getNumber()).getName());
+      case MESSAGE -> convertToJson((DynamicMessage) value);
+      default -> new JsonPrimitive(String.valueOf(value));
+    };
   }
 
 
-  // New coercion helper for JSON→Proto types (bytes, enums, numerics, nested):
-  private Object coerceForField(FieldDescriptor field, Object value) {
-    if (value == null) return null;
-
+  private Object coerceForField(FieldDescriptor field, Object value, String path) {
+    if (value == null) {
+      return null;
+    }
     switch (field.getJavaType()) {
       case STRING:
         return String.valueOf(value);
 
       case INT:
-        if (value instanceof Number n) return n.intValue();
+        if (value instanceof Number numberValue) {
+          return numberValue.intValue();
+        }
         return Integer.parseInt(String.valueOf(value));
 
       case LONG:
-        if (value instanceof Number n) return n.longValue();
+        if (value instanceof Number numberValue) {
+          return numberValue.longValue();
+        }
         return Long.parseLong(String.valueOf(value));
 
       case FLOAT:
-        if (value instanceof Number n) return n.floatValue();
+        if (value instanceof Number numberValue) {
+          return numberValue.floatValue();
+        }
         return Float.parseFloat(String.valueOf(value));
 
       case DOUBLE:
-        if (value instanceof Number n) return n.doubleValue();
+        if (value instanceof Number numberValue) {
+          return numberValue.doubleValue();
+        }
         return Double.parseDouble(String.valueOf(value));
 
       case BOOLEAN:
-        if (value instanceof Boolean b) return b;
-        String s = String.valueOf(value);
-        if ("1".equals(s)) return true;
-        if ("0".equals(s)) return false;
-        return Boolean.parseBoolean(s);
+        if (value instanceof Boolean booleanValue) {
+          return booleanValue;
+        }
+
+        String booleanString = String.valueOf(value);
+        if ("1".equals(booleanString)) {
+          return true;
+        }
+        if ("0".equals(booleanString)) {
+          return false;
+        }
+        return Boolean.parseBoolean(booleanString);
 
       case BYTE_STRING:
-        if (value instanceof String bs) {
-          // Expect base64 string
-          return ByteString.copyFrom(Base64.getDecoder().decode(bs));
+        if (value instanceof String byteStringValue) {
+          try {
+            byte[] decoded = Base64.getDecoder().decode(byteStringValue);
+            return ByteString.copyFrom(decoded);
+          } catch (IllegalArgumentException exception) {
+            byte[] utf8Bytes = byteStringValue.getBytes(StandardCharsets.UTF_8);
+            return ByteString.copyFrom(utf8Bytes);
+          }
         }
-        if (value instanceof Collection<?> coll) {
-          // Accept array of numbers as bytes
-          byte[] bytes = new byte[coll.size()];
-          int i = 0;
-          for (Object o : coll) bytes[i++] = ((Number) o).byteValue();
+
+        if (value instanceof Collection<?> collection) {
+          byte[] bytes = new byte[collection.size()];
+          int index = 0;
+          for (Object object : collection) {
+            bytes[index] = ((Number) object).byteValue();
+            index++;
+          }
           return ByteString.copyFrom(bytes);
         }
-        throw new IllegalArgumentException("bytes field expects base64 string or array of numbers: " + field.getName());
+
+        throw new IllegalArgumentException(
+            "bytes field expects base64 string, UTF-8 string, or array of numbers: " + field.getName()
+        );
 
       case ENUM:
-        if (value instanceof Number n) {
-          Descriptors.EnumValueDescriptor ev = field.getEnumType().findValueByNumber(n.intValue());
-          if (ev == null) throw new IllegalArgumentException("Unknown enum number " + n + " for " + field.getFullName());
-          return ev;
-        } else {
-          String name = String.valueOf(value);
-          // Try by name first
-          Descriptors.EnumValueDescriptor ev = field.getEnumType().findValueByName(name);
-          if (ev != null) return ev;
-          // Then try numeric-in-string
-          try {
-            int num = Integer.parseInt(name);
-            ev = field.getEnumType().findValueByNumber(num);
-            if (ev != null) return ev;
-          } catch (NumberFormatException ignore) {
+        if (value instanceof Number numberValue) {
+          Descriptors.EnumValueDescriptor enumValue =
+              field.getEnumType().findValueByNumber(numberValue.intValue());
+
+          if (enumValue == null) {
+            throw new IllegalArgumentException(
+                "Unknown enum number " + numberValue + " for " + field.getFullName()
+            );
           }
-          throw new IllegalArgumentException("Unknown enum value '" + name + "' for " + field.getFullName());
+          return enumValue;
         }
 
-      case MESSAGE:
-        if (value instanceof Map<?, ?> m) {
-          @SuppressWarnings("unchecked")
-          Map<String, Object> nested = (Map<String, Object>) m;
-          DynamicMessage.Builder nestedBuilder = DynamicMessage.newBuilder(field.getMessageType());
-          for (FieldDescriptor nf : field.getMessageType().getFields()) {
-            Object nv = nested.get(nf.getName());
-            if (nv == null) continue;
-            if (nf.isRepeated() && nv instanceof Collection<?> coll) {
-              for (Object el : coll) nestedBuilder.addRepeatedField(nf, coerceForField(nf, el));
-            } else {
-              nestedBuilder.setField(nf, coerceForField(nf, nv));
-            }
+        String enumName = String.valueOf(value);
+        Descriptors.EnumValueDescriptor enumValue = field.getEnumType().findValueByName(enumName);
+        if (enumValue != null) {
+          return enumValue;
+        }
+
+        try {
+          int enumNumber = Integer.parseInt(enumName);
+          enumValue = field.getEnumType().findValueByNumber(enumNumber);
+          if (enumValue != null) {
+            return enumValue;
           }
+        } catch (NumberFormatException ignore) {
+          // Temporary debug mode, not temporary stupidity mode.
+        }
+
+        throw new IllegalArgumentException(
+            "Unknown enum value '" + enumName + "' for " + field.getFullName()
+        );
+
+      case MESSAGE:
+        if (value instanceof Map<?, ?> nestedMapValue) {
+          @SuppressWarnings("unchecked")
+          Map<String, Object> nestedMap = (Map<String, Object>) nestedMapValue;
+
+          DynamicMessage.Builder nestedBuilder = DynamicMessage.newBuilder(field.getMessageType());
+          populateBuilderFromMap(nestedBuilder, field.getMessageType(), nestedMap, path);
+
           return nestedBuilder.build();
         }
+
         throw new IllegalArgumentException("Message field expects object for " + field.getFullName());
 
       default:
@@ -418,5 +488,43 @@ public class ProtoBufFormatter extends MessageFormatter {
       }
     }
     return list;
+  }
+
+  private Descriptors.Descriptor findMessageDescriptor(String messageName) {
+    if (messageName == null || messageName.isEmpty()) {
+      return null;
+    }
+
+    for (Descriptors.FileDescriptor fileDescriptor : descriptors.values()) {
+      Descriptors.Descriptor descriptor = findMessageDescriptor(fileDescriptor, messageName);
+      if (descriptor != null) {
+        return descriptor;
+      }
+    }
+    return null;
+  }
+
+  private Descriptors.Descriptor findMessageDescriptor(Descriptors.FileDescriptor fileDescriptor, String messageName) {
+    for (Descriptors.Descriptor descriptor : fileDescriptor.getMessageTypes()) {
+      Descriptors.Descriptor match = findMessageDescriptor(descriptor, messageName);
+      if (match != null) {
+        return match;
+      }
+    }
+    return null;
+  }
+
+  private Descriptors.Descriptor findMessageDescriptor(Descriptors.Descriptor descriptor, String messageName) {
+    if (messageName.equals(descriptor.getFullName()) || messageName.equals(descriptor.getName())) {
+      return descriptor;
+    }
+
+    for (Descriptors.Descriptor nestedDescriptor : descriptor.getNestedTypes()) {
+      Descriptors.Descriptor match = findMessageDescriptor(nestedDescriptor, messageName);
+      if (match != null) {
+        return match;
+      }
+    }
+    return null;
   }
 }

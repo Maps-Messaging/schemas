@@ -61,8 +61,7 @@ public abstract class GeneralBaseTest {
 
   }
 
-  SchemaConfig getSchemaProperties() throws IOException {
-    SchemaConfig properties = getProperties();
+  SchemaConfig getSchemaProperties(SchemaConfig properties) {
     // --- Root-level metadata ---
     String uid = UUID.randomUUID().toString();
     properties.setVersionId(uid);
@@ -79,7 +78,7 @@ public abstract class GeneralBaseTest {
 
   @Test
   void validateBaseConstructor() throws IOException {
-    SchemaConfig schemaConfig = buildConfig();
+    SchemaConfig schemaConfig = getSchemaProperties(buildConfig());
     validate(schemaConfig);
     validateSchema(schemaConfig);
   }
@@ -87,7 +86,8 @@ public abstract class GeneralBaseTest {
 
   @Test
   void validateConstructors() throws IOException {
-    SchemaConfig schemaProps = buildConfig();
+    SchemaConfig schemaProps = getSchemaProperties(buildConfig());
+    System.err.println(schemaProps.pack());
     Assertions.assertNotNull(schemaProps);
     validate(schemaProps);
     validateSchema(schemaProps);
@@ -95,7 +95,7 @@ public abstract class GeneralBaseTest {
 
   @Test
   void validateStreamConstructors() throws IOException {
-    SchemaConfig schemaProps = buildConfig();
+    SchemaConfig schemaProps = getSchemaProperties(buildConfig());
     SchemaConfig schemaConfig = SchemaConfigFactory.getInstance().constructConfig(schemaProps.pack());
     validate(schemaConfig);
     Assertions.assertEquals(schemaProps.getClass().getName(), schemaConfig.getClass().getName());
@@ -105,7 +105,7 @@ public abstract class GeneralBaseTest {
 
   @Test
   void validateConstructorFromMap() throws IOException {
-    SchemaConfig schemaConfig = buildConfig();
+    SchemaConfig schemaConfig = getSchemaProperties(buildConfig());
     validate(schemaConfig);
     validateSchema(schemaConfig);
     byte[] schemaProps = schemaConfig.packAsBytes();

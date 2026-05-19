@@ -39,11 +39,15 @@ public class AvroSchemaConfig extends SchemaConfig {
     super(config);
   }
 
+  // Use the getSchema
+  @Deprecated
   public String getAvroSchema() {
     JsonObject json = getSchema();
     return json.get("schema").getAsString();
   }
 
+  // Use the setSchema
+  @Deprecated
   public void setAvroSchema(String avroSchema) {
     JsonObject json = new JsonObject();
     json.addProperty("schema", avroSchema);

@@ -100,8 +100,14 @@ class TestXMLFormatter extends BaseTest {
     xmlConfig.setRootEntry("catalog");
     config.setConfig(xmlConfig);
     XmlFormatter xmlFormatter = (XmlFormatter) MessageFormatterFactory.getInstance().getFormatter(config);
-    Assertions.assertNotNull(xmlFormatter.parse("This is not a XML document".getBytes()));
-    Assertions.assertNull(xmlFormatter.parse("This is not a XML document".getBytes()).get("Whatever"));
+    Assertions.assertThrows(
+        ParseException.class,
+        () -> xmlFormatter.parse("This is not a XML document".getBytes(), ParseMode.STRICT)
+    );
+    Assertions.assertThrows(
+        ParseException.class,
+        () -> xmlFormatter.parse("This is not a XML document".getBytes(), ParseMode.IGNORE).get("Whatever")
+    );
   }
 
   @Test
@@ -111,8 +117,8 @@ class TestXMLFormatter extends BaseTest {
     xmlConfig.setRootEntry("catalog");
     config.setConfig(xmlConfig);
     XmlFormatter xmlFormatter = (XmlFormatter) MessageFormatterFactory.getInstance().getFormatter(config);
-    Assertions.assertEquals("Cardigan Sweater", xmlFormatter.parse(XML_STRING.getBytes()).get("product.description"));
-    Assertions.assertEquals(39.95, xmlFormatter.parse(XML_STRING.getBytes()).get("product.catalog_item[0].price"));
+    Assertions.assertEquals("Cardigan Sweater", xmlFormatter.parse(XML_STRING.getBytes(), ParseMode.IGNORE).get("product.description"));
+    Assertions.assertEquals(39.95, xmlFormatter.parse(XML_STRING.getBytes(), ParseMode.IGNORE).get("product.catalog_item[0].price"));
   }
 
   private static final String XML_STRING = "<?xml version=\"1.0\"?>\n"

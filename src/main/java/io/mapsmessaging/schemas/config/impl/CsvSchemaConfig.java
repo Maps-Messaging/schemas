@@ -20,6 +20,7 @@
 
 package io.mapsmessaging.schemas.config.impl;
 
+import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -30,9 +31,6 @@ import lombok.Setter;
  */
 @Schema(description = "CVS Schema Configuration")
 public class CsvSchemaConfig extends SchemaConfig {
-
-  @Getter
-  private CsvConfig config;
 
   /**
    * Instantiates a new Csv schema config.
@@ -49,9 +47,10 @@ public class CsvSchemaConfig extends SchemaConfig {
    */
   public CsvSchemaConfig(String header, boolean interpretNumericStrings) {
     super("CSV");
-    config = new CsvConfig();
+    CsvConfig config = new CsvConfig();
     config.setHeaderValues(header);
     config.setInterpretNumericStrings(interpretNumericStrings);
+    setConfig(config);
   }
 
   /**
@@ -61,9 +60,6 @@ public class CsvSchemaConfig extends SchemaConfig {
    */
   protected CsvSchemaConfig(SchemaConfig config) {
     super(config);
-    if (config.getSchema() != null) {
-      this.config = gson.fromJson(config.getSchema(), CsvConfig.class);
-    }
   }
 
   @Override
@@ -77,8 +73,15 @@ public class CsvSchemaConfig extends SchemaConfig {
   }
 
   public void setConfig(CsvConfig csvConfig) {
-    this.config = csvConfig;
     setSchema(gson.toJsonTree(csvConfig).getAsJsonObject());
+  }
+
+  public CsvConfig getConfig() {
+    JsonObject obj = getSchema().getAsJsonObject();
+    if (obj != null) {
+      return gson.fromJson(obj, CsvConfig.class);
+    }
+    return null;
   }
 
   @Getter

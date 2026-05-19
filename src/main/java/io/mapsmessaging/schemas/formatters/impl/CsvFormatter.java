@@ -26,8 +26,11 @@ import com.univocity.parsers.csv.CsvParserSettings;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.CsvSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
+import io.mapsmessaging.schemas.formatters.ParseException;
+import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
+import io.mapsmessaging.schemas.repository.SchemaResolver;
 
 import java.io.IOException;
 import java.util.*;
@@ -71,13 +74,17 @@ public class CsvFormatter extends MessageFormatter {
   }
 
   @Override
-  public synchronized ParsedObject parse(byte[] payload) {
-    return new MapResolver(parseToMap(payload), interpretNumericStrings);
+  public synchronized ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException {
+    MapResolver resolver = new MapResolver(parseToMap(payload), interpretNumericStrings);
+    if (parseMode == ParseMode.STRICT && resolver.getKeys().size() != keys.length) {
+      throw new ParseException("CSV payload does not match schema");
+    }
+    return resolver;
   }
 
   @Override
-  public JsonObject parseToJson(byte[] payload) throws IOException {
-    ParsedObject parsedObject = parse(payload);
+  public JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException {
+    ParsedObject parsedObject = parse(payload, ParseMode.IGNORE);
     JsonObject jsonObject = new JsonObject();
     for (String key : keys) {
       Object value = parsedObject.get(key);
@@ -120,7 +127,7 @@ public class CsvFormatter extends MessageFormatter {
 
 
   @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
+  public MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) throws IOException {
     CsvSchemaConfig csvSchemaConfig = (CsvSchemaConfig) config;
     CsvSchemaConfig.CsvConfig csvConfig = csvSchemaConfig.getConfig();
     if (csvConfig != null) {

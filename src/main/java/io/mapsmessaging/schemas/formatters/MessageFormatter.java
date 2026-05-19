@@ -25,6 +25,7 @@ import com.google.gson.JsonObject;
 import io.mapsmessaging.logging.Logger;
 import io.mapsmessaging.logging.LoggerFactory;
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.repository.SchemaResolver;
 
 import java.io.IOException;
 import java.util.Map;
@@ -57,20 +58,22 @@ public abstract class MessageFormatter {
   /**
    * Gets instance.
    *
-   * @param config the config
+   * @param config         the config
+   * @param schemaResolver
    * @return the instance
    * @throws IOException the io exception
    */
-  public abstract MessageFormatter getInstance(SchemaConfig config) throws IOException;
+  public abstract MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) throws IOException;
 
   /**
    * Parse to json json object.
    *
-   * @param payload the payload
+   * @param payload   the payload
+   * @param parseMode
    * @return the json object
-   * @throws IOException the io exception
+   * @throws ParseException the io exception
    */
-  public abstract JsonObject parseToJson(byte[] payload) throws IOException;
+  public abstract JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException;
 
 
   /**
@@ -85,10 +88,11 @@ public abstract class MessageFormatter {
   /**
    * Parse parsed object.
    *
-   * @param payload the payload
+   * @param payload   the payload
+   * @param parseMode
    * @return the parsed object
    */
-  public abstract ParsedObject parse(byte[] payload);
+  public abstract ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException;
 
 
   public abstract Map<String, Object> getFormat();

@@ -26,6 +26,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.impl.CbcSchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatterFactory;
+import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.impl.CbcFormatter;
 import org.junit.jupiter.api.Assertions;
@@ -93,7 +94,7 @@ public class TestCbcHeartbeatConformance {
     CbcFormatter formatter = (CbcFormatter) MessageFormatterFactory.getInstance().getFormatter(schema);
 
     byte[] payload = TestHeartbeatVectors.buildExampleVector(schema); // our local vector builder
-    ParsedObject parsed = formatter.parse(payload);
+    ParsedObject parsed = formatter.parse(payload, ParseMode.IGNORE);
 
     // core fields
     Assertions.assertEquals(65280L, ((Number) parsed.get("messageKey")).longValue());
@@ -113,12 +114,12 @@ public class TestCbcHeartbeatConformance {
     Assertions.assertEquals(65535L, ((Number) parsed.get("counter")).longValue());
 
     // JSON view checks
-    JsonObject json = formatter.parseToJson(payload);
+    JsonObject json = formatter.parseToJson(payload, ParseMode.IGNORE);
     Assertions.assertEquals(86399, json.get("secOfDay").getAsInt());
 
     // Round-trip
     Map<String, Object> valueMap = jsonToMap(json);
-    byte[] reencoded = ((CbcFormatter) new CbcFormatter().getInstance(schema)).toBytes(valueMap);
+    byte[] reencoded = ((CbcFormatter) new CbcFormatter().getInstance(schema, null)).toBytes(valueMap);
     Assertions.assertArrayEquals(payload, reencoded);
   }
 
@@ -130,7 +131,7 @@ public class TestCbcHeartbeatConformance {
 
 
     byte[] golden = HexUtil.parseHex(GOLDEN_HEX.replace(" ", "").replace("\n", ""));
-    ParsedObject parsed = formatter.parse(golden);
+    ParsedObject parsed = formatter.parse(golden, ParseMode.IGNORE);
 
     // Spot check a few fields
     Assertions.assertEquals(65280L, ((Number) parsed.get("messageTypeId")).longValue());

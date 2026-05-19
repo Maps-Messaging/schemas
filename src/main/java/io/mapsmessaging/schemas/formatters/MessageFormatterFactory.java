@@ -21,6 +21,7 @@
 package io.mapsmessaging.schemas.formatters;
 
 import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.repository.SchemaResolver;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -63,9 +64,13 @@ public class MessageFormatterFactory {
    * @throws IOException the io exception
    */
   public MessageFormatter getFormatter(SchemaConfig config) throws IOException {
+    return getFormatter(config, null);
+  }
+
+  public MessageFormatter getFormatter(SchemaConfig config, SchemaResolver resolver) throws IOException {
     for (MessageFormatter formatter : messageFormatters) {
       if (formatter.getName().equalsIgnoreCase(config.getFormat())) {
-        return formatter.getInstance(config);
+        return formatter.getInstance(config, resolver);
       }
     }
     throw new IOException("Unknown format config received");

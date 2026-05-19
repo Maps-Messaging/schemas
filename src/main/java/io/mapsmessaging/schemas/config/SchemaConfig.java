@@ -56,6 +56,7 @@ public class SchemaConfig {
   private String schemaUrl;
   private JsonObject schema;
   private String schemaBase64;
+  private String parentUuid;
 
   @JsonAdapter(OffsetDateTimeAdapter.class)
   private OffsetDateTime createdAt;
@@ -100,6 +101,22 @@ public class SchemaConfig {
     }
   }
 
+  public boolean isBundle() {
+    return false;
+  }
+
+  public List<SchemaConfig> getBundledSchemas() {
+    return Collections.emptyList();
+  }
+
+  public boolean isPrimary() {
+    return parentUuid == null || parentUuid.isEmpty();
+  }
+
+  public boolean isChild() {
+    return parentUuid != null && !parentUuid.isEmpty();
+  }
+
   public String getMatchExpression() {
     return getFromLabels("matchExpression");
   }
@@ -109,7 +126,7 @@ public class SchemaConfig {
       Pattern.compile(matchExpression);
       setInLables("matchExpression", matchExpression);
     } catch (Exception e) {
-      e.printStackTrace();
+      // Log this
     }
   }
 

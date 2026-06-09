@@ -31,6 +31,7 @@ import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParseException;
 import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
+import io.mapsmessaging.schemas.formatters.impl.json.JsonSchemaDeepDumper;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 import io.mapsmessaging.schemas.repository.SchemaResolver;
@@ -173,6 +174,20 @@ public class JsonFormatter extends MessageFormatter {
     } catch (Exception e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), e.getMessage());
       return Map.of();
+    }
+  }
+
+  public JsonObject getJsonSchema() {
+    if (rootSchemaNode == null || selectedSchemaNode == null) {
+      return new JsonObject();
+    }
+
+    try {
+      JsonNode expandedSchemaNode = JsonSchemaDeepDumper.dumpSchema(rootSchemaNode, selectedSchemaNode, definitionPointer);
+      return JsonParser.parseString(expandedSchemaNode.toString()).getAsJsonObject();
+    } catch (Exception e) {
+      logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), e.getMessage());
+      return new JsonObject();
     }
   }
 

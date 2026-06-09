@@ -75,6 +75,39 @@ class TestCanbusFormatter {
   }
 
   @Test
+  void parseToJson_processesUnknownN2kPgnWithoutFailing() throws IOException {
+    CanbusFormatter formatter = new CanbusFormatter();
+
+    int unknownPgn = 130999;
+    int sourceAddress = 0x23;
+    int priority = 6;
+    int canIdentifier = (priority << 26) | (unknownPgn << 8) | sourceAddress;
+
+    boolean extendedFrame = true;
+    int dataLengthCode = 8;
+    byte[] payload = new byte[]{
+        0x01,
+        0x02,
+        0x03,
+        0x04,
+        0x05,
+        0x06,
+        0x07,
+        0x08
+    };
+
+    CanFrame original = new CanFrame(canIdentifier, extendedFrame, dataLengthCode, payload);
+    byte[] packed = original.getRawData();
+
+    JsonObject json = formatter.parseToJson(packed, ParseMode.IGNORE);
+
+    Assertions.assertEquals(canIdentifier, json.get("canId").getAsInt());
+    Assertions.assertEquals(dataLengthCode, json.get("dlc").getAsInt());
+    Assertions.assertTrue(json.get("extended").getAsBoolean());
+    Assertions.assertEquals(Base64.getEncoder().encodeToString(payload), json.get("data").getAsString());
+  }
+
+  @Test
   void parseFromJson_acceptsEnvelopeWithJ1939Decoration() throws IOException {
     CanbusFormatter formatter = new CanbusFormatter();
 

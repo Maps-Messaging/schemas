@@ -26,10 +26,8 @@ import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.networknt.schema.*;
 import com.networknt.schema.Error;
-import com.networknt.schema.Schema;
-import com.networknt.schema.SchemaRegistry;
-import com.networknt.schema.dialect.Dialects;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParseException;
@@ -40,6 +38,7 @@ import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 import io.mapsmessaging.schemas.repository.SchemaResolver;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -48,38 +47,63 @@ import static io.mapsmessaging.schemas.logging.SchemaLogMessages.JSON_PARSE_EXCE
 
 public class CborFormatter extends MessageFormatter {
 
+  private final ObjectMapper cborMapper;
+  private final ObjectMapper jsonMapper;
+  private final Gson gson;
   private final JsonNode schemaNode;
   private final Schema schema;
 
   public CborFormatter() {
+    cborMapper = new ObjectMapper(new CBORFactory());
+    jsonMapper = new ObjectMapper();
+    gson = new Gson();
     schemaNode = null;
     schema = null;
   }
 
   public CborFormatter(String schemaString) throws IOException {
-    ObjectMapper objectMapper = new ObjectMapper();
-    schemaNode = objectMapper.readTree(schemaString);
-    // Create JsonSchema instance
-    SchemaRegistry schemaRegistry = SchemaRegistry.withDialect(Dialects.getDraft7());
-    schema = schemaRegistry.getSchema(schemaNode);
+    cborMapper = new ObjectMapper(new CBORFactory());
+    jsonMapper = new ObjectMapper();
+    gson = new Gson();
+
+    if (schemaString == null || schemaString.isBlank() || "null".equals(schemaString.trim())) {
+      schemaNode = null;
+      schema = null;
+      return;
+    }
+
+    schemaNode = jsonMapper.readTree(schemaString);
+    if (schemaNode == null || schemaNode.isNull() || !schemaNode.isObject()) {
+      schema = null;
+      return;
+    }
+
+    String schemaDialect = schemaNode.path("$schema").asText(null);
+    SpecificationVersion version = SpecificationVersion.fromDialectId(schemaDialect)
+        .orElse(SpecificationVersion.DRAFT_7);
+
+    SchemaRegistry schemaRegistry = SchemaRegistry.withDefaultDialect(version);
+    schema = schemaRegistry.getSchema(schemaNode.toString(), InputFormat.JSON);
   }
 
   @Override
   public ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException {
     try {
-      ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());
       Map<String, Object> map = cborMapper.readValue(payload, Map.class);
 
       if (schema != null) {
-        JsonNode node = cborMapper.readTree(payload);
-        List<Error> validationResult = schema.validate(node);
+        String jsonString = jsonMapper.writeValueAsString(map);
+        List<Error> validationResult = schema.validate(jsonString, InputFormat.JSON);
+
         if (!validationResult.isEmpty()) {
           logger.log(JSON_PARSE_EXCEPTION, getName(), validationResult);
+          if (parseMode == ParseMode.STRICT) {
+            throw new ParseException(validationResult.toString());
+          }
           return new DefaultParser(payload);
         }
       }
 
-      Gson gson = new Gson();
       JsonObject json = gson.toJsonTree(map).getAsJsonObject();
       return new StructuredResolver(new MapResolver(map), json);
     } catch (Exception e) {
@@ -93,10 +117,9 @@ public class CborFormatter extends MessageFormatter {
 
   @Override
   public JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException {
-    ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());
     try {
       Map<String, Object> map = cborMapper.readValue(payload, Map.class);
-      return JsonParser.parseString(new Gson().toJson(map)).getAsJsonObject();
+      return JsonParser.parseString(gson.toJson(map)).getAsJsonObject();
     } catch (IOException e) {
       throw new ParseException(e.getMessage(), e);
     }
@@ -104,18 +127,19 @@ public class CborFormatter extends MessageFormatter {
 
   @Override
   public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
-    ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());
-
     @SuppressWarnings("unchecked")
-    Map<String, Object> map = new Gson().fromJson(jsonObject, Map.class);
+    Map<String, Object> map = gson.fromJson(jsonObject, Map.class);
 
     return cborMapper.writeValueAsBytes(map);
   }
 
-
   @Override
   public MessageFormatter getInstance(SchemaConfig config, SchemaResolver schemaResolver) throws IOException {
-    return new CborFormatter(SchemaConfig.gson.toJson(config.getSchema()));
+    JsonObject configSchema = config.getSchema();
+    if (configSchema == null || configSchema.isJsonNull() || configSchema.isEmpty()) {
+      return new CborFormatter();
+    }
+    return new CborFormatter(SchemaConfig.gson.toJson(configSchema));
   }
 
   @Override
@@ -130,14 +154,13 @@ public class CborFormatter extends MessageFormatter {
     }
 
     try {
-      ObjectMapper objectMapper = new ObjectMapper();
       JsonNode propertiesNode = schemaNode.get("properties");
-      Map<String, Object> result = new java.util.LinkedHashMap<>();
+      Map<String, Object> result = new LinkedHashMap<>();
 
       propertiesNode.fields().forEachRemaining(entry -> {
         String fieldName = entry.getKey();
         JsonNode attributes = entry.getValue();
-        Map<String, Object> attrMap = objectMapper.convertValue(attributes, Map.class);
+        Map<String, Object> attrMap = jsonMapper.convertValue(attributes, Map.class);
         result.put(fieldName, attrMap);
       });
 
@@ -147,5 +170,4 @@ public class CborFormatter extends MessageFormatter {
       return Map.of();
     }
   }
-
 }

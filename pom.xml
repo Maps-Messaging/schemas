@@ -509,7 +509,7 @@
     <dependency>
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
-      <version>3.0.5</version>
+      <version>3.0.6</version>
 
       <!-- Only required for versions < 1.0.82. See README.md -->
       <exclusions>

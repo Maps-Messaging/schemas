@@ -3,5 +3,5 @@ steps:
     command:
       - mvn clean deploy -Prelease,unix
     agents:
-      queue: "java_build_queue"
+      queue: "java_build_queue_aws"
 

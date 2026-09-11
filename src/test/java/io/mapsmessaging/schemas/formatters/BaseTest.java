@@ -47,7 +47,7 @@ public abstract class BaseTest {
       Person p = new Person();
       switch (x % 6) {
         case 0:
-          p.setStringId(faker.lordOfTheRings().character());
+          p.setStringId(selectorSafe(faker.lordOfTheRings().character()));
           break;
         case 1:
           p.setStringId(faker.gameOfThrones().character());
@@ -76,6 +76,10 @@ public abstract class BaseTest {
       list.add(p);
     }
     return list;
+  }
+
+  private static String selectorSafe(String value) {
+    return value.replace("'", "");
   }
 
   @BeforeAll
@@ -274,6 +278,7 @@ public abstract class BaseTest {
     Faker faker = new Faker();
     int index = faker.random().nextInt(0, data.size() -1);
 
+    System.err.println("stringId = '" + data.get(index).getStringId() + "'");
     ParserExecutor stringExecutor = SelectorParser.compile("stringId = '" + data.get(index).getStringId() + "'");
     ParserExecutor longExecutor = SelectorParser.compile("longId = " + data.get(index).getLongId());
     ParserExecutor intExecutor = SelectorParser.compile("intId = " + data.get(index).getIntId());

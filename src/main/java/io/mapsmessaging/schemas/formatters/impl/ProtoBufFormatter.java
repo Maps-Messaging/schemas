@@ -40,6 +40,13 @@ import io.mapsmessaging.schemas.repository.SchemaResolver;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -355,16 +362,10 @@ public class ProtoBufFormatter extends MessageFormatter {
         return String.valueOf(value);
 
       case INT:
-        if (value instanceof Number numberValue) {
-          return numberValue.intValue();
-        }
-        return Integer.parseInt(String.valueOf(value));
+        return coerceInteger(value, path);
 
       case LONG:
-        if (value instanceof Number numberValue) {
-          return numberValue.longValue();
-        }
-        return Long.parseLong(String.valueOf(value));
+        return coerceLong(value, path);
 
       case FLOAT:
         if (value instanceof Number numberValue) {
@@ -465,6 +466,96 @@ public class ProtoBufFormatter extends MessageFormatter {
 
       default:
         throw new IllegalStateException("Unhandled type for " + field.getFullName());
+    }
+  }
+
+  private int coerceInteger(Object value, String path) {
+    if (value instanceof Number numberValue) {
+      return Math.toIntExact(numberValue.longValue());
+    }
+
+    String stringValue = String.valueOf(value);
+    try {
+      return Math.toIntExact(Long.parseLong(stringValue));
+    } catch (NumberFormatException exception) {
+      Long durationSeconds = parseDurationSeconds(stringValue, path);
+      if (durationSeconds != null) {
+        return Math.toIntExact(durationSeconds);
+      }
+      throw new IllegalArgumentException(
+          "Unable to coerce value '" + stringValue + "' to integer at " + path, exception
+      );
+    }
+  }
+
+  private long coerceLong(Object value, String path) {
+    if (value instanceof Number numberValue) {
+      return numberValue.longValue();
+    }
+
+    String stringValue = String.valueOf(value);
+    try {
+      return Long.parseLong(stringValue);
+    } catch (NumberFormatException exception) {
+      Long durationSeconds = parseDurationSeconds(stringValue, path);
+      if (durationSeconds != null) {
+        return durationSeconds;
+      }
+
+      Long epochMillis = parseEpochMillis(stringValue);
+      if (epochMillis != null) {
+        return epochMillis;
+      }
+
+      throw new IllegalArgumentException(
+          "Unable to coerce value '" + stringValue + "' to long at " + path, exception
+      );
+    }
+  }
+
+  private Long parseDurationSeconds(String value, String path) {
+    if (!(value.startsWith("P") || value.startsWith("-P") || value.startsWith("+P"))) {
+      return null;
+    }
+
+    try {
+      Duration duration = Duration.parse(value);
+      if (duration.getNano() != 0) {
+        throw new IllegalArgumentException(
+            "Duration '" + value + "' has sub-second precision that cannot be represented at " + path
+        );
+      }
+      return duration.getSeconds();
+    } catch (DateTimeParseException exception) {
+      throw new IllegalArgumentException(
+          "Invalid ISO-8601 duration '" + value + "' at " + path, exception
+      );
+    }
+  }
+
+  private Long parseEpochMillis(String value) {
+    try {
+      return Instant.parse(value).toEpochMilli();
+    } catch (DateTimeParseException ignore) {
+      // Try less specific ISO-8601 representations below.
+    }
+
+    try {
+      return OffsetDateTime.parse(value).toInstant().toEpochMilli();
+    } catch (DateTimeParseException ignore) {
+      // Try a local date-time, interpreted as UTC.
+    }
+
+    try {
+      return LocalDateTime.parse(value).toInstant(ZoneOffset.UTC).toEpochMilli();
+    } catch (DateTimeParseException ignore) {
+      // Try a date-only value at UTC start of day.
+    }
+
+    try {
+      return LocalDate.parse(value).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
+    } catch (DateTimeParseException ignore) {
+      return null;
     }
   }
 

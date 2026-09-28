@@ -31,6 +31,8 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ProtoDescriptorCompilerTest {
@@ -103,6 +105,146 @@ class ProtoDescriptorCompilerTest {
 
     assertEquals(firstCompile, secondCompile);
     assertEquals(initialLogLineCount, finalLogLineCount);
+  }
+
+  @Test
+  void unavailableConfiguredProtocIsReported() {
+    ProtoDescriptorCompiler compiler =
+        new ProtoDescriptorCompiler(tempDirectory.resolve("missing-protoc"));
+
+    assertFalse(compiler.isAvailable());
+    assertThrows(IOException.class, compiler::getProtocPath);
+  }
+
+  @Test
+  void validatesRootProtoRootAndDescriptorArguments() throws Exception {
+    Path missingRoot = tempDirectory.resolve("missing-root");
+    ProtoDescriptorCompiler compiler = new ProtoDescriptorCompiler(tempDirectory.resolve("missing-protoc"));
+
+    assertThrows(
+        IOException.class,
+        () -> compiler.compileAllUnderRoot(missingRoot, tempDirectory.resolve("out"))
+    );
+
+    Path rootFile = tempDirectory.resolve("root-file");
+    Files.writeString(rootFile, "not a directory");
+    assertThrows(
+        IOException.class,
+        () -> compiler.compileAllUnderRoot(rootFile, tempDirectory.resolve("out"))
+    );
+
+    Path root = Files.createDirectories(tempDirectory.resolve("root"));
+    Path missingProtoRoot = root.resolve("missing");
+    assertThrows(
+        IOException.class,
+        () -> compiler.compile(root, missingProtoRoot, tempDirectory.resolve("out.desc"))
+    );
+
+    Path protoFile = root.resolve("proto-file");
+    Files.writeString(protoFile, "not a directory");
+    assertThrows(
+        IOException.class,
+        () -> compiler.compile(root, protoFile, tempDirectory.resolve("out.desc"))
+    );
+
+    Path outside = Files.createDirectories(tempDirectory.resolve("outside"));
+    createProtoFile(outside.resolve("outside.proto"), "Outside");
+    assertThrows(
+        IOException.class,
+        () -> compiler.compile(root, outside, tempDirectory.resolve("out.desc"))
+    );
+
+    assertThrows(
+        NullPointerException.class,
+        () -> compiler.compileAllToSingleDescriptor(root, null)
+    );
+  }
+
+  @Test
+  void rejectsDirectoriesWithoutProtoFiles() throws Exception {
+    Path root = Files.createDirectories(tempDirectory.resolve("empty-root"));
+    Path protoRoot = Files.createDirectories(root.resolve("proto"));
+
+    ProtoDescriptorCompiler compiler =
+        new ProtoDescriptorCompiler(tempDirectory.resolve("missing-protoc"));
+
+    assertThrows(
+        IOException.class,
+        () -> compiler.compile(root, protoRoot, tempDirectory.resolve("out.desc"))
+    );
+    assertThrows(
+        IOException.class,
+        () -> compiler.compileAllUnderRoot(root, tempDirectory.resolve("out"))
+    );
+    assertThrows(
+        IOException.class,
+        () -> compiler.compileAllToSingleDescriptor(root, tempDirectory.resolve("all.desc"))
+    );
+  }
+
+  @Test
+  void findProtoDirectoriesReturnsSortedUniqueDirectories() throws Exception {
+    Path root = Files.createDirectories(tempDirectory.resolve("find-root"));
+    createProtoFile(root.resolve("b/two.proto"), "Two");
+    createProtoFile(root.resolve("a/one.proto"), "One");
+    createProtoFile(root.resolve("a/three.proto"), "Three");
+    Files.writeString(root.resolve("a/ignore.txt"), "ignore");
+
+    ProtoDescriptorCompiler compiler = new ProtoDescriptorCompiler();
+
+    List<Path> directories = compiler.findProtoDirectories(root);
+
+    assertEquals(2, directories.size());
+    assertTrue(directories.get(0).endsWith("a"));
+    assertTrue(directories.get(1).endsWith("b"));
+  }
+
+  @Test
+  void compileIfRequiredRebuildsWhenProtoIsNewer() throws Exception {
+    Path root = Files.createDirectories(tempDirectory.resolve("rebuild-root"));
+    Path protoRoot = Files.createDirectories(root.resolve("proto"));
+    Path proto = protoRoot.resolve("sample.proto");
+    createProtoFile(proto, "Sample");
+
+    Path scriptDirectory = Files.createDirectories(tempDirectory.resolve("rebuild-script"));
+    Path logFile = scriptDirectory.resolve("protoc.log");
+    Path fakeProtoc = createFakeProtoc(scriptDirectory, logFile);
+    Path descriptor = tempDirectory.resolve("rebuild.desc");
+
+    ProtoDescriptorCompiler compiler = new ProtoDescriptorCompiler(fakeProtoc);
+    compiler.compile(root, protoRoot, descriptor);
+    long before = countLines(logFile);
+
+    Files.setLastModifiedTime(descriptor, FileTime.from(Instant.now().minusSeconds(120)));
+    Files.setLastModifiedTime(proto, FileTime.from(Instant.now()));
+
+    compiler.compileIfRequired(root, protoRoot, descriptor, List.of());
+
+    assertTrue(countLines(logFile) > before);
+  }
+
+  @Test
+  void compileSupportsAdditionalIncludePathsIncludingNullEntries() throws Exception {
+    Path root = Files.createDirectories(tempDirectory.resolve("include-root"));
+    Path protoRoot = Files.createDirectories(root.resolve("proto"));
+    createProtoFile(protoRoot.resolve("sample.proto"), "Sample");
+    Path include = Files.createDirectories(tempDirectory.resolve("include-extra"));
+
+    Path scriptDirectory = Files.createDirectories(tempDirectory.resolve("include-script"));
+    Path logFile = scriptDirectory.resolve("protoc.log");
+    Path fakeProtoc = createFakeProtoc(scriptDirectory, logFile);
+
+    ProtoDescriptorCompiler compiler = new ProtoDescriptorCompiler(fakeProtoc);
+    Path descriptor = compiler.compile(
+        root,
+        protoRoot,
+        tempDirectory.resolve("include.desc"),
+        java.util.Arrays.asList(include, null)
+    );
+
+    assertTrue(Files.exists(descriptor));
+    String log = Files.readString(logFile);
+    assertTrue(log.contains(include.toAbsolutePath().normalize().toString()));
   }
 
   private void createProtoFile(Path path, String messageName) throws IOException {

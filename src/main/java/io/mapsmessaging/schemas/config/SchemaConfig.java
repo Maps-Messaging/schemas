@@ -90,9 +90,8 @@ public class SchemaConfig {
     this.schemaUrl = copyFrom.schemaUrl;
     this.schema = copyFrom.schema;
     this.schemaBase64 = copyFrom.schemaBase64;
-    if (copyFrom.labels != null) {
-      this.labels = new LinkedHashMap<>(copyFrom.labels);
-    }
+    this.parentUuid = copyFrom.parentUuid;
+    this.labels = copyFrom.labels == null ? null : new LinkedHashMap<>(copyFrom.labels);
   }
 
   public void setFormat(String format) {

@@ -132,7 +132,7 @@ public class CanbusFormatter extends MessageFormatter {
       return new CanbusFormatter(canbusSchemaConfig.getXmlPath());
     }
     if (canbusSchemaConfig.getXmlBase64() != null) {
-      byte[] xml = Base64.getDecoder().decode(canbusSchemaConfig.getXmlBase64());
+      byte[] xml = canbusSchemaConfig.getXmlBase64();
       ByteArrayInputStream n2kStream = new ByteArrayInputStream(xml);
       return new CanbusFormatter(n2kStream);
     }

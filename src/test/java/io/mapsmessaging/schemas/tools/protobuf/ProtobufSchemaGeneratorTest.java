@@ -30,6 +30,18 @@ class ProtobufSchemaGeneratorTest {
   Path tempDirectory;
 
   @Test
+  void privateTempDirectoryIsCreatedUnderUserHome() throws Exception {
+    Path directory = ProtobufSchemaGenerator.createPrivateTempDirectory();
+    try {
+      Path userHome = Path.of(System.getProperty("user.home")).toAbsolutePath().normalize();
+      assertTrue(directory.startsWith(userHome));
+      assertTrue(Files.isDirectory(directory));
+    } finally {
+      Files.deleteIfExists(directory);
+    }
+  }
+
+  @Test
   void loadSchemasBuildsConfigFromGeneratedDescriptor() throws Exception {
     Path root = Files.createDirectories(tempDirectory.resolve("schemas"));
     Files.writeString(

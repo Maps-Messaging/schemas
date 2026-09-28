@@ -8,6 +8,7 @@ import lombok.NonNull;
 
 import java.net.URI;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -164,7 +165,7 @@ public class SimpleSchemaRepository implements SchemaRepository {
       }
       dv.getLabels().putAll(labels);
     }
-    dv.setModifiedAt(OffsetDateTime.now());
+    dv.setModifiedAt(OffsetDateTime.now(ZoneOffset.UTC));
     // reflect inline
     resource.setDefaultVersion(copyVersion(dv));
     return resource;
@@ -174,6 +175,9 @@ public class SimpleSchemaRepository implements SchemaRepository {
   @Override
   public boolean deleteVersion(@NonNull String schemaId, @NonNull String versionId, boolean force) {
     SchemaResource resource = resourcesBySchemaId.get(schemaId);
+    if (resource == null) {
+      return false;
+    }
     boolean removedFlag = resource.remove(versionId);
     if (!removedFlag) {
       return false;
@@ -198,7 +202,7 @@ public class SimpleSchemaRepository implements SchemaRepository {
     if (v.getVersionId() == null || v.getVersionId().isBlank()) {
       v.setVersionId(UUID.randomUUID().toString());
     }
-    OffsetDateTime now = OffsetDateTime.now();
+    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
     if (v.getCreatedAt() == null) {
       v.setCreatedAt(now);
     }

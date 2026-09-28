@@ -42,6 +42,8 @@ public class RestSchemaRepository extends FileSchemaRepository {
     try {
       HttpResponse<String> r = httpClient.send(req(path).GET().build(), HttpResponse.BodyHandlers.ofString());
       if (r.statusCode() >= 200 && r.statusCode() < 300) return GSON.fromJson(r.body(), type);
+    } catch (InterruptedException exception) {
+      Thread.currentThread().interrupt();
     } catch (Exception ignored) { /* fallback to cache */ }
     return null;
   }
@@ -52,6 +54,9 @@ public class RestSchemaRepository extends FileSchemaRepository {
           req(path).POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(body))).build(),
           HttpResponse.BodyHandlers.ofString());
       return r.statusCode() >= 200 && r.statusCode() < 300;
+    } catch (InterruptedException exception) {
+      Thread.currentThread().interrupt();
+      return false;
     } catch (Exception ignored) {
       return false;
     }
@@ -63,6 +68,9 @@ public class RestSchemaRepository extends FileSchemaRepository {
           req(path).PUT(HttpRequest.BodyPublishers.ofString(GSON.toJson(body))).build(),
           HttpResponse.BodyHandlers.ofString());
       return r.statusCode() >= 200 && r.statusCode() < 300;
+    } catch (InterruptedException exception) {
+      Thread.currentThread().interrupt();
+      return false;
     } catch (Exception ignored) {
       return false;
     }
@@ -72,6 +80,9 @@ public class RestSchemaRepository extends FileSchemaRepository {
     try {
       HttpResponse<String> r = httpClient.send(req(path).DELETE().build(), HttpResponse.BodyHandlers.ofString());
       return r.statusCode() >= 200 && r.statusCode() < 300;
+    } catch (InterruptedException exception) {
+      Thread.currentThread().interrupt();
+      return false;
     } catch (Exception ignored) {
       return false;
     }
@@ -80,7 +91,7 @@ public class RestSchemaRepository extends FileSchemaRepository {
   // ---------------------------- API overrides ----------------------------
 
   @Override
-  public SchemaResource createSchema(@NonNull String schemaId, SchemaConfig initialVersion) {
+  public synchronized SchemaResource createSchema(@NonNull String schemaId, SchemaConfig initialVersion) {
     boolean ok = tryRemotePost("/schemas/" + schemaId, initialVersion == null ? new Object() : initialVersion);
     // Even if remote fails, we still create locally (cache-first resilience)
     return super.createSchema(schemaId, initialVersion);
@@ -108,32 +119,32 @@ public class RestSchemaRepository extends FileSchemaRepository {
   }
 
   @Override
-  public SchemaResource addVersion(@NonNull String schemaId, @NonNull SchemaConfig version) {
+  public synchronized SchemaResource addVersion(@NonNull String schemaId, @NonNull SchemaConfig version) {
     boolean ok = tryRemotePost("/schemas/" + schemaId + "/versions", version);
     // write-through to cache regardless, we’re the runtime source of truth
     return super.addVersion(schemaId, version);
   }
 
   @Override
-  public SchemaResource setDefaultVersion(@NonNull String schemaId, @NonNull String versionId) {
+  public synchronized SchemaResource setDefaultVersion(@NonNull String schemaId, @NonNull String versionId) {
     boolean ok = tryRemotePut("/schemas/" + schemaId + "/default", Map.of("versionId", versionId));
     return super.setDefaultVersion(schemaId, versionId);
   }
 
   @Override
-  public List<SchemaConfig> listVersions(@NonNull String schemaId, int page, int size) {
+  public synchronized List<SchemaConfig> listVersions(@NonNull String schemaId, int page, int size) {
     // keep local paging, remote optional
     return super.listVersions(schemaId, page, size);
   }
 
   @Override
-  public List<SchemaResource> search(String format, Map<String, String> labelFilter, int page, int size) {
+  public synchronized List<SchemaResource> search(String format, Map<String, String> labelFilter, int page, int size) {
     // You can call remote if you want, but cache is fine for now
     return super.search(format, labelFilter, page, size);
   }
 
   @Override
-  public SchemaResource updateMetadata(@NonNull String schemaId,
+  public synchronized SchemaResource updateMetadata(@NonNull String schemaId,
                                        String version,
                                        String documentation,
                                        Map<String, String> labels) {
@@ -144,7 +155,7 @@ public class RestSchemaRepository extends FileSchemaRepository {
   }
 
   @Override
-  public boolean deleteVersion(@NonNull String schemaId, @NonNull String versionId, boolean force) {
+  public synchronized boolean deleteVersion(@NonNull String schemaId, @NonNull String versionId, boolean force) {
     tryRemoteDelete("/schemas/" + schemaId + "/versions/" + versionId + "?force=" + force);
     return super.deleteVersion(schemaId, versionId, force);
   }

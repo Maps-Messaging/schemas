@@ -80,7 +80,7 @@ class DescriptorLoaderCoverageTest {
     IllegalStateException exception =
         assertThrows(IllegalStateException.class, () -> loader.loadDescFiles(image));
 
-    assertTrue(exception.getMessage().contains("missing.proto"));
+    assertTrue(exception.getMessage().contains("broken.proto"));
   }
 
   @Test

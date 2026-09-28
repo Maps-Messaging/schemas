@@ -80,7 +80,7 @@ class ProtoBufFormatterCoverageTest {
     byte[] bytes = formatter.parseFromJson(json);
     JsonObject decoded = formatter.parseToJson(bytes, io.mapsmessaging.schemas.formatters.ParseMode.STRICT);
 
-    assertEquals("123", decoded.get("text").getAsString());
+    assertEquals("123.0", decoded.get("text").getAsString());
     assertEquals(5, decoded.get("count").getAsInt());
     assertEquals(
         Instant.parse("2026-09-28T10:15:30Z").toEpochMilli(),

@@ -122,8 +122,7 @@ public class JsonFormatter extends MessageFormatter {
         .orElse(SpecificationVersion.DRAFT_7);
 
     SchemaRegistry schemaRegistry = SchemaRegistry.withDefaultDialect(version);
-    SchemaLocation location = SchemaLocation.of(schemaPath.toUri().toString());
-    schema = schemaRegistry.getSchema(location);
+    schema = schemaRegistry.getSchema(rootSchemaNode.toString(), InputFormat.JSON);
     schema.initializeValidators();
   }
 

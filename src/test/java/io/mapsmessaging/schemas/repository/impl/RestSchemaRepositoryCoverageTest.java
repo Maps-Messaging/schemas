@@ -81,16 +81,17 @@ class RestSchemaRepositoryCoverageTest {
 
       repository.createSchema("schema", null);
       repository.addVersion("schema", jsonVersion("v1"));
-      repository.setDefaultVersion("schema", "v1");
-      repository.updateMetadata(
+      SchemaResource defaulted = repository.setDefaultVersion("schema", "v1");
+      SchemaResource updated = repository.updateMetadata(
           "schema",
           "v1",
           "https://example.invalid/docs",
           Map.of("team", "schema")
       );
 
-      assertEquals("schema", repository.getResource("schema").getSchemaId());
-      assertEquals("schema", repository.getResource("schema").get("v1").getLabels().get("team"));
+      assertNotNull(defaulted);
+      assertEquals("schema", updated.getSchemaId());
+      assertEquals("schema", updated.get("v1").getLabels().get("team"));
 
       assertTrue(repository.deleteVersion("schema", "v1", true));
 

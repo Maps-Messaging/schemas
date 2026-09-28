@@ -288,7 +288,7 @@ class TestCanbusFormatter {
   }
 
   @Test
-  void getInstanceRejectsWrongConfigAndInvalidXmlSources() {
+  void getInstanceRejectsWrongConfigAndInvalidXmlSources() throws Exception {
     CanbusFormatter formatter = new CanbusFormatter();
 
     Assertions.assertThrows(

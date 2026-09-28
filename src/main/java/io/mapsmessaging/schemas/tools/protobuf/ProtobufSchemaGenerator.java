@@ -40,7 +40,7 @@ public class ProtobufSchemaGenerator {
   private static final Logger logger = LoggerFactory.getLogger(ProtobufSchemaGenerator.class);
 
   public static List<ProtoBufSchemaConfig> loadSchemas(Path rootPath, Path protocCommandPath) throws IOException {
-    Path tempDir = Files.createTempDirectory("proto-desc-" + System.nanoTime());
+    Path tempDir = createPrivateTempDirectory();
     try {
       ProtoDescriptorCompiler generator = new ProtoDescriptorCompiler(protocCommandPath);
       try {
@@ -55,6 +55,11 @@ public class ProtobufSchemaGenerator {
     }
   }
 
+
+  static Path createPrivateTempDirectory() throws IOException {
+    Path userHome = Path.of(System.getProperty("user.home")).toAbsolutePath().normalize();
+    return Files.createTempDirectory(userHome, ".proto-desc-");
+  }
 
   private static List<ProtoBufSchemaConfig> loadDescriptors(Path outputPath) throws IOException {
     List<ProtoBufSchemaConfig> configs = new ArrayList<>();

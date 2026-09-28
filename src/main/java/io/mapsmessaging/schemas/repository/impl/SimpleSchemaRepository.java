@@ -262,8 +262,12 @@ public class SimpleSchemaRepository implements SchemaRepository {
     return resource.getDefaultVersion();
   }
 
-  private SchemaConfig copyVersion(SchemaConfig v) {
-    return SchemaConfigFactory.getInstance().constructConfig(v);
+  private SchemaConfig copyVersion(SchemaConfig version) {
+    SchemaConfig copy = SchemaConfigFactory.getInstance().constructConfig(version);
+    if (copy == null) {
+      throw new IllegalArgumentException("Unsupported schema format: " + version.getFormat());
+    }
+    return copy;
   }
 
   private SchemaResource shallowCopyResource(SchemaResource r) {

@@ -29,8 +29,8 @@ class JavaTimeAdaptersTest {
   void instantAdapterReadsAndWritesIsoAndEpochValues() {
     Instant value = Instant.parse("2026-09-28T10:15:30Z");
 
-    assertEquals(""2026-09-28T10:15:30Z"", gson.toJson(value, Instant.class));
-    assertEquals(value, gson.fromJson(""2026-09-28T10:15:30Z"", Instant.class));
+    assertEquals(jsonString("2026-09-28T10:15:30Z"), gson.toJson(value, Instant.class));
+    assertEquals(value, gson.fromJson(jsonString("2026-09-28T10:15:30Z"), Instant.class));
     assertEquals(Instant.ofEpochSecond(1_700_000_000L), gson.fromJson("1700000000", Instant.class));
     assertEquals(Instant.ofEpochMilli(1_700_000_000_000L), gson.fromJson("1700000000000", Instant.class));
     assertNull(gson.fromJson("null", Instant.class));
@@ -41,7 +41,7 @@ class JavaTimeAdaptersTest {
   void offsetDateTimeAdapterNormalisesWritesToUtc() {
     OffsetDateTime value = OffsetDateTime.parse("2026-09-28T20:15:30+10:00");
 
-    assertEquals(""2026-09-28T10:15:30Z"", gson.toJson(value, OffsetDateTime.class));
+    assertEquals(jsonString("2026-09-28T10:15:30Z"), gson.toJson(value, OffsetDateTime.class));
     assertNull(gson.fromJson("null", OffsetDateTime.class));
     assertEquals("null", gson.toJson(null, OffsetDateTime.class));
   }
@@ -50,23 +50,27 @@ class JavaTimeAdaptersTest {
   void offsetDateTimeAdapterAcceptsSupportedInputShapes() {
     OffsetDateTime expected = OffsetDateTime.of(2026, 9, 28, 10, 15, 30, 0, ZoneOffset.UTC);
 
-    assertEquals(expected, gson.fromJson(""2026-09-28T10:15:30Z"", OffsetDateTime.class));
-    assertEquals(expected, gson.fromJson(""2026-09-28T10:15:30"", OffsetDateTime.class));
-    assertEquals(expected, gson.fromJson(""2026-09-28 10:15:30"", OffsetDateTime.class));
+    assertEquals(expected, gson.fromJson(jsonString("2026-09-28T10:15:30Z"), OffsetDateTime.class));
+    assertEquals(expected, gson.fromJson(jsonString("2026-09-28T10:15:30"), OffsetDateTime.class));
+    assertEquals(expected, gson.fromJson(jsonString("2026-09-28 10:15:30"), OffsetDateTime.class));
     assertEquals(
         Instant.ofEpochSecond(1_700_000_000L).atOffset(ZoneOffset.UTC),
         gson.fromJson("1700000000", OffsetDateTime.class)
     );
     assertEquals(
         Instant.ofEpochMilli(1_700_000_000_000L).atOffset(ZoneOffset.UTC),
-        gson.fromJson(""1700000000000"", OffsetDateTime.class)
+        gson.fromJson(jsonString("1700000000000"), OffsetDateTime.class)
     );
-    assertNull(gson.fromJson(""   "", OffsetDateTime.class));
+    assertNull(gson.fromJson(jsonString("   "), OffsetDateTime.class));
   }
 
   @Test
   void offsetDateTimeAdapterRejectsUnsupportedText() {
     assertThrows(JsonParseException.class,
-        () -> gson.fromJson(""not-a-date"", OffsetDateTime.class));
+        () -> gson.fromJson(jsonString("not-a-date"), OffsetDateTime.class));
+  }
+
+  private String jsonString(String value) {
+    return '"' + value + '"';
   }
 }

@@ -30,10 +30,10 @@ class GsonFactoryTest {
   @Test
   void deserialisesDoubleNumbersStringsAndSpecialValues() {
     assertEquals(12.5d, gson.fromJson("12.5", Double.class));
-    assertEquals(12.5d, gson.fromJson(""12.5"", Double.class));
-    assertNull(gson.fromJson(""NaN"", Double.class));
-    assertNull(gson.fromJson(""Infinity"", Double.class));
-    assertNull(gson.fromJson(""-Infinity"", Double.class));
+    assertEquals(12.5d, gson.fromJson(jsonString("12.5"), Double.class));
+    assertNull(gson.fromJson(jsonString("NaN"), Double.class));
+    assertNull(gson.fromJson(jsonString("Infinity"), Double.class));
+    assertNull(gson.fromJson(jsonString("-Infinity"), Double.class));
     assertNull(gson.fromJson("null", Double.class));
   }
 
@@ -48,15 +48,19 @@ class GsonFactoryTest {
   @Test
   void deserialisesFloatNumbersStringsAndSpecialValues() {
     assertEquals(12.5f, gson.fromJson("12.5", Float.class));
-    assertEquals(12.5f, gson.fromJson(""12.5"", Float.class));
-    assertNull(gson.fromJson(""NaN"", Float.class));
-    assertNull(gson.fromJson(""Infinity"", Float.class));
-    assertNull(gson.fromJson(""-Infinity"", Float.class));
+    assertEquals(12.5f, gson.fromJson(jsonString("12.5"), Float.class));
+    assertNull(gson.fromJson(jsonString("NaN"), Float.class));
+    assertNull(gson.fromJson(jsonString("Infinity"), Float.class));
+    assertNull(gson.fromJson(jsonString("-Infinity"), Float.class));
     assertNull(gson.fromJson("null", Float.class));
   }
 
   @Test
   void htmlEscapingIsDisabled() {
-    assertEquals(""<tag>"", gson.toJson("<tag>"));
+    assertEquals(jsonString("<tag>"), gson.toJson("<tag>"));
+  }
+
+  private String jsonString(String value) {
+    return '"' + value + '"';
   }
 }

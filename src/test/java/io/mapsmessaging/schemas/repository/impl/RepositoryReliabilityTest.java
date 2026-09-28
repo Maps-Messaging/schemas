@@ -32,6 +32,23 @@ class RepositoryReliabilityTest {
   Path tempDirectory;
 
   @Test
+  void unsupportedSchemaFormatIsRejectedInsteadOfDereferenced() {
+    SimpleSchemaRepository repository = new SimpleSchemaRepository();
+    SchemaConfig config = new SchemaConfig();
+    config.setFormat("unsupported-format");
+    JsonObject schema = new JsonObject();
+    schema.addProperty("type", "object");
+    config.setSchema(schema);
+
+    IllegalArgumentException exception = org.junit.jupiter.api.Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> repository.addVersion("schema", config)
+    );
+
+    assertTrue(exception.getMessage().contains("unsupported-format"));
+  }
+
+  @Test
   void deletingVersionFromMissingSchemaReturnsFalse() {
     SimpleSchemaRepository repository = new SimpleSchemaRepository();
 

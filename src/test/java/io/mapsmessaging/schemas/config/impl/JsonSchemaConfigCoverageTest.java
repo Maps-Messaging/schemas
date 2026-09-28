@@ -88,7 +88,7 @@ class JsonSchemaConfigCoverageTest {
   void nonObjectOrEmptyDefsAreNotBundles() {
     assertFalse(new JsonSchemaConfig("{}").isBundle());
     assertFalse(new JsonSchemaConfig("{\"$defs\":{}}").isBundle());
-    assertFalse(new JsonSchemaConfig("{\"$defs\":[]}}").isBundle());
+    assertFalse(new JsonSchemaConfig("{\"$defs\":[]}").isBundle());
   }
 
   @Test

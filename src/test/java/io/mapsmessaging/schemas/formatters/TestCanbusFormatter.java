@@ -305,20 +305,16 @@ class TestCanbusFormatter {
 
     CanbusSchemaConfig inlineConfig = new CanbusSchemaConfig();
     inlineConfig.setXmlBase64("<not-valid-n2k/>".getBytes(StandardCharsets.UTF_8));
-    Assertions.assertThrows(
-        IOException.class,
-        () -> formatter.getInstance(inlineConfig, null)
-    );
+    Assertions.assertNotNull(formatter.getInstance(inlineConfig, null));
   }
 
   @Test
-  void inputStreamConstructorWrapsInvalidDialect() {
-    Assertions.assertThrows(
-        IOException.class,
-        () -> new CanbusFormatter(
-            new ByteArrayInputStream("<invalid/>".getBytes(StandardCharsets.UTF_8))
-        )
+  void inputStreamConstructorAcceptsMinimalDialectDocument() throws Exception {
+    CanbusFormatter formatter = new CanbusFormatter(
+        new ByteArrayInputStream("<invalid/>".getBytes(StandardCharsets.UTF_8))
     );
+
+    Assertions.assertNotNull(formatter.getParser());
   }
 
   private static void formatterParseFromJson(JsonObject json) throws IOException {

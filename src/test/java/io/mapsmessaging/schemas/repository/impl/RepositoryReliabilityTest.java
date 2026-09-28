@@ -14,13 +14,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
+import io.mapsmessaging.schemas.config.GsonFactory;
 import io.mapsmessaging.schemas.config.SchemaConfig;
-import java.io.File;
+import io.mapsmessaging.schemas.config.SchemaResource;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
-import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -53,6 +54,26 @@ class RepositoryReliabilityTest {
         ZoneOffset.UTC,
         repository.getResource("schema").get("v1").getModifiedAt().getOffset()
     );
+  }
+
+  @Test
+  void fileRepositoryRepairsMissingTimestampsUsingUtc() throws Exception {
+    SchemaConfig config = schema("v1");
+    SchemaResource resource = new SchemaResource();
+    resource.setSchemaId("loaded");
+    resource.put("v1", config);
+    resource.setDefaultVersion(config);
+
+    Path file = tempDirectory.resolve("loaded.schema");
+    Files.writeString(file, GsonFactory.buildGson().toJson(resource));
+
+    FileSchemaRepository repository = new FileSchemaRepository(tempDirectory.toFile());
+    SchemaResource loaded = repository.getResource("loaded");
+
+    assertEquals(ZoneOffset.UTC, loaded.get("v1").getCreatedAt().getOffset());
+    assertEquals(ZoneOffset.UTC, loaded.get("v1").getModifiedAt().getOffset());
+    assertEquals(ZoneOffset.UTC, loaded.getDefaultVersion().getCreatedAt().getOffset());
+    assertEquals(ZoneOffset.UTC, loaded.getDefaultVersion().getModifiedAt().getOffset());
   }
 
   @Test

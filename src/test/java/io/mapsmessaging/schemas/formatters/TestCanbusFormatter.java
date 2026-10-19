@@ -19,11 +19,15 @@ package io.mapsmessaging.schemas.formatters;
 
 import com.google.gson.JsonObject;
 import io.mapsmessaging.canbus.device.frames.CanFrame;
+import io.mapsmessaging.schemas.config.SchemaConfig;
+import io.mapsmessaging.schemas.config.impl.CanbusSchemaConfig;
 import io.mapsmessaging.schemas.formatters.impl.CanbusFormatter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 class TestCanbusFormatter {
@@ -72,6 +76,39 @@ class TestCanbusFormatter {
 
     byte[] roundTripped = formatter.parseFromJson(json);
     Assertions.assertArrayEquals(packed, roundTripped);
+  }
+
+  @Test
+  void parseToJson_processesUnknownN2kPgnWithoutFailing() throws IOException {
+    CanbusFormatter formatter = new CanbusFormatter();
+
+    int unknownPgn = 130999;
+    int sourceAddress = 0x23;
+    int priority = 6;
+    int canIdentifier = (priority << 26) | (unknownPgn << 8) | sourceAddress;
+
+    boolean extendedFrame = true;
+    int dataLengthCode = 8;
+    byte[] payload = new byte[]{
+        0x01,
+        0x02,
+        0x03,
+        0x04,
+        0x05,
+        0x06,
+        0x07,
+        0x08
+    };
+
+    CanFrame original = new CanFrame(canIdentifier, extendedFrame, dataLengthCode, payload);
+    byte[] packed = original.getRawData();
+
+    JsonObject json = formatter.parseToJson(packed, ParseMode.IGNORE);
+
+    Assertions.assertEquals(canIdentifier, json.get("canId").getAsInt());
+    Assertions.assertEquals(dataLengthCode, json.get("dlc").getAsInt());
+    Assertions.assertTrue(json.get("extended").getAsBoolean());
+    Assertions.assertEquals(Base64.getEncoder().encodeToString(payload), json.get("data").getAsString());
   }
 
   @Test
@@ -181,6 +218,103 @@ class TestCanbusFormatter {
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       formatterParseFromJson(json);
     });
+  }
+
+  @Test
+  void basicFormatterMetadataIsStable() {
+    CanbusFormatter formatter = new CanbusFormatter();
+
+    Assertions.assertEquals("canbus", formatter.getName());
+    Assertions.assertTrue(formatter.getFormat().isEmpty());
+    Assertions.assertNull(formatter.getParser());
+  }
+
+  @Test
+  void strictParseRejectsUnknownFrameWithoutParser() {
+    CanbusFormatter formatter = new CanbusFormatter();
+    CanFrame frame = new CanFrame(0x123, false, 1, new byte[]{0x01});
+
+    Assertions.assertThrows(
+        ParseException.class,
+        () -> formatter.parseToJson(frame.getRawData(), ParseMode.STRICT)
+    );
+  }
+
+  @Test
+  void parseFromJsonRejectsNullAndEachMissingRequiredField() {
+    CanbusFormatter formatter = new CanbusFormatter();
+
+    Assertions.assertThrows(IllegalArgumentException.class, () -> formatter.parseFromJson(null));
+
+    JsonObject missingCanId = new JsonObject();
+    missingCanId.addProperty("dlc", 0);
+    missingCanId.addProperty("extended", false);
+    missingCanId.addProperty("data", "");
+    Assertions.assertThrows(IllegalArgumentException.class, () -> formatter.parseFromJson(missingCanId));
+
+    JsonObject missingExtended = new JsonObject();
+    missingExtended.addProperty("canId", 1);
+    missingExtended.addProperty("dlc", 0);
+    missingExtended.addProperty("data", "");
+    Assertions.assertThrows(IllegalArgumentException.class, () -> formatter.parseFromJson(missingExtended));
+
+    JsonObject missingData = new JsonObject();
+    missingData.addProperty("canId", 1);
+    missingData.addProperty("dlc", 0);
+    missingData.addProperty("extended", false);
+    Assertions.assertThrows(IllegalArgumentException.class, () -> formatter.parseFromJson(missingData));
+  }
+
+  @Test
+  void parseFromJsonRejectsNegativeDlcAndTruncatesExtraDecodedBytes() throws Exception {
+    CanbusFormatter formatter = new CanbusFormatter();
+
+    JsonObject negative = new JsonObject();
+    negative.addProperty("canId", 1);
+    negative.addProperty("dlc", -1);
+    negative.addProperty("extended", false);
+    negative.addProperty("data", "");
+    Assertions.assertThrows(IllegalArgumentException.class, () -> formatter.parseFromJson(negative));
+
+    JsonObject extra = new JsonObject();
+    extra.addProperty("canId", 1);
+    extra.addProperty("dlc", 2);
+    extra.addProperty("extended", false);
+    extra.addProperty("data", Base64.getEncoder().encodeToString(new byte[]{1, 2, 3, 4}));
+
+    CanFrame decoded = CanFrame.fromBytes(formatter.parseFromJson(extra));
+    Assertions.assertEquals(2, decoded.dataLengthCode());
+    Assertions.assertArrayEquals(new byte[]{1, 2}, decoded.data());
+  }
+
+  @Test
+  void getInstanceRejectsWrongConfigAndInvalidXmlSources() throws Exception {
+    CanbusFormatter formatter = new CanbusFormatter();
+
+    Assertions.assertThrows(
+        IOException.class,
+        () -> formatter.getInstance(new SchemaConfig(), null)
+    );
+
+    CanbusSchemaConfig pathConfig = new CanbusSchemaConfig();
+    pathConfig.setXmlPath("/definitely/not/present/n2k.xml");
+    Assertions.assertThrows(
+        IOException.class,
+        () -> formatter.getInstance(pathConfig, null)
+    );
+
+    CanbusSchemaConfig inlineConfig = new CanbusSchemaConfig();
+    inlineConfig.setXmlBase64("<not-valid-n2k/>".getBytes(StandardCharsets.UTF_8));
+    Assertions.assertNotNull(formatter.getInstance(inlineConfig, null));
+  }
+
+  @Test
+  void inputStreamConstructorAcceptsMinimalDialectDocument() throws Exception {
+    CanbusFormatter formatter = new CanbusFormatter(
+        new ByteArrayInputStream("<invalid/>".getBytes(StandardCharsets.UTF_8))
+    );
+
+    Assertions.assertNotNull(formatter.getParser());
   }
 
   private static void formatterParseFromJson(JsonObject json) throws IOException {

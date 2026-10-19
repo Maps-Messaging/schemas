@@ -90,7 +90,7 @@ public class CanbusSchemaConfig extends SchemaConfig {
     String path = getXmlPath();
     byte[] xml = getXmlBase64();
 
-    if ((path == null || path.isBlank()) && (xml == null || xml.length > 0)) {
+    if ((path == null || path.isBlank()) && (xml == null || xml.length == 0)) {
       throw new IOException("Canbus config requires either 'dialect' or 'dialectXml'");
     }
 

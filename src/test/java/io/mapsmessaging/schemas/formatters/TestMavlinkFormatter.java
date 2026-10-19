@@ -18,6 +18,7 @@
 package io.mapsmessaging.schemas.formatters;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.MavlinkSchemaConfig;
 import org.junit.jupiter.api.Assertions;
@@ -25,7 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-class TestMavLinkFormatter {
+class TestMavlinkFormatter {
 
   private static final String DIALECT = "common";
 
@@ -43,6 +44,102 @@ class TestMavLinkFormatter {
   private static JsonObject payload(JsonObject json) {
     Assertions.assertTrue(json.has("payload"));
     return json.getAsJsonObject("payload");
+  }
+
+  @Test
+  void commandIntEnvelopeStringRoundTripJsonToFrameToJson() throws IOException {
+    SchemaConfig schemaConfig = getSchema();
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
+    Assertions.assertNotNull(formatter);
+
+    String json = """
+        {
+          "header": {
+            "version": "V2",
+            "systemId": 2,
+            "componentId": 1,
+            "sequence": 1,
+            "messageId": 75,
+            "signed": false,
+            "incompatibilityFlags": 0,
+            "compatibilityFlags": 0
+          },
+          "payload": {
+            "target_system": 2,
+            "target_component": 1,
+            "frame": 6,
+            "command": 192,
+            "current": 0,
+            "autocontinue": 0,
+            "param1": -1.0,
+            "param2": 1.0,
+            "param3": 0.0,
+            "param4": 0.0,
+            "x": 594657200,
+            "y": 248236800,
+            "z": 100.0
+          }
+        }
+        """;
+
+    JsonObject input = JsonParser.parseString(json).getAsJsonObject();
+
+    byte[] frame = formatter.parseFromJson(input);
+    Assertions.assertNotNull(frame);
+    Assertions.assertTrue(frame.length > 0);
+
+    JsonObject output = formatter.parseToJson(frame, ParseMode.IGNORE);
+    Assertions.assertNotNull(output);
+
+    JsonObject outHeader = header(output);
+    JsonObject outPayload = payload(output);
+
+    Assertions.assertEquals(75, outHeader.get("messageId").getAsInt());
+    Assertions.assertEquals(2, outHeader.get("systemId").getAsInt());
+    Assertions.assertEquals(1, outHeader.get("componentId").getAsInt());
+
+    Assertions.assertEquals(2, outPayload.get("target_system").getAsInt());
+    Assertions.assertEquals(1, outPayload.get("target_component").getAsInt());
+    Assertions.assertEquals(6, outPayload.get("frame").getAsInt());
+    Assertions.assertEquals(192, outPayload.get("command").getAsInt());
+    Assertions.assertEquals(0, outPayload.get("current").getAsInt());
+    Assertions.assertEquals(0, outPayload.get("autocontinue").getAsInt());
+
+    Assertions.assertEquals(-1.0f, outPayload.get("param1").getAsFloat());
+    Assertions.assertEquals(1.0f, outPayload.get("param2").getAsFloat());
+    Assertions.assertEquals(0.0f, outPayload.get("param3").getAsFloat());
+    Assertions.assertEquals(0.0f, outPayload.get("param4").getAsFloat());
+
+    Assertions.assertEquals(594657200, outPayload.get("x").getAsInt());
+    Assertions.assertEquals(248236800, outPayload.get("y").getAsInt());
+    Assertions.assertEquals(100.0f, outPayload.get("z").getAsFloat());
+  }
+
+  private static JsonObject flattenMavlinkEnvelope(JsonObject envelope) {
+    JsonObject mavlink = envelope.getAsJsonObject("mavlink");
+    JsonObject decoded = mavlink
+        .getAsJsonObject("payload")
+        .getAsJsonObject("decoded");
+
+    JsonObject flattened = new JsonObject();
+
+    flattened.add("messageId", mavlink.get("messageId"));
+    flattened.add("systemId", mavlink.get("systemId"));
+    flattened.add("componentId", mavlink.get("componentId"));
+
+    if (mavlink.has("sequence")) {
+      flattened.add("sequence", mavlink.get("sequence"));
+    } else {
+      flattened.addProperty("sequence", 0);
+    }
+
+    for (String key : decoded.keySet()) {
+      if (!decoded.get(key).isJsonNull()) {
+        flattened.add(key, decoded.get(key));
+      }
+    }
+
+    return flattened;
   }
 
   @Test

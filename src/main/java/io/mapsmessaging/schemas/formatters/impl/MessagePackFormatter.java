@@ -26,6 +26,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.networknt.schema.Error;
+import com.networknt.schema.InputFormat;
 import com.networknt.schema.Schema;
 import com.networknt.schema.SchemaRegistry;
 import com.networknt.schema.dialect.Dialects;
@@ -59,9 +60,9 @@ public class MessagePackFormatter extends MessageFormatter {
   public MessagePackFormatter(JsonObject schemaString) throws IOException {
     ObjectMapper objectMapper = new ObjectMapper();
     schemaNode = objectMapper.readTree(schemaString.toString());
-    // Create JsonSchema instance
+
     SchemaRegistry schemaRegistry = SchemaRegistry.withDialect(Dialects.getDraft7());
-    schema = schemaRegistry.getSchema(schemaNode);
+    schema = schemaRegistry.getSchema(schemaNode.toString(), InputFormat.JSON);
   }
 
   @Override
@@ -71,8 +72,10 @@ public class MessagePackFormatter extends MessageFormatter {
       Map<String, Object> map = messagePackMapper.readValue(payload, Map.class);
 
       if (schema != null) {
-        JsonNode node = messagePackMapper.readTree(payload);
-        List<Error> validationResult = schema.validate(node);
+        ObjectMapper jsonMapper = new ObjectMapper();
+        String jsonString = jsonMapper.writeValueAsString(map);
+
+        List<Error> validationResult = schema.validate(jsonString, InputFormat.JSON);
         if (!validationResult.isEmpty()) {
           logger.log(JSON_PARSE_EXCEPTION, getName(), validationResult);
           if (parseMode == ParseMode.STRICT) {

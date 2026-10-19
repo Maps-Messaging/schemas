@@ -132,7 +132,7 @@ public class CanbusFormatter extends MessageFormatter {
       return new CanbusFormatter(canbusSchemaConfig.getXmlPath());
     }
     if (canbusSchemaConfig.getXmlBase64() != null) {
-      byte[] xml = Base64.getDecoder().decode(canbusSchemaConfig.getXmlBase64());
+      byte[] xml = canbusSchemaConfig.getXmlBase64();
       ByteArrayInputStream n2kStream = new ByteArrayInputStream(xml);
       return new CanbusFormatter(n2kStream);
     }
@@ -152,7 +152,16 @@ public class CanbusFormatter extends MessageFormatter {
     j1939.addProperty("destination", canId.isPdu1() ? canId.getDestinationAddress() : 255);
     j1939.addProperty("priority", canId.getPriority());
     j1939.addProperty("pgn", canId.getPgn());
+    j1939.addProperty("pduFormat", canId.getPduFormat());
     j1939.addProperty("pdu1", canId.isPdu1());
+    j1939.addProperty("pdu2", canId.isPdu2());
+    j1939.addProperty("broadcast", canId.isBroadcast());
+
+    if (canId.isPdu1()) {
+      j1939.addProperty("destinationAddress", canId.getDestinationAddress());
+    } else {
+      j1939.addProperty("groupExtension", canId.getGroupExtension());
+    }
 
     if (n2kJson != null) {
       j1939.add("n2k", n2kJson);

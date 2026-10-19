@@ -31,6 +31,7 @@ import io.mapsmessaging.schemas.formatters.MessageFormatter;
 import io.mapsmessaging.schemas.formatters.ParseException;
 import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
+import io.mapsmessaging.schemas.formatters.impl.json.JsonSchemaDeepDumper;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 import io.mapsmessaging.schemas.repository.SchemaResolver;
@@ -83,6 +84,7 @@ public class JsonFormatter extends MessageFormatter {
     JsonNode effectiveSchemaNode;
     if (definitionPointer != null && !definitionPointer.isEmpty()) {
       effectiveSchemaNode = buildChildWrapperSchema(rootSchemaNode, definitionPointer);
+
       JsonObject rootObject = JsonParser.parseString(schemaString).getAsJsonObject();
       JsonElement selected = JsonSchemaPointerResolver.resolve(rootObject, definitionPointer);
       selectedSchemaNode = objectMapper.readTree(selected.toString());
@@ -92,9 +94,11 @@ public class JsonFormatter extends MessageFormatter {
     }
 
     String schemaDialect = rootSchemaNode.path("$schema").asText(null);
-    SpecificationVersion version = SpecificationVersion.fromDialectId(schemaDialect).orElse(SpecificationVersion.DRAFT_7);
+    SpecificationVersion version = SpecificationVersion.fromDialectId(schemaDialect)
+        .orElse(SpecificationVersion.DRAFT_7);
+
     SchemaRegistry schemaRegistry = SchemaRegistry.withDefaultDialect(version);
-    schema = schemaRegistry.getSchema(effectiveSchemaNode);
+    schema = schemaRegistry.getSchema(effectiveSchemaNode.toString(), InputFormat.JSON);
   }
 
   public JsonFormatter(Path schemaPath) throws IOException {
@@ -118,8 +122,7 @@ public class JsonFormatter extends MessageFormatter {
         .orElse(SpecificationVersion.DRAFT_7);
 
     SchemaRegistry schemaRegistry = SchemaRegistry.withDefaultDialect(version);
-    SchemaLocation location = SchemaLocation.of(schemaPath.toUri().toString());
-    schema = schemaRegistry.getSchema(location);
+    schema = schemaRegistry.getSchema(rootSchemaNode.toString(), InputFormat.JSON);
     schema.initializeValidators();
   }
 
@@ -130,9 +133,7 @@ public class JsonFormatter extends MessageFormatter {
       JsonObject json = JsonParser.parseString(jsonString).getAsJsonObject();
 
       if (schema != null) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode jsonNode = objectMapper.readTree(jsonString);
-        List<Error> validationResult = schema.validate(jsonNode);
+        List<Error> validationResult = schema.validate(jsonString, InputFormat.JSON);
         if (!validationResult.isEmpty()) {
           logger.log(JSON_PARSE_EXCEPTION, getName(), validationResult);
           if (parseMode == ParseMode.STRICT) {
@@ -173,6 +174,20 @@ public class JsonFormatter extends MessageFormatter {
     } catch (Exception e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), e.getMessage());
       return Map.of();
+    }
+  }
+
+  public JsonObject getJsonSchema() {
+    if (rootSchemaNode == null || selectedSchemaNode == null) {
+      return new JsonObject();
+    }
+
+    try {
+      JsonNode expandedSchemaNode = JsonSchemaDeepDumper.dumpSchema(rootSchemaNode, selectedSchemaNode, definitionPointer);
+      return JsonParser.parseString(expandedSchemaNode.toString()).getAsJsonObject();
+    } catch (Exception e) {
+      logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), e.getMessage());
+      return new JsonObject();
     }
   }
 

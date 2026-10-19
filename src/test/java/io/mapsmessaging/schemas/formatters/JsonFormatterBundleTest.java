@@ -1,28 +1,7 @@
-/*
- *
- *  Copyright [ 2020 - 2024 ] Matthew Buckton
- *  Copyright [ 2024 - 2026 ] MapsMessaging B.V.
- *
- *  Licensed under the Apache License, Version 2.0 with the Commons Clause
- *  (the "License"); you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at:
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *      https://commonsclause.com/
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- */
-
 package io.mapsmessaging.schemas.formatters;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.Error;
+import com.networknt.schema.InputFormat;
 import com.networknt.schema.Schema;
 import io.mapsmessaging.schemas.formatters.impl.JsonFormatter;
 import org.junit.jupiter.api.Test;
@@ -86,17 +65,16 @@ class JsonFormatterBundleTest {
     JsonFormatter formatter = new JsonFormatter(ROOT_SCHEMA, "#/$defs/Track");
     Schema schema = extractSchema(formatter);
 
-    ObjectMapper objectMapper = new ObjectMapper();
-    JsonNode validPayload = objectMapper.readTree("""
+    String validPayload = """
         {
           "id": "TRACK-001",
           "header": {
             "source": "sensor-A"
           }
         }
-        """);
+        """;
 
-    List<Error> errors = schema.validate(validPayload);
+    List<Error> errors = schema.validate(validPayload, InputFormat.JSON);
 
     assertTrue(errors.isEmpty(), "Expected no validation errors but got: " + errors);
   }
@@ -106,17 +84,16 @@ class JsonFormatterBundleTest {
     JsonFormatter formatter = new JsonFormatter(ROOT_SCHEMA, "#/$defs/Track");
     Schema schema = extractSchema(formatter);
 
-    ObjectMapper objectMapper = new ObjectMapper();
-    JsonNode invalidPayload = objectMapper.readTree("""
+    String invalidPayload = """
         {
           "id": "TRACK-001",
           "header": {
             "source": 100
           }
         }
-        """);
+        """;
 
-    List<Error> errors = schema.validate(invalidPayload);
+    List<Error> errors = schema.validate(invalidPayload, InputFormat.JSON);
 
     assertFalse(errors.isEmpty());
   }
@@ -126,14 +103,13 @@ class JsonFormatterBundleTest {
     JsonFormatter formatter = new JsonFormatter(ROOT_SCHEMA, "#/$defs/Track");
     Schema schema = extractSchema(formatter);
 
-    ObjectMapper objectMapper = new ObjectMapper();
-    JsonNode invalidPayload = objectMapper.readTree("""
+    String invalidPayload = """
         {
           "id": "TRACK-001"
         }
-        """);
+        """;
 
-    List<Error> errors = schema.validate(invalidPayload);
+    List<Error> errors = schema.validate(invalidPayload, InputFormat.JSON);
 
     assertFalse(errors.isEmpty());
   }

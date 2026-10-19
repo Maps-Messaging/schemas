@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
@@ -153,7 +154,7 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
     SchemaResource version = gson.fromJson(new String(bytes), SchemaResource.class);
     for (SchemaConfig entry : version.getAll()) {
       if (entry.getCreatedAt() == null) {
-        entry.setCreatedAt(OffsetDateTime.now());
+        entry.setCreatedAt(OffsetDateTime.now(ZoneOffset.UTC));
       }
       if (entry.getModifiedAt() == null) {
         entry.setModifiedAt(entry.getCreatedAt());
@@ -161,7 +162,7 @@ public class FileSchemaRepository extends SimpleSchemaRepository {
     }
     if (version.getDefaultVersion() != null) {
       if (version.getDefaultVersion().getCreatedAt() == null) {
-        version.getDefaultVersion().setCreatedAt(OffsetDateTime.now());
+        version.getDefaultVersion().setCreatedAt(OffsetDateTime.now(ZoneOffset.UTC));
       }
       if (version.getDefaultVersion().getModifiedAt() == null) {
         version.getDefaultVersion().setModifiedAt(version.getDefaultVersion().getCreatedAt());

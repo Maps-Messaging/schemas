@@ -45,6 +45,7 @@ public final class GsonFactory {
                 .registerSubtype("csv", CsvSchemaConfig.class)
                 .registerSubtype("xml", XmlSchemaConfig.class)
                 .registerSubtype("cbor", CborSchemaConfig.class)
+                .registerSubtype("cdr", CdrSchemaConfig.class)
                 .registerSubtype("messagepack", MessagePackSchemaConfig.class)
                 .registerSubtype("native", NativeSchemaConfig.class)
                 .registerSubtype("cbc", CbcSchemaConfig.class)

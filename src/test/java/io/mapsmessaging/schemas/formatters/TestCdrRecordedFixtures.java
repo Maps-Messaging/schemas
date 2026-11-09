@@ -14,6 +14,8 @@
  */
 package io.mapsmessaging.schemas.formatters;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.impl.CdrSchemaConfig;
@@ -107,4 +109,34 @@ class TestCdrRecordedFixtures {
       assertThrows(ParseException.class, () -> formatter.parseToJson(truncated, ParseMode.STRICT), "truncated at " + length);
     }
   }
+  @Test
+  void allSevenOriginalRos2RecordsAreRetainedByteForByte() throws IOException {
+    JsonArray rows = JsonParser.parseString(resource("all-recorded-messages.json")).getAsJsonObject().getAsJsonArray("rows");
+    assertEquals(7, rows.size());
+    int basicCount = 0;
+    int arrayCount = 0;
+    for (JsonElement rowElement : rows) {
+      JsonObject row = rowElement.getAsJsonObject();
+      StringBuilder hex = new StringBuilder();
+      for (JsonElement chunk : row.getAsJsonArray("hexChunks")) {
+        hex.append(chunk.getAsString());
+      }
+      byte[] sample = HexFormat.of().parseHex(hex.toString());
+      String topic = row.get("topic").getAsString();
+      if (topic.equals("test_msgs/msg/BasicTypes")) {
+        basicCount++;
+        assertArrayEquals(fixtureBytes("basic-types.hex"), sample);
+      } else if (topic.equals("test_msgs/msg/Arrays")) {
+        arrayCount++;
+        assertArrayEquals(fixtureBytes("arrays-original-full.hex"), sample);
+      } else {
+        throw new IOException("Unknown ROS 2 recorded message type: " + topic);
+      }
+      assertEquals(row.get("bytes").getAsInt(), sample.length);
+    }
+    assertEquals(3, basicCount);
+    assertEquals(4, arrayCount);
+  }
+
+
 }

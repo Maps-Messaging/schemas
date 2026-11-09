@@ -34,6 +34,8 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -52,10 +54,12 @@ public class CdrFormatter extends MessageFormatter {
 
   private final JsonObject definition;
   private final boolean littleEndian;
+  private final List<Field> fields;
 
   public CdrFormatter() {
     definition = null;
     littleEndian = true;
+    fields = List.of();
   }
 
   private CdrFormatter(JsonObject schema) throws IOException {
@@ -64,7 +68,7 @@ public class CdrFormatter extends MessageFormatter {
     }
     definition = schema.deepCopy();
     littleEndian = !definition.has("littleEndian") || definition.get("littleEndian").getAsBoolean();
-    validateFields(definition.getAsJsonArray("fields"));
+    fields = compileFields(definition.getAsJsonArray("fields"));
   }
 
   @Override
@@ -85,7 +89,7 @@ public class CdrFormatter extends MessageFormatter {
     }
     try {
       Writer writer = new Writer(littleEndian);
-      writeFields(writer, definition.getAsJsonArray("fields"), jsonObject);
+      writeFields(writer, fields, jsonObject);
       return writer.toByteArray();
     } catch (IllegalArgumentException | IllegalStateException e) {
       throw new IOException("Unable to encode CDR sample: " + e.getMessage(), e);
@@ -102,7 +106,7 @@ public class CdrFormatter extends MessageFormatter {
       }
       boolean inputLittleEndian = payload[1] == 1;
       Reader reader = new Reader(payload, inputLittleEndian);
-      JsonObject result = readFields(reader, definition.getAsJsonArray("fields"));
+      JsonObject result = readFields(reader, fields);
       if (reader.remaining() != 0) {
         throw new IOException("Trailing bytes in CDR sample");
       }
@@ -147,46 +151,52 @@ public class CdrFormatter extends MessageFormatter {
     }
   }
 
-  private static void validateFields(JsonArray fields) throws IOException {
-    for (JsonElement element : fields) {
-      if (!element.isJsonObject()) {
-        throw new IOException("CDR fields must be objects");
-      }
-      JsonObject field = element.getAsJsonObject();
-      if (!field.has("name") || !field.get("name").isJsonPrimitive() ||
-          field.get("name").getAsString().isBlank()) {
-        throw new IOException("CDR field requires a name");
-      }
-      validateType(field);
-    }
+
+  private record Field(String name, String type, List<Field> children, Field element, int length) {
   }
 
-  private static void validateType(JsonObject type) throws IOException {
-    if (!type.has("type")) {
+  private static List<Field> compileFields(JsonArray descriptors) throws IOException {
+    List<Field> compiled = new ArrayList<>();
+    for (JsonElement entry : descriptors) {
+      if (!entry.isJsonObject()) {
+        throw new IOException("CDR fields must be objects");
+      }
+      JsonObject field = entry.getAsJsonObject();
+      if (!field.has("name") || !field.get("name").isJsonPrimitive()
+          || field.get("name").getAsString().isBlank()) {
+        throw new IOException("CDR field requires a name");
+      }
+      compiled.add(compileField(field, field.get("name").getAsString()));
+    }
+    return List.copyOf(compiled);
+  }
+
+  private static Field compileField(JsonObject field, String name) throws IOException {
+    if (!field.has("type")) {
       throw new IOException("CDR field requires a type");
     }
-    switch (type.get("type").getAsString().toLowerCase(Locale.ROOT)) {
+    String type = field.get("type").getAsString().toLowerCase(Locale.ROOT);
+    return switch (type) {
       case "struct" -> {
-        if (!type.has("fields") || !type.get("fields").isJsonArray()) {
+        if (!field.has("fields") || !field.get("fields").isJsonArray()) {
           throw new IOException("CDR struct requires fields");
         }
-        validateFields(type.getAsJsonArray("fields"));
+        yield new Field(name, type, compileFields(field.getAsJsonArray("fields")), null, 0);
       }
       case "array", "sequence" -> {
-        if (!type.has("element")) {
+        if (!field.has("element")) {
           throw new IOException("CDR collection requires element");
         }
-        if (type.get("type").getAsString().equalsIgnoreCase("array")) {
-          arrayLength(type);
-        }
-        validateType(descriptor(type.get("element")));
+        Field element = compileField(descriptor(field.get("element")), null);
+        yield new Field(name, type, List.of(), element,
+            type.equals("array") ? arrayLength(field) : 0);
       }
       case "boolean", "bool", "char", "octet", "int8", "uint8",
            "short", "ushort", "int16", "uint16", "long", "ulong", "int32", "uint32",
            "longlong", "ulonglong", "int64", "uint64", "float", "float32",
-           "double", "float64", "string" -> { }
-      default -> throw new IOException("Unsupported CDR type: " + type.get("type"));
-    }
+           "double", "float64", "string" -> new Field(name, type, List.of(), null, 0);
+      default -> throw new IOException("Unsupported CDR type: " + type);
+    };
   }
 
   private static JsonObject descriptor(JsonElement element) throws IOException {
@@ -216,10 +226,10 @@ public class CdrFormatter extends MessageFormatter {
     }
   }
 
-  private static void writeFields(Writer writer, JsonArray fields, JsonObject values) throws IOException {
-    for (JsonElement fieldElement : fields) {
-      JsonObject field = fieldElement.getAsJsonObject();
-      String name = field.get("name").getAsString();
+
+  private static void writeFields(Writer writer, List<Field> fields, JsonObject values) throws IOException {
+    for (Field field : fields) {
+      String name = field.name();
       if (!values.has(name) || values.get(name).isJsonNull()) {
         throw new IOException("Missing CDR field: " + name);
       }
@@ -227,22 +237,21 @@ public class CdrFormatter extends MessageFormatter {
     }
   }
 
-  private static JsonObject readFields(Reader reader, JsonArray fields) throws IOException {
+  private static JsonObject readFields(Reader reader, List<Field> fields) throws IOException {
     JsonObject values = new JsonObject();
-    for (JsonElement fieldElement : fields) {
-      JsonObject field = fieldElement.getAsJsonObject();
-      values.add(field.get("name").getAsString(), readValue(reader, field));
+    for (Field field : fields) {
+      values.add(field.name(), readValue(reader, field));
     }
     return values;
   }
 
-  private static void writeValue(Writer writer, JsonObject descriptor, JsonElement value) throws IOException {
-    String type = descriptor.get("type").getAsString().toLowerCase(Locale.ROOT);
+  private static void writeValue(Writer writer, Field field, JsonElement value) throws IOException {
+    String type = field.type();
     switch (type) {
-      case "struct" -> writeFields(writer, descriptor.getAsJsonArray("fields"), value.getAsJsonObject());
+      case "struct" -> writeFields(writer, field.children(), value.getAsJsonObject());
       case "array", "sequence" -> {
         JsonArray array = value.getAsJsonArray();
-        if (type.equals("array") && array.size() != arrayLength(descriptor)) {
+        if (type.equals("array") && array.size() != field.length()) {
           throw new IOException("CDR fixed array has incorrect length");
         }
         if (array.size() > MAX_ELEMENTS) {
@@ -251,9 +260,8 @@ public class CdrFormatter extends MessageFormatter {
         if (type.equals("sequence")) {
           writer.writeInteger(array.size(), 4);
         }
-        JsonObject element = descriptor(descriptor.get("element"));
         for (JsonElement entry : array) {
-          writeValue(writer, element, entry);
+          writeValue(writer, field.element(), entry);
         }
       }
       case "string" -> {
@@ -303,19 +311,19 @@ public class CdrFormatter extends MessageFormatter {
     writer.writeInteger(number.longValue(), width);
   }
 
-  private static JsonElement readValue(Reader reader, JsonObject descriptor) throws IOException {
-    String type = descriptor.get("type").getAsString().toLowerCase(Locale.ROOT);
+
+  private static JsonElement readValue(Reader reader, Field field) throws IOException {
+    String type = field.type();
     return switch (type) {
-      case "struct" -> readFields(reader, descriptor.getAsJsonArray("fields"));
+      case "struct" -> readFields(reader, field.children());
       case "array", "sequence" -> {
-        long length = type.equals("array") ? arrayLength(descriptor) : reader.readInteger(4, false);
+        long length = type.equals("array") ? field.length() : reader.readInteger(4, false);
         if (length > MAX_ELEMENTS) {
           throw new IOException("CDR collection too large");
         }
         JsonArray array = new JsonArray();
-        JsonObject element = descriptor(descriptor.get("element"));
         for (int i = 0; i < length; i++) {
-          array.add(readValue(reader, element));
+          array.add(readValue(reader, field.element()));
         }
         yield array;
       }

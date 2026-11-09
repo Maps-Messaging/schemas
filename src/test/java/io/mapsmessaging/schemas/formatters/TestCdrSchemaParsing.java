@@ -269,4 +269,51 @@ class TestCdrSchemaParsing {
   }
 
 
+  @Test
+  void idlCompilerProducesTheCanonicalFieldLayout() throws IOException {
+    JsonObject compiled = CdrIdlParser.parse("""
+        struct Sample { unsigned long identifier; float temperature; char code[2]; };
+        """, "Sample");
+    assertEquals("Sample", compiled.get("name").getAsString());
+    assertEquals(json("""
+        {"fields":[
+          {"type":"uint32","name":"identifier"},
+          {"type":"float32","name":"temperature"},
+          {"type":"array","length":2,"element":{"type":"char"},"name":"code"}
+        ]}
+        """).getAsJsonArray("fields"), compiled.getAsJsonArray("fields"));
+  }
+
+  @Test
+  void jsonSchemaProducesTheSameLayoutAsIdl() throws IOException {
+    JsonObject fromIdl = CdrIdlParser.parse("struct Sample { unsigned long id; double value; };", "Sample");
+    JsonObject fromJson = CdrJsonSchemaParser.parse(json("""
+        {"type":"object","x-cdr-order":["id","value"],"properties":{
+          "value":{"type":"number","format":"float64"},
+          "id":{"type":"integer","format":"uint32"}
+        }}
+        """));
+    assertEquals(fromIdl.getAsJsonArray("fields"), fromJson.getAsJsonArray("fields"));
+  }
+
+  @Test
+  void repeatedSamplesUseTheSameCompiledDefinition() throws IOException {
+    MessageFormatter formatter = idl("struct Sample { long position; double speed; string name; };", null);
+    for (int i = 0; i < 100; i++) {
+      JsonObject sample = new JsonObject();
+      sample.addProperty("position", i % 2 == 0 ? i : -i);
+      sample.addProperty("speed", i / 3.0);
+      sample.addProperty("name", i % 3 == 0 ? "🌊" : "");
+      byte[] wire = formatter.parseFromJson(sample);
+      assertEquals(sample, formatter.parseToJson(wire, ParseMode.STRICT), "sample " + i);
+    }
+  }
+
+  @Test
+  void tokenBudgetStopsPathologicalIdl() {
+    String source = "struct Sample { long value; }; " + " ".repeat(10) + "typedef long Extra; ".repeat(20_000);
+    assertThrows(IOException.class, () -> CdrIdlParser.parse(source, "Sample"));
+  }
+
+
 }

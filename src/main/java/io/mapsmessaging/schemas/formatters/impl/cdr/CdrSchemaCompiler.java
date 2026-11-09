@@ -19,6 +19,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.Locale;
 
@@ -30,6 +32,7 @@ public final class CdrSchemaCompiler {
 
   public static List<CdrField> compileFields(JsonArray descriptors) throws IOException {
     List<CdrField> compiled = new ArrayList<>();
+    Set<String> names = new HashSet<>();
     for (JsonElement entry : descriptors) {
       if (!entry.isJsonObject()) {
         throw new IOException("CDR fields must be objects");
@@ -39,7 +42,11 @@ public final class CdrSchemaCompiler {
           || field.get("name").getAsString().isBlank()) {
         throw new IOException("CDR field requires a name");
       }
-      compiled.add(compileField(field, field.get("name").getAsString()));
+      String name = field.get("name").getAsString();
+      if (!names.add(name)) {
+        throw new IOException("Duplicate CDR field name: " + name);
+      }
+      compiled.add(compileField(field, name));
     }
     return List.copyOf(compiled);
   }

@@ -114,7 +114,6 @@ public final class CdrCodec {
     writer.writeInteger(number.longValue(), width);
   }
 
-
   private static JsonElement readValue(CdrReader reader, CdrField field) throws IOException {
     String type = field.type();
     return switch (type) {
@@ -166,5 +165,4 @@ public final class CdrCodec {
       default -> throw new IOException("Unsupported CDR type: " + type);
     };
   }
-
 }

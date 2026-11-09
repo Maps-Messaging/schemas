@@ -31,6 +31,7 @@ import java.util.List;
 import io.mapsmessaging.schemas.formatters.impl.cdr.CdrField;
 import io.mapsmessaging.schemas.formatters.impl.cdr.CdrCodec;
 import io.mapsmessaging.schemas.formatters.impl.cdr.CdrSchemaCompiler;
+import io.mapsmessaging.schemas.formatters.impl.cdr.CdrSchemaResolver;
 import io.mapsmessaging.schemas.formatters.impl.cdr.CdrReader;
 import io.mapsmessaging.schemas.formatters.impl.cdr.CdrWriter;
 import java.util.Map;
@@ -42,7 +43,7 @@ import java.util.Map;
  * "type". Struct fields contain another "fields" array; array and sequence
  * fields contain an "element" descriptor (a type string or a descriptor
  * object). Fixed arrays additionally contain a "length". This formatter
- * deliberately does not interpret IDL, XCDR2, parameter-list CDR or unions.
+ * supports IDL and ordered JSON Schema inputs. XCDR2, parameter-list CDR and unions remain unsupported.
  */
 public class CdrFormatter extends MessageFormatter {
 
@@ -57,10 +58,7 @@ public class CdrFormatter extends MessageFormatter {
   }
 
   private CdrFormatter(JsonObject schema) throws IOException {
-    if (schema == null || !schema.has("fields") || !schema.get("fields").isJsonArray()) {
-      throw new IOException("CDR schema requires an ordered fields array");
-    }
-    definition = schema.deepCopy();
+    definition = CdrSchemaResolver.resolve(schema);
     littleEndian = !definition.has("littleEndian") || definition.get("littleEndian").getAsBoolean();
     fields = CdrSchemaCompiler.compileFields(definition.getAsJsonArray("fields"));
   }

@@ -226,4 +226,47 @@ class TestCdrSchemaParsing {
     invalid[1] = 3;
     assertThrows(ParseException.class, () -> formatter.parseToJson(invalid, ParseMode.STRICT));
   }
+  @Test
+  void configHelpersSelectIdlAndJsonSchema() throws IOException {
+    CdrSchemaConfig config = new CdrSchemaConfig();
+    config.setIdl("struct Sample { unsigned short value; };", "Sample");
+    MessageFormatter idlFormatter = MessageFormatterFactory.getInstance().getFormatter(config);
+    JsonObject data = json("{\"value\":42}");
+    assertEquals(data, idlFormatter.parseToJson(idlFormatter.parseFromJson(data), ParseMode.STRICT));
+
+    config.setJsonSchema(json("""
+        {"type":"object","x-cdr-order":["value"],"properties":{"value":{"type":"integer","format":"uint16"}}}
+        """));
+    MessageFormatter jsonFormatter = MessageFormatterFactory.getInstance().getFormatter(config);
+    assertEquals(data, jsonFormatter.parseToJson(jsonFormatter.parseFromJson(data), ParseMode.STRICT));
+  }
+
+  @Test
+  void rejectsDuplicateIdlAndCanonicalFieldNames() {
+    assertThrows(IOException.class, () -> idl("struct Sample { long value; short value; };", null));
+    assertThrows(IOException.class, () -> formatter(json("""
+        {"fields":[{"name":"value","type":"int32"},{"name":"value","type":"int16"}]}
+        """)));
+  }
+
+  @Test
+  void unresolvedTypedefAndCircularAliasFailFast() {
+    assertThrows(IOException.class, () -> idl("typedef Missing Alias; struct Sample { Alias value; };", null));
+    assertThrows(IOException.class, () -> idl("typedef B A; typedef A B; struct Sample { A value; };", null));
+  }
+
+  @Test
+  void typeDefinitionsCannotSilentlyChangeAfterCompilation() throws IOException {
+    JsonObject input = json("""
+        {"idl":"struct Sample { unsigned short number; };","typeName":"Sample"}
+        """);
+    MessageFormatter formatter = formatter(input);
+    JsonObject data = json("{\"number\":65535}");
+    byte[] wire = formatter.parseFromJson(data);
+    input.addProperty("idl", "struct Sample { string number; };");
+    assertArrayEquals(wire, formatter.parseFromJson(data));
+    assertEquals(data, formatter.parseToJson(wire, ParseMode.STRICT));
+  }
+
+
 }

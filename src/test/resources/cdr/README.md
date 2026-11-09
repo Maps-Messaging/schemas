@@ -19,8 +19,9 @@ Upstream: [ros2/rosbag2](https://github.com/ros2/rosbag2)
 - Data attribution: ROS 2/rosbag2 contributors.
 
 The upstream recording has **3 BasicTypes** and **4 Arrays** serialized CDR messages.
-The stored database contains duplicate payloads of each kind; these fixtures retain one
-representative payload of each kind.
+The stored database contains duplicate payloads of each kind. `ros2/all-recorded-messages.json`
+retains **all seven original byte-exact samples** (as arrays of hex chunks), with source row IDs and
+message types. The focused tests also retain one representative payload of each kind as separate hex files.
 
 - `ros2/basic-types.hex`: **52 bytes**, unmodified full `test_msgs/msg/BasicTypes` payload
   from row 1 of SQLite table `messages`. `int32_value` is 123; remaining values are zero/false.

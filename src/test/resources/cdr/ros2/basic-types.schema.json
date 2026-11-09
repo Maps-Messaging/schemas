@@ -1,0 +1,56 @@
+{
+  "fields": [
+    {
+      "name": "bool_value",
+      "type": "boolean"
+    },
+    {
+      "name": "byte_value",
+      "type": "octet"
+    },
+    {
+      "name": "char_value",
+      "type": "char"
+    },
+    {
+      "name": "float32_value",
+      "type": "float32"
+    },
+    {
+      "name": "float64_value",
+      "type": "float64"
+    },
+    {
+      "name": "int8_value",
+      "type": "int8"
+    },
+    {
+      "name": "uint8_value",
+      "type": "uint8"
+    },
+    {
+      "name": "int16_value",
+      "type": "int16"
+    },
+    {
+      "name": "uint16_value",
+      "type": "uint16"
+    },
+    {
+      "name": "int32_value",
+      "type": "int32"
+    },
+    {
+      "name": "uint32_value",
+      "type": "uint32"
+    },
+    {
+      "name": "int64_value",
+      "type": "int64"
+    },
+    {
+      "name": "uint64_value",
+      "type": "uint64"
+    }
+  ]
+}

@@ -27,7 +27,7 @@ These **14 payload formatters** are registered in `src/main/resources/META-INF/s
 | RAW | Opaque bytes without structured field decoding | |
 | XML | Extensible Markup Language payloads | [XML](https://www.w3.org/XML/) |
 
-These are **payload formats**, not transport or messaging protocols. Qpid-JMS is not a separately registered schema formatter.
+These are **payload formats**, not transport or messaging protocols.
 
 Capabilities vary by format. CDR, for example, supports plain XCDR1, not XCDR2 or a complete DDS/ROS 2 client. See the [format-specific schema documentation](https://github.com/Maps-Messaging/docs-site/tree/main/docs/schemas) for details.
 

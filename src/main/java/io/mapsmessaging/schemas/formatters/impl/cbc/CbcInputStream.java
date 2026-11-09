@@ -22,6 +22,7 @@ package io.mapsmessaging.schemas.formatters.impl.cbc;
 
 import io.mapsmessaging.schemas.config.impl.cbc.CbcFormat;
 import io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification;
+import io.mapsmessaging.schemas.formatters.impl.Uint64Values;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -61,7 +62,15 @@ public class CbcInputStream extends CbcStream {
       case "struct" -> {
         return readStruct(f, c);
       }
-      case "uint", "bitmask" -> {
+      case "uint" -> {
+        long raw = c.readUnsigned(reqSizeBits(f));
+        if (reqSizeBits(f) == 64 && !hasEnum(f) && f.getDecalc() == null) {
+          return Uint64Values.fromSignedBits(raw);
+        }
+        if (hasEnum(f)) return codeToEnum(raw, f);
+        return applyDecalcUint(raw, f);
+      }
+      case "bitmask" -> {
         long raw = c.readUnsigned(reqSizeBits(f));
         if (hasEnum(f)) return codeToEnum(raw, f);
         return applyDecalcUint(raw, f);

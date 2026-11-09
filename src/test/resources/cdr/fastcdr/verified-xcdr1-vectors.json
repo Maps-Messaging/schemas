@@ -1,0 +1,90 @@
+{
+  "upstream": "eProsima/Fast-CDR",
+  "commit": "0e2650a58c1968ca2acc3314e17ed2f8a1188f93",
+  "source": "test/cdr/array_as_std_vector.cpp",
+  "license": "Apache-2.0",
+  "details": "Literal expected_streams for PLAIN_CDR (XCDR1). No Java encoder was used to produce these vectors.",
+  "cases": [
+    {
+      "name": "uint32-fixed-array",
+      "schema": {
+        "fields": [
+          {
+            "name": "values",
+            "type": "array",
+            "length": 2,
+            "element": "uint32"
+          }
+        ]
+      },
+      "expected": {
+        "values": [
+          3452816860,
+          3452816860
+        ]
+      },
+      "bigEndian": "00000000cdcdcddccdcdcddc",
+      "littleEndian": "00010000dccdcdcddccdcdcd"
+    },
+    {
+      "name": "boolean-fixed-array",
+      "schema": {
+        "fields": [
+          {
+            "name": "values",
+            "type": "array",
+            "length": 2,
+            "element": "boolean"
+          }
+        ]
+      },
+      "expected": {
+        "values": [
+          true,
+          false
+        ]
+      },
+      "bigEndian": "000000000100",
+      "littleEndian": "000100000100"
+    },
+    {
+      "name": "nested-struct-fixed-array",
+      "schema": {
+        "fields": [
+          {
+            "name": "values",
+            "type": "array",
+            "length": 2,
+            "element": {
+              "type": "struct",
+              "fields": [
+                {
+                  "name": "value1",
+                  "type": "uint16"
+                },
+                {
+                  "name": "value2",
+                  "type": "uint16"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected": {
+        "values": [
+          {
+            "value1": 52700,
+            "value2": 52700
+          },
+          {
+            "value1": 56525,
+            "value2": 56525
+          }
+        ]
+      },
+      "bigEndian": "00000000cddccddcdccddccd",
+      "littleEndian": "00010000dccddccdcddccddc"
+    }
+  ]
+}

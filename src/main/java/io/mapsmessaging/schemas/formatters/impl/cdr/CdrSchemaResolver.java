@@ -25,6 +25,14 @@ public final class CdrSchemaResolver {
   }
 
   public static JsonObject resolve(JsonObject schema) throws IOException {
+    try {
+      return resolveDefinition(schema);
+    } catch (IllegalArgumentException | IllegalStateException | UnsupportedOperationException e) {
+      throw new IOException("Invalid CDR schema definition: " + e.getMessage(), e);
+    }
+  }
+
+  private static JsonObject resolveDefinition(JsonObject schema) throws IOException {
     if (schema == null) {
       throw new IOException("CDR schema is missing");
     }

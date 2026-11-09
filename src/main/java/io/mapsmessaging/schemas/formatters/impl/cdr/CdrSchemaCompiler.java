@@ -98,6 +98,4 @@ public final class CdrSchemaCompiler {
       throw new IOException("Invalid CDR array length", e);
     }
   }
-
-
 }

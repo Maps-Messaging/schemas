@@ -16,6 +16,7 @@ package io.mapsmessaging.schemas.formatters;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.mapsmessaging.schemas.config.SchemaConfig;
 import io.mapsmessaging.schemas.config.impl.CdrSchemaConfig;
 import io.mapsmessaging.schemas.formatters.impl.cdr.CdrIdlParser;
 import io.mapsmessaging.schemas.formatters.impl.cdr.CdrJsonSchemaParser;
@@ -313,6 +314,19 @@ class TestCdrSchemaParsing {
   void tokenBudgetStopsPathologicalIdl() {
     String source = "struct Sample { long value; }; " + " ".repeat(10) + "typedef long Extra; ".repeat(20_000);
     assertThrows(IOException.class, () -> CdrIdlParser.parse(source, "Sample"));
+  }
+
+
+  @Test
+  void persistedIdlSchemaConfigCanBeReloaded() throws IOException {
+    CdrSchemaConfig config = new CdrSchemaConfig();
+    config.setIdl("struct Sample { unsigned long id; };", "Sample");
+    config.setName("Sensor Sample");
+    SchemaConfig restored = SchemaConfig.gson.fromJson(config.pack(), SchemaConfig.class);
+    assertInstanceOf(CdrSchemaConfig.class, restored);
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(restored);
+    JsonObject value = json("{\"id\":4294967295}");
+    assertEquals(value, formatter.parseToJson(formatter.parseFromJson(value), ParseMode.STRICT));
   }
 
 

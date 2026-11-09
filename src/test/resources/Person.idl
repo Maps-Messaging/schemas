@@ -1,0 +1,14 @@
+// CDR representation of the shared Person test payload.
+// Base64 binary data and the enum name are strings in the current JSON contract.
+struct Person {
+  string stringId;
+  long long longId;
+  long intId;
+  float floatId;
+  double doubleId;
+  boolean booleanId;
+  string bytesId;
+  long arrayId[5];
+  string enumId;
+  long long timestampId;
+};

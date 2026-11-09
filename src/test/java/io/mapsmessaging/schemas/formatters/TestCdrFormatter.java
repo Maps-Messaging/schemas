@@ -161,4 +161,26 @@ class TestCdrFormatter {
     terminator[terminator.length - 1] = 1;
     assertThrows(ParseException.class, () -> formatter.parseToJson(terminator, ParseMode.STRICT));
   }
+  @Test
+  void compiledLayoutIsIndependentOfSchemaChanges() throws IOException {
+    CdrSchemaConfig config = new CdrSchemaConfig();
+    JsonObject schema = JsonParser.parseString("""
+        {"fields":[
+          {"name":"first","type":"uint32"},
+          {"name":"second","type":"float64"}
+        ]}""").getAsJsonObject();
+    config.setSchema(schema);
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
+    JsonObject event = JsonParser.parseString(
+        "{\"first\":4294967295,\"second\":1.25}").getAsJsonObject();
+    byte[] expected = formatter.parseFromJson(event);
+
+    schema.getAsJsonArray("fields").get(0).getAsJsonObject().addProperty("type", "string");
+    schema.getAsJsonArray("fields").remove(1);
+
+    assertArrayEquals(expected, formatter.parseFromJson(event));
+    assertEquals(event, formatter.parseToJson(expected, ParseMode.STRICT));
+  }
+
+
 }

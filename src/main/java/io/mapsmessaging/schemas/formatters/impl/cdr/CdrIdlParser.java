@@ -114,8 +114,9 @@ public final class CdrIdlParser {
         }
       } else if (accept("typedef")) {
         JsonObject type = type(scope);
-        String name = identifier();
         type = arrays(type);
+        String name = pendingName;
+        pendingName = null;
         expect(";");
         String qualified = scope + name;
         if (aliases.putIfAbsent(qualified, type) != null || structs.containsKey(qualified)) {

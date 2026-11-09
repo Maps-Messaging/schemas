@@ -16,5 +16,5 @@ package io.mapsmessaging.schemas.formatters.impl.cdr;
 
 import java.util.List;
 
-public record CdrField(String name, String type, List<Field> children, Field element, int length) {
+public record CdrField(String name, String type, List<CdrField> children, CdrField element, int length) {
 }

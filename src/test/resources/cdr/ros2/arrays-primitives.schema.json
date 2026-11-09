@@ -1,0 +1,82 @@
+{
+  "fields": [
+    {
+      "name": "bool_values",
+      "type": "array",
+      "length": 3,
+      "element": "boolean"
+    },
+    {
+      "name": "byte_values",
+      "type": "array",
+      "length": 3,
+      "element": "octet"
+    },
+    {
+      "name": "char_values",
+      "type": "array",
+      "length": 3,
+      "element": "char"
+    },
+    {
+      "name": "float32_values",
+      "type": "array",
+      "length": 3,
+      "element": "float32"
+    },
+    {
+      "name": "float64_values",
+      "type": "array",
+      "length": 3,
+      "element": "float64"
+    },
+    {
+      "name": "int8_values",
+      "type": "array",
+      "length": 3,
+      "element": "int8"
+    },
+    {
+      "name": "uint8_values",
+      "type": "array",
+      "length": 3,
+      "element": "uint8"
+    },
+    {
+      "name": "int16_values",
+      "type": "array",
+      "length": 3,
+      "element": "int16"
+    },
+    {
+      "name": "uint16_values",
+      "type": "array",
+      "length": 3,
+      "element": "uint16"
+    },
+    {
+      "name": "int32_values",
+      "type": "array",
+      "length": 3,
+      "element": "int32"
+    },
+    {
+      "name": "uint32_values",
+      "type": "array",
+      "length": 3,
+      "element": "uint32"
+    },
+    {
+      "name": "int64_values",
+      "type": "array",
+      "length": 3,
+      "element": "int64"
+    },
+    {
+      "name": "uint64_values",
+      "type": "array",
+      "length": 3,
+      "element": "uint64"
+    }
+  ]
+}

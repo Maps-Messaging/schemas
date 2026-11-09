@@ -1,0 +1,47 @@
+{
+  "name": "Person",
+  "fields": [
+    {
+      "name": "stringId",
+      "type": "string"
+    },
+    {
+      "name": "longId",
+      "type": "int64"
+    },
+    {
+      "name": "intId",
+      "type": "int32"
+    },
+    {
+      "name": "floatId",
+      "type": "float32"
+    },
+    {
+      "name": "doubleId",
+      "type": "float64"
+    },
+    {
+      "name": "booleanId",
+      "type": "boolean"
+    },
+    {
+      "name": "bytesId",
+      "type": "string"
+    },
+    {
+      "name": "arrayId",
+      "type": "array",
+      "length": 5,
+      "element": "int32"
+    },
+    {
+      "name": "enumId",
+      "type": "string"
+    },
+    {
+      "name": "timestampId",
+      "type": "int64"
+    }
+  ]
+}

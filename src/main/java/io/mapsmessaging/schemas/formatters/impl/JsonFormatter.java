@@ -145,6 +145,9 @@ public class JsonFormatter extends MessageFormatter {
       Gson gson = new Gson();
       @SuppressWarnings("unchecked")
       Map<String, Object> map = gson.fromJson(json, Map.class);
+      if (selectedSchemaNode != null && selectedSchemaNode.isObject()) {
+        Uint64Values.applyJsonSchema(JsonParser.parseString(selectedSchemaNode.toString()).getAsJsonObject(), json, map);
+      }
       return new StructuredResolver(new MapResolver(map), json);
     } catch (Exception e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);

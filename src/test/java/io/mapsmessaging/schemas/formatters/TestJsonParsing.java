@@ -45,6 +45,7 @@ class TestJsonParsing {
     Map<String, Object> schemas = loadPersonsFromTestResources();
     Assertions.assertNotNull(schemas);
     Assertions.assertFalse(schemas.isEmpty());
+    Assertions.assertTrue(schemas.containsKey("cdr"), "Person.cdr must be included in the shared formatter tests");
 
 
     int[] array = {1, 2, 3, 4, 5};

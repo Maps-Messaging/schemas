@@ -9,21 +9,18 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.DescriptorProtos;
+import org.junit.jupiter.api.Test;
+
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class ProtoBufFormatterCoverageTest {
 
@@ -69,7 +66,7 @@ class ProtoBufFormatterCoverageTest {
 
     @SuppressWarnings("unchecked")
     List<Map<String, Object>> oneOfs = (List<Map<String, Object>>) format.get("oneOfs");
-    assertEquals("choice", oneOfs.getFirst().get("name"));
+    assertEquals("choice", oneOfs.get(0).get("name"));
   }
 
   @Test

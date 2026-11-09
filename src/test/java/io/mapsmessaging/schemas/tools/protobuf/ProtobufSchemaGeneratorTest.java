@@ -9,20 +9,18 @@
 
 package io.mapsmessaging.schemas.tools.protobuf;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class ProtobufSchemaGeneratorTest {
 
@@ -55,7 +53,7 @@ class ProtobufSchemaGeneratorTest {
 
     assertEquals(1, configs.size());
 
-    ProtoBufSchemaConfig config = configs.getFirst();
+    ProtoBufSchemaConfig config = configs.get(0);
     assertEquals("all.desc", config.getName());
     assertEquals("1", config.getVersion());
     assertEquals("all", config.getProtobufConfig().getMessageName());

@@ -9,17 +9,14 @@
 
 package io.mapsmessaging.schemas.config.impl.cbc;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.google.gson.JsonPrimitive;
+import org.junit.jupiter.api.Test;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class FieldSpecificationTest {
 
@@ -70,7 +67,7 @@ class FieldSpecificationTest {
 
     assertEquals(Map.of(1, "ONE", 2, "TWO"), field.getEnumTable());
     assertEquals(1, field.getFields().size());
-    assertEquals("child", field.getFields().getFirst().getName());
+    assertEquals("child", field.getFields().get(0).getName());
   }
 
   @Test

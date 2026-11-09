@@ -23,6 +23,7 @@ package io.mapsmessaging.schemas.formatters.walker;
 import io.mapsmessaging.selector.IdentifierResolver;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -64,7 +65,8 @@ public class StructureWalker {
         lookup instanceof Character ||
         lookup instanceof Short ||
         lookup instanceof Integer ||
-        lookup instanceof Long) {
+        lookup instanceof Long ||
+        lookup instanceof BigInteger) {
       return lookup;
     } else if (lookup instanceof BigDecimal) {
       return ((BigDecimal) lookup).doubleValue();

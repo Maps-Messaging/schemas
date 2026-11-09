@@ -1,0 +1,56 @@
+/*
+ * Copyright [ 2024 - 2026 ] MapsMessaging B.V.
+ *
+ * Licensed under the Apache License, Version 2.0 with the Commons Clause
+ * (the "License"); you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at:
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://commonsclause.com/
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ */
+package io.mapsmessaging.schemas.formatters.impl.cbc;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification;
+import io.mapsmessaging.schemas.formatters.impl.Uint64Values;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+/** Restores numeric precision only for unscaled, explicitly declared 64-bit unsigned CBC fields. */
+public final class CbcUint64Fields {
+  private CbcUint64Fields() {
+  }
+
+  public static void restore(JsonObject source, Map<String, Object> values, List<FieldSpecification> fields) throws IOException {
+    if (fields == null) {
+      return;
+    }
+    for (FieldSpecification field : fields) {
+      if (!source.has(field.getName()) || !values.containsKey(field.getName())) {
+        continue;
+      }
+      JsonElement input = source.get(field.getName());
+      if (input == null || input.isJsonNull()) {
+        continue;
+      }
+      if (field.getType().equalsIgnoreCase("uint") && Integer.valueOf(64).equals(field.getSize())
+          && field.getEncalc() == null && (field.getEnumTable() == null || field.getEnumTable().isEmpty())) {
+        values.put(field.getName(), Uint64Values.fromJson(input));
+      } else if (field.getType().equalsIgnoreCase("struct") && field.getFields() != null) {
+        Object current = values.get(field.getName());
+        if (input.isJsonObject() && current instanceof Map<?, ?> nested) {
+          @SuppressWarnings("unchecked")
+          Map<String, Object> nestedMap = (Map<String, Object>) nested;
+          restore(input.getAsJsonObject(), nestedMap, field.getFields());
+        }
+      }
+    }
+  }
+}

@@ -14,6 +14,7 @@
  */
 package io.mapsmessaging.schemas.formatters;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mapsmessaging.schemas.config.impl.CdrSchemaConfig;
@@ -23,8 +24,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -42,8 +43,10 @@ class TestCdrPersonIdlResource {
   @Test
   void personIdlFileCompilesToExpectedFields() throws IOException {
     JsonObject compiled = CdrIdlParser.parse(resource("Person.idl"), "Person");
-    List<String> fields = compiled.getAsJsonArray("fields").asList().stream()
-        .map(field -> field.getAsJsonObject().get("name").getAsString()).toList();
+    List<String> fields = new ArrayList<>();
+    for (JsonElement field : compiled.getAsJsonArray("fields")) {
+      fields.add(field.getAsJsonObject().get("name").getAsString());
+    }
     assertEquals(List.of("stringId", "longId", "intId", "floatId", "doubleId", "booleanId", "bytesId", "arrayId", "enumId", "timestampId"), fields);
     assertEquals("int64", compiled.getAsJsonArray("fields").get(1).getAsJsonObject().get("type").getAsString());
     assertEquals("array", compiled.getAsJsonArray("fields").get(7).getAsJsonObject().get("type").getAsString());

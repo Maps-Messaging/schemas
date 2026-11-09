@@ -31,6 +31,7 @@ import io.mapsmessaging.schemas.formatters.ParseMode;
 import io.mapsmessaging.schemas.formatters.ParsedObject;
 import io.mapsmessaging.schemas.formatters.impl.cbc.CbcInputStream;
 import io.mapsmessaging.schemas.formatters.impl.cbc.CbcOutputStream;
+import io.mapsmessaging.schemas.formatters.impl.cbc.CbcUint64Fields;
 import io.mapsmessaging.schemas.formatters.walker.MapResolver;
 import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 import io.mapsmessaging.schemas.repository.SchemaResolver;
@@ -137,6 +138,11 @@ public class CbcFormatter extends MessageFormatter {
       values = (Map<String, Object>) m;
     } else if (data instanceof JsonObject json) {
       values = new Gson().fromJson(json, Map.class);
+      try {
+        CbcUint64Fields.restore(json, values, schema.getFields());
+      } catch (IOException exception) {
+        throw new IllegalArgumentException("Invalid CBC unsigned 64-bit field", exception);
+      }
     } else {
       throw new IllegalArgumentException("Unsupported data type for CBC encode: " + data);
     }

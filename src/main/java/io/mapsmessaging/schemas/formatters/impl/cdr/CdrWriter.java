@@ -17,38 +17,36 @@ package io.mapsmessaging.schemas.formatters.impl.cdr;
 import java.io.ByteArrayOutputStream;
 
 public final class CdrWriter {
-    private final ByteArrayOutputStream output = new ByteArrayOutputStream();
-    private final boolean littleEndian;
+  private final ByteArrayOutputStream output = new ByteArrayOutputStream();
+  private final boolean littleEndian;
 
-    public CdrWriter(boolean littleEndian) {
-      this.littleEndian = littleEndian;
+  public CdrWriter(boolean littleEndian) {
+    this.littleEndian = littleEndian;
+    output.write(0);
+    output.write(littleEndian ? 1 : 0);
+    output.write(0);
+    output.write(0);
+  }
+
+  private void align(int width) {
+    while ((output.size() - 4) % width != 0) {
       output.write(0);
-      output.write(littleEndian ? 1 : 0);
-      output.write(0);
-      output.write(0);
-    }
-
-    private void align(int width) {
-      while ((output.size() - 4) % width != 0) {
-        output.write(0);
-      }
-    }
-
-    public void writeInteger(long value, int width) {
-      align(width);
-      for (int i = 0; i < width; i++) {
-        int shift = (littleEndian ? i : width - i - 1) * 8;
-        output.write((int) (value >>> shift) & 0xff);
-      }
-    }
-
-    public void writeBytes(byte[] data) {
-      output.writeBytes(data);
-    }
-
-    public byte[] toByteArray() {
-      return output.toByteArray();
     }
   }
 
+  public void writeInteger(long value, int width) {
+    align(width);
+    for (int i = 0; i < width; i++) {
+      int shift = (littleEndian ? i : width - i - 1) * 8;
+      output.write((int) (value >>> shift) & 0xff);
+    }
+  }
 
+  public void writeBytes(byte[] data) {
+    output.writeBytes(data);
+  }
+
+  public byte[] toByteArray() {
+    return output.toByteArray();
+  }
+}

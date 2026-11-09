@@ -1,208 +1,118 @@
-# Schemas
+# MapsMessaging Schemas
 
 ## Introduction
 
-When handling different data from different sources the problem arises trying to understand the different event structures and definitions.
-Currently, there is Avro from Apache, Protobuf from google, JSON, XML, CSV that can be used to define data in events.
+Messages arrive in many formats, with different field types, layouts and encodings. The MapsMessaging Schemas library provides a common interface for configuring payload formats, encoding and decoding messages, and accessing fields for filtering and processing.
 
-* So which one to use when ingesting data from many sources?
-* How to maintain a generic approach to message formats?
+It is used by the MapsMessaging server and can also be embedded in other applications. Schema configurations may be stored in a repository and bound to contexts such as topics or queues.
 
-This is where this package comes in to play. It provides an abstract ability to pack and unpack data as well as the ability to query fields within the data. Making it simpler to
-add new emerging technolgies without rewriting your code.
+## Supported formats
 
-The MapsMessaging server uses this package to be able to parse and filter in flight data from different sources. It uses the Repository to maintain a list of known schemas and will
-replicate the definitions amongst other servers.
+These **14 payload formatters** are registered in `src/main/resources/META-INF/services/io.mapsmessaging.schemas.formatters.MessageFormatter` on `development`:
 
-It is released here as a standalone package so others can use it as well, either in client side or server side code, or when you simply are not sure on what data you may ingest but
-need to be able to query it.
+| Format | Description | Reference |
+|---|---|---|
+| Avro | Apache Avro schema-based binary encoding | [Apache Avro](https://avro.apache.org/) |
+| CANAerospace | CANAerospace message data | [CANAerospace](https://www.canaerospace.net/) |
+| CANbus | CAN frame data with identifier interpretation | [CAN](https://en.wikipedia.org/wiki/CAN_bus) |
+| CBC | Compact Binary Coding; schema-defined bit-packed fields | [CBC documentation](https://github.com/Maps-Messaging/docs-site/blob/main/docs/schemas/impl/cbc.md) |
+| CBOR | Concise Binary Object Representation | [RFC 8949](https://www.rfc-editor.org/rfc/rfc8949) |
+| CDR | DDS Common Data Representation; plain XCDR1 with IDL or JSON schema definitions | [CDR documentation](https://github.com/Maps-Messaging/docs-site/blob/main/docs/schemas/impl/cdr.md) |
+| CSV | Comma-separated values with configurable fields | [RFC 4180](https://www.rfc-editor.org/rfc/rfc4180) |
+| JSON | JSON payloads, optionally validated against JSON Schema | [JSON](https://www.json.org/) |
+| MAVLink | MAVLink frames and dialect-defined messages | [MAVLink](https://mavlink.io/) |
+| MessagePack | Binary encoding of JSON-like values | [MessagePack](https://msgpack.org/) |
+| Native | Single Java scalar values (integer, float, double or string) | |
+| Protobuf | Google Protocol Buffers with compiled descriptors | [Protocol Buffers](https://protobuf.dev/) |
+| RAW | Opaque bytes without structured field decoding | |
+| XML | Extensible Markup Language payloads | [XML](https://www.w3.org/XML/) |
 
-## Supported
+These are **payload formats**, not transport or messaging protocols. Qpid-JMS is not a separately registered schema formatter.
 
-This package allows for different schema configuration and message formatters.
+Capabilities vary by format. CDR, for example, supports plain XCDR1, not XCDR2 or a complete DDS/ROS 2 client. See the [format-specific schema documentation](https://github.com/Maps-Messaging/docs-site/tree/main/docs/schemas) for details.
 
-Current supported protocols are
+## Usage
 
-| Name     | Description                | Link                                                            |
-|----------|----------------------------|-----------------------------------------------------------------|
-| JSON     | Javascript Notation        | https://www.json.org/json-en.html                               |
-| XML      | extensible markup language | https://www.w3schools.com/xml/xml_whatis.asp                    |
-| ProtoBuf | Google Protobuf            | https://github.com/protocolbuffers/protobuf                     |
-| AVRO     | Apache AVRO                | https://en.wikipedia.org/wiki/Apache_Avro                       |
-| CSV      | Comma seperated Values     | https://en.wikipedia.org/wiki/Comma-separated_values            |
-| QPID-JMS | Apache QPID JMS Messages   |                                                                 |
-| RAW      | Opaque data load           | This schema does no field loading                               |
-| Native   | Single Native Java types   | This schema supports single value like what a sensor might send |
+### Schema configuration and lookup
 
-# Usage
+A `SchemaConfig` contains format selection, schema definition, version and metadata. A schema repository can associate configurations with contexts such as topics or queues and retrieve them by context or schema ID.
 
-## Using Formatters
-
-There are 2 parts to using the formatters
-
-* Admin and Repository
-* Lookup and using
-
-
-### Admin and Repository
-
-The administration side of formatters covers the addition, update and deletion of configuration using a Schema Repository. 
-The Schema Repository is simply a central place to store and retrieve Schemas. This could be a RestAPI, a file backed repository or in the case of MapsMessaging the messaging server itself.
-
-Each Schema is defined by a unique id that is used to bind the format to an application 'Context'. For example, in MapsMessaging a Schema is bound to a topic or queue. The topic or queue name is used as the context when binding the schema to the topic or queue.
-
-### Lookup and Using
-
-The schema is retrieved from the Repository as the example below
+Given a `SchemaConfig`, request the corresponding formatter from the service-loaded factory:
 
 ```java
-repository.getSchemaByContext("/root");
-```
-This would return a list of any schemas bound to '/root'. The list provides the ability to return multiple schemas that could support versions or slightly different configurations that could be received.
-
-or
-```java
-repository.getSchema(unique_id);
+MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 ```
 
-This returns the single unique schema defined by the supplied unique_id.
-
-To then parse the data from the byte[] using the schema 
+If a format requires parent or related schema resolution, supply a `SchemaResolver`:
 
 ```java
-      byte[] data = getData();
-      ParsedObject parsedObject = formatter.parse(data);
-      parsedObject.get("stringId");
+MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config, schemaResolver);
 ```
-This would return the field called "stringId" from the data byte[] 
 
-## Extending Formatters
-
-To add a new, potentially company internal format, simply extend MessageFormatter, below is the JSON implementation.
+### Encoding, decoding and field lookup
 
 ```java
-package io.mapsmessaging.schemas.formatters.impl;
+JsonObject value = new JsonObject();
+value.addProperty("stringId", "sensor-1");
 
-import static io.mapsmessaging.schemas.logging.SchemaLogMessages.FORMATTER_UNEXPECTED_OBJECT;
-
-import io.mapsmessaging.schemas.config.SchemaConfig;
-import io.mapsmessaging.schemas.formatters.MessageFormatter;
-import io.mapsmessaging.schemas.formatters.ParsedObject;
-import io.mapsmessaging.schemas.formatters.walker.MapResolver;
-import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
-import java.io.IOException;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-/**
- * The type Json formatter.
- */
-public class JsonFormatter extends MessageFormatter {
-
-  /**
-   * Instantiates a new Json formatter.
-   */
-  public JsonFormatter() {
-    // Used by the service loader, there is nothing to do
-  }
-
-  @Override
-  public ParsedObject parse(byte[] payload) {
-    JSONObject json;
-    try {
-      json = new JSONObject(new String(payload));
-      return new StructuredResolver(new MapResolver(json.toMap()), json);
-    } catch (JSONException e) {
-      logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
-      return new DefaultParser(payload);
-    }
-  }
-
-  @Override
-  public JSONObject parseToJson(byte[] payload) throws IOException {
-    return new JSONObject(new String(payload));
-  }
-
-  @Override
-  public MessageFormatter getInstance(SchemaConfig config) throws IOException {
-    return this;
-  }
-
-  @Override
-  public String getName() {
-    return "JSON";
-  }
-
-}
-
+byte[] encoded = formatter.parseFromJson(value);
+JsonObject decoded = formatter.parseToJson(encoded, ParseMode.STRICT);
+ParsedObject parsed = formatter.parse(encoded, ParseMode.STRICT);
+Object identifier = parsed.get("stringId");
 ```
 
-Then simply add the new formatter class into the file in resources/META-INF.servers/io.mapsmessaging.schemas.formatters.MessageFormatter
+- `parseFromJson(JsonObject)` encodes a JSON object into the configured wire format.
+- `parseToJson(byte[], ParseMode)` decodes a payload into a JSON object.
+- `parse(byte[], ParseMode)` returns a `ParsedObject` for field lookup and selector evaluation.
+- `getFormat()` exposes format information where implemented.
 
-```text
-io.mapsmessaging.schemas.formatters.impl.AvroFormatter
-io.mapsmessaging.schemas.formatters.impl.CsvFormatter
-io.mapsmessaging.schemas.formatters.impl.JsonFormatter
-io.mapsmessaging.schemas.formatters.impl.NativeFormatter
-io.mapsmessaging.schemas.formatters.impl.ProtoBufFormatter
-io.mapsmessaging.schemas.formatters.impl.RawFormatter
-io.mapsmessaging.schemas.formatters.impl.XmlFormatter
+`ParseMode.STRICT` reports parsing errors with `ParseException`. Some implementations provide an opaque-payload fallback with `ParseMode.IGNORE`; this behaviour is format-specific.
 
-```
+### CDR with an IDL definition
 
-This allows data in a byte[] to be parsed, the next step is to be able to pack and unpack the configuration for the new formatter.
-Since all formatters are slightly different the configuration required will be different, for this you extend the class SchemaConfig.
+CDR accepts a supported IDL definition, a native ordered CDR field schema, or JSON Schema with explicit CDR type and order metadata.
 
 ```java
-public class JsonSchemaConfig extends SimpleSchemaConfig {
+CdrSchemaConfig config = new CdrSchemaConfig();
+config.setIdl("struct Reading { unsigned long id; double temperature; };", "Reading");
 
-  private static final String NAME = "JSON";
+MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
 
-  /**
-   * Instantiates a new Json schema config.
-   */
-  public JsonSchemaConfig() {
-    super(NAME);
-    setMimeType("application/json");
-  }
+JsonObject sample = new JsonObject();
+sample.addProperty("id", 42);
+sample.addProperty("temperature", 21.5);
 
-  private JsonSchemaConfig(Map<String, Object> config) {
-    super(NAME, config);
-  }
-
-  protected SchemaConfig getInstance(Map<String, Object> config) {
-    return new JsonSchemaConfig(config);
-  }
-}
+byte[] payload = formatter.parseFromJson(sample);
+JsonObject decoded = formatter.parseToJson(payload, ParseMode.STRICT);
 ```
 
-Then add it to the file resources/META-INF.servers/io.mapsmessaging.schemas.config.SchemaConfig as follows
+The IDL is compiled into an ordered field layout when the formatter is constructed. The same layout is reused for subsequent messages. See the [CDR schema guide](https://github.com/Maps-Messaging/docs-site/blob/main/docs/schemas/impl/cdr.md) for supported types and limitations.
 
-```text
-io.mapsmessaging.schemas.config.impl.AvroSchemaConfig
-io.mapsmessaging.schemas.config.impl.CsvSchemaConfig
-io.mapsmessaging.schemas.config.impl.JsonSchemaConfig
-io.mapsmessaging.schemas.config.impl.NativeSchemaConfig
-io.mapsmessaging.schemas.config.impl.ProtoBufSchemaConfig
-io.mapsmessaging.schemas.config.impl.RawSchemaConfig
-io.mapsmessaging.schemas.config.impl.XmlSchemaConfig
+## Extending formatters
+
+To add another payload format:
+
+1. Extend `MessageFormatter` and implement `getName()`, `getInstance(SchemaConfig, SchemaResolver)`, `parseToJson(byte[], ParseMode)`, `parseFromJson(JsonObject)`, `parse(byte[], ParseMode)` and `getFormat()`.
+2. Provide a no-argument constructor and register the implementation in `src/main/resources/META-INF/services/io.mapsmessaging.schemas.formatters.MessageFormatter`.
+3. If the format needs configuration, extend `SchemaConfig` and register the configuration class in `src/main/resources/META-INF/services/io.mapsmessaging.schemas.config.SchemaConfig`.
+4. Test configuration construction, factory discovery, binary/JSON round trips, malformed input and `ParsedObject` field lookup. The shared Person tests provide an example.
+
+See `JsonFormatter`, `CdrFormatter`, `AvroFormatter` and `ProtoBufFormatter` for different implementations.
+
+## Maven
+
+Current **development** coordinates from `pom.xml`:
+
+```xml
+<dependency>
+  <groupId>io.mapsmessaging</groupId>
+  <artifactId>schemas</artifactId>
+  <version>3.2.0-SNAPSHOT</version>
+</dependency>
 ```
 
-For more complex implementations refer to the Avro or the Protobuf implementation.
+This is the development version, not a claim that this snapshot is published to Maven Central. Select a published release or configure the MapsMessaging snapshot repository as appropriate.
 
-## pom.xml setup
-
-All MapsMessaging libraries are hosted on the [maven central server.](https://central.sonatype.com/search?smo=true&q=mapsmessaging)
-
-Include the dependency
-
-``` xml
-    <!-- Message Schema module -->
-    <dependency>
-      <groupId>io.mapsmessaging</groupId>
-      <artifactId>Schemas</artifactId>
-      <version>2.0.7</version>
-    </dependency>
-```    
+[Published artifacts on Maven Central](https://central.sonatype.com/search?q=io.mapsmessaging)
 
 [![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/summary/new_code?id=Schemas)

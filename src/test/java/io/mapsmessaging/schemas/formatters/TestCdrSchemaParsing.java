@@ -193,7 +193,8 @@ class TestCdrSchemaParsing {
         "{\"type\":\"object\",\"x-cdr-order\":[\"missing\"],\"properties\":{\"id\":{\"type\":\"integer\",\"format\":\"uint32\"}}}",
         "{\"type\":\"object\",\"x-cdr-order\":[\"number\"],\"properties\":{\"number\":{\"type\":\"number\"}}}",
         "{\"type\":\"object\",\"x-cdr-order\":[\"number\"],\"properties\":{\"number\":{\"type\":\"number\",\"format\":\"int32\"}}}",
-        "{\"type\":\"object\",\"x-cdr-order\":[\"array\"],\"properties\":{\"array\":{\"type\":\"array\",\"minItems\":1,\"maxItems\":2,\"items\":{\"type\":\"integer\",\"format\":\"uint16\"}}}}",
+        "{\"type\":\"object\",\"x-cdr-order\":[\"array\"],\"properties\":{\"array\":{\"type\":\" +
+        ""array\",\"minItems\":1,\"maxItems\":2,\"items\":{\"type\":\"integer\",\"format\":\"uint16\"}}}}",
         "{\"type\":\"object\",\"x-cdr-order\":[\"array\"],\"properties\":{\"array\":{\"type\":\"array\",\"items\":[{\"type\":\"integer\",\"format\":\"uint16\"}]}}}"
     };
     for (String input : bad) {

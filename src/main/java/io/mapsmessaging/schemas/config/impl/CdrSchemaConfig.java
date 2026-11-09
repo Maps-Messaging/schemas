@@ -14,6 +14,7 @@
  */
 package io.mapsmessaging.schemas.config.impl;
 
+import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.SchemaConfig;
 
 public class CdrSchemaConfig extends SchemaConfig {
@@ -24,6 +25,21 @@ public class CdrSchemaConfig extends SchemaConfig {
 
   public CdrSchemaConfig(SchemaConfig config) {
     super(config);
+  }
+
+  /** Set an inline IDL definition and its selected struct type. */
+  public void setIdl(String idl, String typeName) {
+    JsonObject definition = new JsonObject();
+    definition.addProperty("idl", idl);
+    if (typeName != null && !typeName.isBlank()) {
+      definition.addProperty("typeName", typeName);
+    }
+    setSchema(definition);
+  }
+
+  /** Set a JSON Schema with explicit CDR field ordering and numeric type metadata. */
+  public void setJsonSchema(JsonObject jsonSchema) {
+    setSchema(jsonSchema);
   }
 
   @Override

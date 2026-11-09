@@ -20,6 +20,7 @@ io.mapsmessaging.schemas.config.impl.CanAerospaceSchemaConfig
 io.mapsmessaging.schemas.config.impl.CanbusSchemaConfig
 io.mapsmessaging.schemas.config.impl.CbcSchemaConfig
 io.mapsmessaging.schemas.config.impl.CborSchemaConfig
+io.mapsmessaging.schemas.config.impl.CdrSchemaConfig
 io.mapsmessaging.schemas.config.impl.CsvSchemaConfig
 io.mapsmessaging.schemas.config.impl.JsonSchemaConfig
 io.mapsmessaging.schemas.config.impl.MavlinkSchemaConfig

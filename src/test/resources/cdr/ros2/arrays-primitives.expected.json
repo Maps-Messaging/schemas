@@ -1,0 +1,67 @@
+{
+  "bool_values": [
+    true,
+    false,
+    true
+  ],
+  "byte_values": [
+    0,
+    0,
+    0
+  ],
+  "char_values": [
+    "\u0000",
+    "\u0000",
+    "\u0000"
+  ],
+  "float32_values": [
+    0,
+    0,
+    0
+  ],
+  "float64_values": [
+    0,
+    0,
+    0
+  ],
+  "int8_values": [
+    0,
+    0,
+    0
+  ],
+  "uint8_values": [
+    0,
+    0,
+    0
+  ],
+  "int16_values": [
+    0,
+    0,
+    0
+  ],
+  "uint16_values": [
+    0,
+    0,
+    0
+  ],
+  "int32_values": [
+    0,
+    0,
+    0
+  ],
+  "uint32_values": [
+    0,
+    0,
+    0
+  ],
+  "int64_values": [
+    0,
+    0,
+    0
+  ],
+  "uint64_values": [
+    0,
+    0,
+    0
+  ]
+}

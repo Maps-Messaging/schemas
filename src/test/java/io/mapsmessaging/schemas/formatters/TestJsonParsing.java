@@ -45,6 +45,7 @@ class TestJsonParsing {
     Map<String, Object> schemas = loadPersonsFromTestResources();
     Assertions.assertNotNull(schemas);
     Assertions.assertFalse(schemas.isEmpty());
+    Assertions.assertTrue(schemas.containsKey("cdr"), "Person.cdr must be included in the shared formatter tests");
 
 
     int[] array = {1, 2, 3, 4, 5};
@@ -121,7 +122,7 @@ class TestJsonParsing {
       for (Path p : files) {
         String name = base.relativize(p).toString().replace('\\', '/');
         String key = name.substring(name.lastIndexOf('.') + 1);
-        if (key.equalsIgnoreCase("proto")) {
+        if (key.equalsIgnoreCase("proto") || key.equalsIgnoreCase("idl")) {
           continue;
         }
         if (key.equalsIgnoreCase("avsc")) {

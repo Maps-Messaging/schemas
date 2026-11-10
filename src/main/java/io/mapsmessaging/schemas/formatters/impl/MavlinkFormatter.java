@@ -18,11 +18,15 @@
 package io.mapsmessaging.schemas.formatters.impl;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mapsmessaging.mavlink.MavlinkMessageFormatLoader;
 import io.mapsmessaging.mavlink.codec.MavlinkCodec;
 import io.mapsmessaging.mavlink.codec.MavlinkFrameCodec;
+import io.mapsmessaging.mavlink.message.CompiledField;
+import io.mapsmessaging.mavlink.message.CompiledMessage;
 import io.mapsmessaging.mavlink.message.Frame;
 import io.mapsmessaging.mavlink.message.Version;
 import io.mapsmessaging.schemas.config.SchemaConfig;
@@ -38,6 +42,9 @@ import lombok.Getter;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -163,6 +170,7 @@ public class MavlinkFormatter extends MessageFormatter {
 
       @SuppressWarnings("unchecked")
       Map<String, Object> values = gson.fromJson(payloadObject, Map.class);
+      restoreUnsigned64Fields(messageId, payloadObject, values);
 
       byte[] payload = codec.encodePayload(messageId, values);
 
@@ -198,6 +206,37 @@ public class MavlinkFormatter extends MessageFormatter {
     } catch (Exception exception) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), exception.getMessage());
       throw new IOException("Failed to parse JSON to MAVLink payload", exception);
+    }
+  }
+
+  private void restoreUnsigned64Fields(int messageId, JsonObject source, Map<String, Object> values) throws IOException {
+    CompiledMessage message = codec.getRegistry().getCompiledMessagesById().get(messageId);
+    if (message == null) {
+      return;
+    }
+    for (CompiledField compiled : message.getCompiledFields()) {
+      String fieldType = compiled.getFieldDefinition().getType();
+      if (!"uint64_t".equals(fieldType) && !fieldType.startsWith("uint64_t[")) {
+        continue;
+      }
+      String name = compiled.getFieldDefinition().getName();
+      if (!source.has(name) || !values.containsKey(name) || source.get(name).isJsonNull()) {
+        continue;
+      }
+      JsonElement sourceValue = source.get(name);
+      if (compiled.getFieldDefinition().isArray()) {
+        if (!sourceValue.isJsonArray()) {
+          throw new IOException("Expected uint64_t array for MAVLink field " + name);
+        }
+        JsonArray array = sourceValue.getAsJsonArray();
+        List<BigInteger> numbers = new ArrayList<>(array.size());
+        for (JsonElement element : array) {
+          numbers.add(Uint64Values.fromJson(element));
+        }
+        values.put(name, numbers);
+      } else {
+        values.put(name, Uint64Values.fromJson(sourceValue));
+      }
     }
   }
 

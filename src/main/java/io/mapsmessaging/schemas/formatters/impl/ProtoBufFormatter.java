@@ -631,11 +631,25 @@ public class ProtoBufFormatter extends MessageFormatter {
         }
       } else if (value instanceof Collection collection) {
         map.put(field.getName(), createMap(collection));
+      } else if (value instanceof DynamicMessage nested && containsUnsigned64(nested.getDescriptorForType())) {
+        map.put(field.getName(), convertToMap(nested));
       } else {
         map.put(field.getName(), value);
       }
     }
     return map;
+  }
+
+  private boolean containsUnsigned64(Descriptors.Descriptor descriptor) {
+    for (FieldDescriptor field : descriptor.getFields()) {
+      if (isUnsigned64(field)) {
+        return true;
+      }
+      if (field.getJavaType() == FieldDescriptor.JavaType.MESSAGE && containsUnsigned64(field.getMessageType())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private List<Map<String, Object>> createMap(Collection<Object> collection) {

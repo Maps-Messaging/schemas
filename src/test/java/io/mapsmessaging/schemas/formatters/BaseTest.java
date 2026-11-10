@@ -163,9 +163,11 @@ public abstract class BaseTest {
   void testFormatters() throws IOException {
     long start = System.currentTimeMillis();
     List<byte[]> packed = packList(data);
+    SchemaConfig schemaConfig = getSchema();
+    System.err.println("======================================================");
+    System.err.println("Schema:" + schemaConfig.getFormat());
     System.err.println("Time to Pack:" + (System.currentTimeMillis() - start) + "ms");
     start = System.currentTimeMillis();
-    SchemaConfig schemaConfig = getSchema();
     MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(schemaConfig);
     for (int x = 0; x < data.size(); x++) {
       ParsedObject parsedObject = formatter.parse(packed.get(x), ParseMode.IGNORE);

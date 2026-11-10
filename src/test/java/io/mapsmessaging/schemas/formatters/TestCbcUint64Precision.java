@@ -86,4 +86,25 @@ class TestCbcUint64Precision {
     assertEquals(-1, wire[7]);
     assertEquals(sample, formatter.parseToJson(wire, ParseMode.STRICT));
   }
+  @Test
+  void indexedStructArrayRetainsUnsigned64Elements() throws IOException {
+    CbcSchemaConfig config = new CbcSchemaConfig();
+    config.setSchema(JsonParser.parseString("""
+        {"messageKey":0,"fields":[{"name":"ids","type":"struct","fields":[
+          {"name":"a0","type":"uint","size":64},
+          {"name":"a1","type":"uint","size":64}
+        ]}]}
+        """).getAsJsonObject());
+    MessageFormatter formatter = MessageFormatterFactory.getInstance().getFormatter(config);
+    JsonObject input = JsonParser.parseString("""
+        {"ids":[9007199254740993,18446744073709551615]}
+        """).getAsJsonObject();
+    byte[] bytes = formatter.parseFromJson(input);
+    assertEquals(input, formatter.parseToJson(bytes, ParseMode.STRICT));
+    ParsedObject parsed = formatter.parse(bytes, ParseMode.STRICT);
+    assertEquals(new BigInteger("9007199254740993"), parsed.get("ids[0]"));
+    assertEquals(new BigInteger("18446744073709551615"), parsed.get("ids[1]"));
+  }
+
+
 }

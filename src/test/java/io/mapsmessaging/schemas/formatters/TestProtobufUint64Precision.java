@@ -78,10 +78,18 @@ class TestProtobufUint64Precision {
           }
           """.formatted(value)).getAsJsonObject();
       byte[] payload = formatter.parseFromJson(sample);
-      assertEquals(sample, formatter.parseToJson(payload, ParseMode.STRICT), value);
+      JsonObject expected = sample.deepCopy();
+      if ("0".equals(value)) {
+        expected.remove("id"); // proto3 omits singular scalar fields at their default value.
+      }
+      assertEquals(expected, formatter.parseToJson(payload, ParseMode.STRICT), value);
 
       ParsedObject parsed = formatter.parse(payload, ParseMode.STRICT);
-      assertEquals(new BigInteger(value), parsed.get("id"), value);
+      if ("0".equals(value)) {
+        assertNull(parsed.get("id"), "proto3 default value is not present");
+      } else {
+        assertEquals(new BigInteger(value), parsed.get("id"), value);
+      }
       assertEquals(new BigInteger("18446744073709551615"), parsed.get("fixedId"));
       assertEquals(new BigInteger("18446744073709551615"), parsed.get("child.id"));
       assertEquals(new BigInteger("9007199254740993"), parsed.get("ids[1]"));

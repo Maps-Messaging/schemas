@@ -14,6 +14,7 @@
  */
 package io.mapsmessaging.schemas.formatters.impl.cbc;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification;
@@ -49,8 +50,34 @@ public final class CbcUint64Fields {
           @SuppressWarnings("unchecked")
           Map<String, Object> nestedMap = (Map<String, Object>) nested;
           restore(input.getAsJsonObject(), nestedMap, field.getFields());
+        } else if (input.isJsonArray() && current instanceof List<?> list) {
+          restoreArray(input.getAsJsonArray(), list, field.getFields());
         }
       }
     }
   }
+  private static void restoreArray(JsonArray source, List<?> values, List<FieldSpecification> children) throws IOException {
+    @SuppressWarnings("unchecked")
+    List<Object> writable = (List<Object>) values;
+    for (int i = 0; i < values.size() && i < source.size(); i++) {
+      FieldSpecification element;
+      if (children.size() == values.size()) {
+        element = children.get(i);
+      } else if (children.size() == 1) {
+        element = children.get(0);
+      } else {
+        return;
+      }
+      if (element.getType().equalsIgnoreCase("uint") && Integer.valueOf(64).equals(element.getSize())
+          && element.getEncalc() == null && (element.getEnumTable() == null || element.getEnumTable().isEmpty())) {
+        writable.set(i, Uint64Values.fromJson(source.get(i)));
+      } else if (element.getType().equalsIgnoreCase("struct") && element.getFields() != null
+          && source.get(i).isJsonObject() && values.get(i) instanceof Map<?, ?> nested) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> nestedMap = (Map<String, Object>) nested;
+        restore(source.get(i).getAsJsonObject(), nestedMap, element.getFields());
+      }
+    }
+  }
+
 }

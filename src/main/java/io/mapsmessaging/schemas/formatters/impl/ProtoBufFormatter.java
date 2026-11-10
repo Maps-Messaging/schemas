@@ -641,11 +641,18 @@ public class ProtoBufFormatter extends MessageFormatter {
   }
 
   private boolean containsUnsigned64(Descriptors.Descriptor descriptor) {
+    return containsUnsigned64(descriptor, new HashSet<>());
+  }
+
+  private boolean containsUnsigned64(Descriptors.Descriptor descriptor, Set<Descriptors.Descriptor> visited) {
+    if (!visited.add(descriptor)) {
+      return false;
+    }
     for (FieldDescriptor field : descriptor.getFields()) {
       if (isUnsigned64(field)) {
         return true;
       }
-      if (field.getJavaType() == FieldDescriptor.JavaType.MESSAGE && containsUnsigned64(field.getMessageType())) {
+      if (field.getJavaType() == FieldDescriptor.JavaType.MESSAGE && containsUnsigned64(field.getMessageType(), visited)) {
         return true;
       }
     }

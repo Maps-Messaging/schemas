@@ -87,7 +87,8 @@ public abstract class GeneralBaseTest {
   @Test
   void validateConstructors() throws IOException {
     SchemaConfig schemaProps = getSchemaProperties(buildConfig());
-    System.err.println(schemaProps.pack());
+    String str = schemaProps.pack();
+    Assertions.assertNotNull(str);
     Assertions.assertNotNull(schemaProps);
     validate(schemaProps);
     validateSchema(schemaProps);

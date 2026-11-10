@@ -32,6 +32,7 @@ import io.mapsmessaging.schemas.formatters.impl.cdr.CdrField;
 import io.mapsmessaging.schemas.formatters.impl.cdr.CdrCodec;
 import io.mapsmessaging.schemas.formatters.impl.cdr.CdrSchemaCompiler;
 import io.mapsmessaging.schemas.formatters.impl.cdr.CdrSchemaResolver;
+import io.mapsmessaging.schemas.formatters.impl.cdr.CdrUint64ParsedObject;
 import io.mapsmessaging.schemas.formatters.impl.cdr.CdrReader;
 import io.mapsmessaging.schemas.formatters.impl.cdr.CdrWriter;
 import java.util.Map;
@@ -114,7 +115,7 @@ public class CdrFormatter extends MessageFormatter {
       JsonObject object = parseToJson(payload, parseMode);
       @SuppressWarnings("unchecked")
       Map<String, Object> map = gson.fromJson(object, Map.class);
-      return new StructuredResolver(new MapResolver(map), object);
+      return new CdrUint64ParsedObject(new StructuredResolver(new MapResolver(map), object), object, fields);
     } catch (ParseException e) {
       if (parseMode == ParseMode.IGNORE) {
         return new DefaultParser(payload);

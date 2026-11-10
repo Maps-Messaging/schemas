@@ -22,6 +22,9 @@ package io.mapsmessaging.schemas.formatters.impl.cbc;
 
 import io.mapsmessaging.schemas.config.impl.cbc.CbcFormat;
 import io.mapsmessaging.schemas.config.impl.cbc.FieldSpecification;
+import io.mapsmessaging.schemas.formatters.impl.Uint64Values;
+
+import java.io.IOException;
 
 import java.util.Base64;
 import java.util.List;
@@ -59,7 +62,20 @@ public class CbcOutputStream extends CbcStream {
     String t = f.getType().toLowerCase();
     switch (t) {
       case "struct" -> writeStruct(f, w, value);
-      case "uint", "bitmask" -> {
+      case "uint" -> {
+        if (reqSizeBits(f) == 64 && !hasEnum(f) && f.getEncalc() == null) {
+          try {
+            w.writeUnsigned(Uint64Values.fromValue(value).longValue(), 64);
+          } catch (IOException exception) {
+            throw new IllegalArgumentException("Invalid uint64 for '" + f.getName() + "'", exception);
+          }
+        } else {
+          long raw = hasEnum(f) ? enumToCode(value, f) : toUintRaw(value, f);
+          requireFitsBits(raw, reqSizeBits(f), f);
+          w.writeUnsigned(raw, reqSizeBits(f));
+        }
+      }
+      case "bitmask" -> {
         long raw = hasEnum(f) ? enumToCode(value, f) : toUintRaw(value, f);
         requireFitsBits(raw, reqSizeBits(f), f);
         w.writeUnsigned(raw, reqSizeBits(f));

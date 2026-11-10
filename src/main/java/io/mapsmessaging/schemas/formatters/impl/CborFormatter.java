@@ -52,6 +52,7 @@ public class CborFormatter extends MessageFormatter {
   private final Gson gson;
   private final JsonNode schemaNode;
   private final Schema schema;
+  private final JsonObject unsignedSchema;
 
   public CborFormatter() {
     cborMapper = new ObjectMapper(new CBORFactory());
@@ -59,6 +60,7 @@ public class CborFormatter extends MessageFormatter {
     gson = new Gson();
     schemaNode = null;
     schema = null;
+    unsignedSchema = null;
   }
 
   public CborFormatter(String schemaString) throws IOException {
@@ -69,14 +71,17 @@ public class CborFormatter extends MessageFormatter {
     if (schemaString == null || schemaString.isBlank() || "null".equals(schemaString.trim())) {
       schemaNode = null;
       schema = null;
+      unsignedSchema = null;
       return;
     }
 
     schemaNode = jsonMapper.readTree(schemaString);
     if (schemaNode == null || schemaNode.isNull() || !schemaNode.isObject()) {
       schema = null;
+      unsignedSchema = null;
       return;
     }
+    unsignedSchema = JsonParser.parseString(schemaNode.toString()).getAsJsonObject();
 
     String schemaDialect = schemaNode.path("$schema").asText(null);
     SpecificationVersion version = SpecificationVersion.fromDialectId(schemaDialect)
@@ -105,6 +110,7 @@ public class CborFormatter extends MessageFormatter {
       }
 
       JsonObject json = gson.toJsonTree(map).getAsJsonObject();
+      Uint64Values.applyJsonSchema(unsignedSchema, json, map);
       return new StructuredResolver(new MapResolver(map), json);
     } catch (Exception e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
@@ -119,7 +125,9 @@ public class CborFormatter extends MessageFormatter {
   public JsonObject parseToJson(byte[] payload, ParseMode parseMode) throws ParseException {
     try {
       Map<String, Object> map = cborMapper.readValue(payload, Map.class);
-      return JsonParser.parseString(gson.toJson(map)).getAsJsonObject();
+      JsonObject json = JsonParser.parseString(gson.toJson(map)).getAsJsonObject();
+      Uint64Values.applyJsonSchema(unsignedSchema, json, map);
+      return gson.toJsonTree(map).getAsJsonObject();
     } catch (IOException e) {
       throw new ParseException(e.getMessage(), e);
     }
@@ -129,7 +137,7 @@ public class CborFormatter extends MessageFormatter {
   public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
     @SuppressWarnings("unchecked")
     Map<String, Object> map = gson.fromJson(jsonObject, Map.class);
-
+    Uint64Values.applyJsonSchema(unsignedSchema, jsonObject, map);
     return cborMapper.writeValueAsBytes(map);
   }
 

@@ -51,15 +51,18 @@ public class MessagePackFormatter extends MessageFormatter {
 
   private final JsonNode schemaNode;
   private final Schema schema;
+  private final JsonObject unsignedSchema;
 
   public MessagePackFormatter() {
     schemaNode = null;
     schema = null;
+    unsignedSchema = null;
   }
 
   public MessagePackFormatter(JsonObject schemaString) throws IOException {
     ObjectMapper objectMapper = new ObjectMapper();
     schemaNode = objectMapper.readTree(schemaString.toString());
+    unsignedSchema = schemaString.deepCopy();
 
     SchemaRegistry schemaRegistry = SchemaRegistry.withDialect(Dialects.getDraft7());
     schema = schemaRegistry.getSchema(schemaNode.toString(), InputFormat.JSON);
@@ -86,6 +89,7 @@ public class MessagePackFormatter extends MessageFormatter {
 
       Gson gson = new Gson();
       JsonObject json = gson.toJsonTree(map).getAsJsonObject();
+      Uint64Values.applyJsonSchema(unsignedSchema, json, map);
       return new StructuredResolver(new MapResolver(map), json);
     } catch (Exception e) {
       logger.log(FORMATTER_UNEXPECTED_OBJECT, getName(), payload);
@@ -101,7 +105,10 @@ public class MessagePackFormatter extends MessageFormatter {
     ObjectMapper messagePackMapper = new ObjectMapper(new MessagePackFactory());
     try {
       Map<String, Object> map = messagePackMapper.readValue(payload, Map.class);
-      return JsonParser.parseString(new Gson().toJson(map)).getAsJsonObject();
+      Gson gson = new Gson();
+      JsonObject json = JsonParser.parseString(gson.toJson(map)).getAsJsonObject();
+      Uint64Values.applyJsonSchema(unsignedSchema, json, map);
+      return gson.toJsonTree(map).getAsJsonObject();
     } catch (IOException e) {
       throw new ParseException(e.getMessage(), e);
     }
@@ -111,6 +118,7 @@ public class MessagePackFormatter extends MessageFormatter {
   public byte[] parseFromJson(JsonObject jsonObject) throws IOException {
     ObjectMapper messagePackMapper = new ObjectMapper(new MessagePackFactory());
     Map<String, Object> map = new Gson().fromJson(jsonObject, Map.class);
+    Uint64Values.applyJsonSchema(unsignedSchema, jsonObject, map);
     return messagePackMapper.writeValueAsBytes(map);
   }
 

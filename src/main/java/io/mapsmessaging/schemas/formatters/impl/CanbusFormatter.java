@@ -17,12 +17,15 @@
 
 package io.mapsmessaging.schemas.formatters.impl;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.mapsmessaging.canbus.device.frames.CanFrame;
 import io.mapsmessaging.canbus.j1939.CanId;
 import io.mapsmessaging.canbus.j1939.n2k.N2kParserFactory;
 import io.mapsmessaging.canbus.j1939.n2k.codec.N2kMessageParser;
+import io.mapsmessaging.canbus.j1939.n2k.canboat.CanboatField;
+import io.mapsmessaging.canbus.j1939.n2k.canboat.CanboatMessage;
 import io.mapsmessaging.canbus.j1939.n2k.compile.N2kCompiledMessage;
 import io.mapsmessaging.canbus.j1939.n2k.compile.N2kCompiledRegistry;
 import io.mapsmessaging.canbus.j1939.n2k.compile.N2kCompiler;
@@ -42,6 +45,10 @@ import lombok.Getter;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.HashSet;
+import java.util.Set;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
@@ -88,7 +95,74 @@ public class CanbusFormatter extends MessageFormatter {
   public ParsedObject parse(byte[] payload, ParseMode parseMode) throws ParseException {
     JsonObject json = parseToJson(payload, parseMode);
     Map<String, Object> map = gson.fromJson(json, Map.class);
+    restoreCanboatUint64(json, map);
     return new StructuredResolver(new MapResolver(map), json);
+  }
+
+  private void restoreCanboatUint64(JsonObject envelope, Map<String, Object> values) {
+    if (parser == null || parser.getRegistry().getDatabase() == null || !envelope.has("j1939")) {
+      return;
+    }
+    JsonObject j1939 = envelope.getAsJsonObject("j1939");
+    if (!j1939.has("n2k") || !j1939.get("n2k").isJsonObject() || !j1939.has("pgn")) {
+      return;
+    }
+    JsonObject decoded = j1939.getAsJsonObject("n2k");
+    if (!decoded.has("packet") || !decoded.get("packet").isJsonObject() || !decoded.has("name")) {
+      return;
+    }
+    Object nested = values.get("j1939");
+    if (!(nested instanceof Map<?, ?> outer) || !(outer.get("n2k") instanceof Map<?, ?> n2k)
+        || !(n2k.get("packet") instanceof Map<?, ?> packet)) {
+      return;
+    }
+    Set<String> names = new HashSet<>();
+    String messageName = decoded.get("name").getAsString();
+    for (CanboatMessage message : parser.getRegistry().getDatabase().candidates(j1939.get("pgn").getAsInt())) {
+      if (!messageName.equals(message.id())) {
+        continue;
+      }
+      for (CanboatField field : message.fields()) {
+        if (field.number("BitLength", 0) == 64 && !Boolean.parseBoolean(field.text("Signed", "false"))
+            && ("NUMBER".equals(field.type()) || "ISO_NAME".equals(field.type()))
+            && BigDecimal.ONE.compareTo(new BigDecimal(field.text("Resolution", "1"))) == 0
+            && BigDecimal.ZERO.compareTo(new BigDecimal(field.text("Offset", "0"))) == 0) {
+          names.add(field.id());
+        }
+      }
+      break;
+    }
+    @SuppressWarnings("unchecked")
+    Map<String, Object> packetMap = (Map<String, Object>) packet;
+    restoreCanboatFields(decoded.getAsJsonObject("packet"), packetMap, names);
+  }
+
+  private void restoreCanboatFields(JsonObject source, Map<String, Object> target, Set<String> names) {
+    for (Map.Entry<String, JsonElement> entry : source.entrySet()) {
+      String name = entry.getKey();
+      JsonElement value = entry.getValue();
+      if (names.contains(name) && value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()) {
+        try {
+          BigInteger number = value.getAsBigDecimal().toBigIntegerExact();
+          target.put(name, Uint64Values.requireRange(number));
+        } catch (ArithmeticException | IOException ignored) {
+          // Preserve the underlying parser's value if it is scaled, invalid or not an exact uint64.
+        }
+      } else if (value.isJsonObject() && target.get(name) instanceof Map<?, ?> nested) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> nestedMap = (Map<String, Object>) nested;
+        restoreCanboatFields(value.getAsJsonObject(), nestedMap, names);
+      } else if (value.isJsonArray() && target.get(name) instanceof List<?> list) {
+        JsonArray array = value.getAsJsonArray();
+        for (int i = 0; i < array.size() && i < list.size(); i++) {
+          if (array.get(i).isJsonObject() && list.get(i) instanceof Map<?, ?> nested) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> nestedMap = (Map<String, Object>) nested;
+            restoreCanboatFields(array.get(i).getAsJsonObject(), nestedMap, names);
+          }
+        }
+      }
+    }
   }
 
   @Override

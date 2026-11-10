@@ -39,6 +39,7 @@ import io.mapsmessaging.schemas.formatters.walker.StructuredResolver;
 import io.mapsmessaging.schemas.repository.SchemaResolver;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -260,6 +261,7 @@ public class ProtoBufFormatter extends MessageFormatter {
 
     @SuppressWarnings("unchecked")
     Map<String, Object> map = gson.fromJson(jsonObject, Map.class);
+    restoreUnsigned64Values(jsonObject, map, messageDescriptor);
     DynamicMessage.Builder builder = DynamicMessage.newBuilder(messageDescriptor);
     populateBuilderFromMap(builder, messageDescriptor, map, messageDescriptor.getFullName());
     DynamicMessage message = builder.build();
@@ -337,7 +339,8 @@ public class ProtoBufFormatter extends MessageFormatter {
     return switch (field.getJavaType()) {
       case STRING -> new JsonPrimitive((String) value);
       case INT -> new JsonPrimitive(((Number) value).intValue());
-      case LONG -> new JsonPrimitive(((Number) value).longValue());
+      case LONG -> new JsonPrimitive(isUnsigned64(field)
+          ? Uint64Values.fromSignedBits(((Number) value).longValue()) : ((Number) value).longValue());
       case FLOAT -> new JsonPrimitive(((Number) value).floatValue());
       case DOUBLE -> new JsonPrimitive(((Number) value).doubleValue());
       case BOOLEAN -> new JsonPrimitive((Boolean) value);
@@ -365,6 +368,13 @@ public class ProtoBufFormatter extends MessageFormatter {
         return coerceInteger(value, path);
 
       case LONG:
+        if (isUnsigned64(field)) {
+          try {
+            return Uint64Values.fromValue(value).longValue();
+          } catch (IOException exception) {
+            throw new IllegalArgumentException("Invalid uint64 at " + path, exception);
+          }
+        }
         return coerceLong(value, path);
 
       case FLOAT:
@@ -469,6 +479,51 @@ public class ProtoBufFormatter extends MessageFormatter {
     }
   }
 
+  private boolean isUnsigned64(FieldDescriptor field) {
+    return field.getType() == FieldDescriptor.Type.UINT64 || field.getType() == FieldDescriptor.Type.FIXED64;
+  }
+
+  private void restoreUnsigned64Values(JsonObject json, Map<String, Object> values, Descriptors.Descriptor descriptor) throws IOException {
+    for (FieldDescriptor field : descriptor.getFields()) {
+      if (!json.has(field.getName()) || !values.containsKey(field.getName()) || json.get(field.getName()).isJsonNull()) {
+        continue;
+      }
+      JsonElement input = json.get(field.getName());
+      Object current = values.get(field.getName());
+
+      if (isUnsigned64(field)) {
+        if (field.isRepeated()) {
+          if (!input.isJsonArray() || !(current instanceof List<?> collection)) {
+            throw new IOException("Expected array for unsigned field " + field.getFullName());
+          }
+          List<BigInteger> unsigned = new ArrayList<>();
+          for (JsonElement element : input.getAsJsonArray()) {
+            unsigned.add(Uint64Values.fromJson(element));
+          }
+          values.put(field.getName(), unsigned);
+        } else {
+          values.put(field.getName(), Uint64Values.fromJson(input));
+        }
+      } else if (field.getJavaType() == FieldDescriptor.JavaType.MESSAGE) {
+        if (field.isRepeated() && input.isJsonArray() && current instanceof List<?> collection) {
+          for (int i = 0; i < collection.size() && i < input.getAsJsonArray().size(); i++) {
+            Object item = collection.get(i);
+            JsonElement child = input.getAsJsonArray().get(i);
+            if (child.isJsonObject() && item instanceof Map<?, ?> nested) {
+              @SuppressWarnings("unchecked")
+              Map<String, Object> nestedMap = (Map<String, Object>) nested;
+              restoreUnsigned64Values(child.getAsJsonObject(), nestedMap, field.getMessageType());
+            }
+          }
+        } else if (input.isJsonObject() && current instanceof Map<?, ?> nested) {
+          @SuppressWarnings("unchecked")
+          Map<String, Object> nestedMap = (Map<String, Object>) nested;
+          restoreUnsigned64Values(input.getAsJsonObject(), nestedMap, field.getMessageType());
+        }
+      }
+    }
+  }
+
   private int coerceInteger(Object value, String path) {
     if (value instanceof Number numberValue) {
       return Math.toIntExact(numberValue.longValue());
@@ -562,13 +617,46 @@ public class ProtoBufFormatter extends MessageFormatter {
   private Map<String, Object> convertToMap(DynamicMessage message) {
     Map<String, Object> map = new LinkedHashMap<>();
     for (Entry<FieldDescriptor, Object> entry : message.getAllFields().entrySet()) {
-      if (entry.getValue() instanceof Collection collection) {
-        map.put(entry.getKey().getName(), createMap(collection));
+      FieldDescriptor field = entry.getKey();
+      Object value = entry.getValue();
+      if (isUnsigned64(field)) {
+        if (value instanceof Collection<?> collection) {
+          List<BigInteger> unsigned = new ArrayList<>();
+          for (Object element : collection) {
+            unsigned.add(Uint64Values.fromSignedBits(((Number) element).longValue()));
+          }
+          map.put(field.getName(), unsigned);
+        } else {
+          map.put(field.getName(), Uint64Values.fromSignedBits(((Number) value).longValue()));
+        }
+      } else if (value instanceof Collection collection) {
+        map.put(field.getName(), createMap(collection));
+      } else if (value instanceof DynamicMessage nested && containsUnsigned64(nested.getDescriptorForType())) {
+        map.put(field.getName(), convertToMap(nested));
       } else {
-        map.put(entry.getKey().getName(), entry.getValue());
+        map.put(field.getName(), value);
       }
     }
     return map;
+  }
+
+  private boolean containsUnsigned64(Descriptors.Descriptor descriptor) {
+    return containsUnsigned64(descriptor, new HashSet<>());
+  }
+
+  private boolean containsUnsigned64(Descriptors.Descriptor descriptor, Set<Descriptors.Descriptor> visited) {
+    if (!visited.add(descriptor)) {
+      return false;
+    }
+    for (FieldDescriptor field : descriptor.getFields()) {
+      if (isUnsigned64(field)) {
+        return true;
+      }
+      if (field.getJavaType() == FieldDescriptor.JavaType.MESSAGE && containsUnsigned64(field.getMessageType(), visited)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private List<Map<String, Object>> createMap(Collection<Object> collection) {

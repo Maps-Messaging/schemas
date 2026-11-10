@@ -114,6 +114,7 @@ class ProtobufSchemaGeneratorTest {
 
   private Path createWindowsFakeProtoc(Path directory) throws IOException {
     Path script = directory.resolve("protoc.cmd");
+    Files.writeString(directory.resolve("fixture.desc"), "fake descriptor", StandardCharsets.UTF_8);
     Files.writeString(
         script,
         "@echo off\r\n"
@@ -126,8 +127,15 @@ class ProtobufSchemaGeneratorTest {
             + "shift\r\n"
             + "goto loop\r\n"
             + ":done\r\n"
-            + "if \"!OUTFILE!\"==\"\" exit /b 1\r\n"
-            + "<nul set /p =fake descriptor>\"!OUTFILE!\"\r\n"
+            + "if \"!OUTFILE!\"==\"\" (\r\n"
+            + "  echo Missing --descriptor_set_out argument 1>&2\r\n"
+            + "  exit /b 1\r\n"
+            + ")\r\n"
+            + "copy /b /y \"%~dp0fixture.desc\" \"!OUTFILE!\" >nul\r\n"
+            + "if errorlevel 1 (\r\n"
+            + "  echo Failed to create descriptor: !OUTFILE! 1>&2\r\n"
+            + "  exit /b 1\r\n"
+            + ")\r\n"
             + "exit /b 0\r\n"
     );
     return script;
